@@ -206,13 +206,13 @@ const Hero = () => {
             }`}
             onLoadedData={() => setVideoLoaded(true)}
           >
-            <source src="./Background.mp4" type="video/mp4" />
+            <source src="/background.mp4" type="video/mp4" />
           </video>
 
           {/* Fallback shown until the video reports it has loaded */}
           {!videoLoaded && (
             <img
-              src="/images/hero-fallback.jpg"
+              src="/cover.jpg"
               alt=""
               aria-hidden="true"
               className="absolute inset-0 w-full h-full object-cover"
@@ -313,7 +313,7 @@ const Hero = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-[#1f2d2d]/30 via-transparent to-[#bf5429]/20 z-10" />
                   <img
-                    src="./logo.png"
+                    src="/logo.png"
                     alt="Social Observatory network visualization"
                     className="w-full h-full object-cover transition-transform duration-1000 hover:scale-110"
                     loading="lazy"

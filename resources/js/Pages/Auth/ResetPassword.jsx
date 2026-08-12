@@ -42,7 +42,7 @@ export default function ResetPassword({ token, email }) {
                     </div>
 
                     <Link href="/" className="relative z-10 flex items-center gap-3 w-fit">
-                        <img src="./logo.png" alt="Logo" className="h-20 w-auto" />
+                        <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
                         <span className="font-display text-lg tracking-wide text-white">
                             {import.meta.env.VITE_APP_NAME ?? "Mon Application"}
                         </span>
@@ -71,7 +71,7 @@ export default function ResetPassword({ token, email }) {
                     <div className="w-full max-w-sm animate-fade-up">
 
                         <div className="mb-8 flex justify-center lg:hidden">
-                            <img src="./logo.png" alt="Logo" className="h-9 w-auto" />
+                            <img src="/logo.png" alt="Logo" className="h-9 w-auto" />
                         </div>
 
                         <div className="rounded-xl border border-[#D6D9D8] bg-white p-8 shadow-sm">
