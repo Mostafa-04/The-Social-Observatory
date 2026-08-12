@@ -1,10 +1,50 @@
-import React, { useEffect, useRef } from 'react';
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import React, { useEffect, useRef, useState } from 'react';
+import { ComposableMap, Geographies, Geography, useMapContext } from 'react-simple-maps';
+import { merge } from 'topojson-client';
 
 const GEO_URL = '/data/countries-110m.json';
 
+// Morocco (504) and Western Sahara (732) are dissolved into a single shape
+// so the map shows Morocco's full territory without an internal border.
+const MOROCCO_MERGED_IDS = ['504', '732'];
+
 const ACTIVE_COLOR = '#bf5429';
 const DEFAULT_COLOR = '#1f2d2d';
+
+const geographyStyle = (active) => ({
+  default: {
+    outline: 'none',
+    transition: 'all 0.3s ease',
+  },
+  hover: {
+    fill: active ? '#a8461f' : '#324949',
+    outline: 'none',
+    cursor: active ? 'pointer' : 'default',
+  },
+  pressed: {
+    outline: 'none',
+  },
+});
+
+// <Geography> only reads `geography.svgPath` — it never computes it. Inside
+// <Geographies>, that path is precomputed for us; for a feature we build by
+// hand (the merged Morocco shape), we have to compute it ourselves via the
+// same projection, using the path generator from map context.
+const MoroccoGeography = ({ feature, active, onHover, onLeave }) => {
+  const { path } = useMapContext();
+  const geography = { ...feature, rsmKey: 'morocco-merged', svgPath: path(feature) };
+  return (
+    <Geography
+      geography={geography}
+      fill={active ? ACTIVE_COLOR : DEFAULT_COLOR}
+      stroke="#f5f5f4"
+      strokeWidth={0.6}
+      style={geographyStyle(active)}
+      onMouseEnter={() => onHover('Morocco')}
+      onMouseLeave={onLeave}
+    />
+  );
+};
 
 const AFRICA_NUMERIC_TO_ISO2 = {
   '012': 'DZ', '024': 'AO', '204': 'BJ', '072': 'BW', '854': 'BF',
@@ -28,6 +68,37 @@ const AfricaProjectsSection = ({
   const sectionRef = useRef(null);
   const titleRef = useRef(null);
   const mapRef = useRef(null);
+  const [moroccoFeature, setMoroccoFeature] = useState(null);
+  const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  const handleMapMouseMove = (e) => {
+    const bounds = e.currentTarget.getBoundingClientRect();
+    setTooltipPos({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(GEO_URL)
+      .then((res) => res.json())
+      .then((topology) => {
+        if (cancelled) return;
+        const geometries = topology.objects.countries.geometries.filter((g) =>
+          MOROCCO_MERGED_IDS.includes(g.id)
+        );
+        if (geometries.length === 0) return;
+        const geometry = merge(topology, geometries);
+        setMoroccoFeature({ type: 'Feature', geometry, properties: { name: 'Morocco' } });
+      })
+      .catch((err) => {
+        console.error('Failed to dissolve Morocco / Western Sahara border', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -119,14 +190,26 @@ const AfricaProjectsSection = ({
           >
             <div className="relative">
               {/* Carte avec ombre et bordure style AreasOfFocus */}
-              <div className="relative rounded-2xl p-6 border border-[#d6d9d8]/30 hover:border-[#bf5429]/50 transition-all duration-500 hover:shadow-2xl">
+              <div
+                className="relative rounded-2xl p-6 border border-[#d6d9d8]/30 hover:border-[#bf5429]/50 transition-all duration-500 hover:shadow-2xl"
+                onMouseMove={handleMapMouseMove}
+              >
                 {/* Top border accent */}
                 <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-[#bf5429] via-[#bf5429] to-transparent w-full rounded-t-2xl"></div>
-                
+
                 {/* Badge nombre de pays */}
                 <div className="absolute -top-3 -right-3 bg-[#bf5429] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                   {projectCountries.length} pays
                 </div>
+
+                {hoveredCountry && (
+                  <div
+                    className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1f2d2d] px-3 py-1.5 text-xs font-medium text-white shadow-lg"
+                    style={{ left: tooltipPos.x, top: tooltipPos.y - 10 }}
+                  >
+                    {hoveredCountry}
+                  </div>
+                )}
 
                 <ComposableMap
                   projection="geoMercator"
@@ -138,6 +221,10 @@ const AfricaProjectsSection = ({
                   <Geographies geography={GEO_URL}>
                     {({ geographies }) =>
                       geographies.map((geo) => {
+                        // Once the dissolved shape is ready, it replaces
+                        // these two below. Until then, render them
+                        // normally so Morocco is never left blank.
+                        if (moroccoFeature && MOROCCO_MERGED_IDS.includes(geo.id)) return null;
                         const iso2 = AFRICA_NUMERIC_TO_ISO2[geo.id];
                         if (!iso2) return null;
                         const active = projectCountries.includes(iso2);
@@ -148,25 +235,23 @@ const AfricaProjectsSection = ({
                             fill={active ? ACTIVE_COLOR : DEFAULT_COLOR}
                             stroke="#f5f5f4"
                             strokeWidth={0.6}
-                            style={{
-                              default: {
-                                outline: 'none',
-                                transition: 'all 0.3s ease',
-                              },
-                              hover: {
-                                fill: active ? '#a8461f' : '#324949',
-                                outline: 'none',
-                                cursor: active ? 'pointer' : 'default',
-                              },
-                              pressed: {
-                                outline: 'none',
-                              },
-                            }}
+                            style={geographyStyle(active)}
+                            onMouseEnter={() => setHoveredCountry(geo.properties?.name || iso2)}
+                            onMouseLeave={() => setHoveredCountry(null)}
                           />
                         );
                       })
                     }
                   </Geographies>
+
+                  {moroccoFeature && (
+                    <MoroccoGeography
+                      feature={moroccoFeature}
+                      active={projectCountries.includes('MA')}
+                      onHover={setHoveredCountry}
+                      onLeave={() => setHoveredCountry(null)}
+                    />
+                  )}
                 </ComposableMap>
 
                 {/* Légende */}
