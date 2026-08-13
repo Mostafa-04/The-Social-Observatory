@@ -13,6 +13,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ClipboardList
 } from "lucide-react";
 
 /**
@@ -290,6 +291,16 @@ export default function DataTable({
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
+                        )}
+                        {actions?.onRegistrations && (
+                            <button
+                                type="button"
+                                onClick={() => actions.onRegistrations(row)}
+                                title="Inscriptions"
+                                className="rounded-lg p-2 text-[#324949] transition hover:bg-[#324949]/10"
+                            >
+                                <ClipboardList size={16} />
+                            </button>
                         )}
                         {actions?.onDelete && (
                           <button

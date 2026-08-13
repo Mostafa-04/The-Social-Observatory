@@ -1,7 +1,7 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import DataTable from "@/Components/DataTable";
 import { Head, Link, router } from "@inertiajs/react";
-import { Plus, ImageOff } from "lucide-react";
+import { Plus, ImageOff,ClipboardList } from "lucide-react";
 
 const TYPE_LABELS = {
     conference: "Conférence",
@@ -149,6 +149,12 @@ export default function Index({ events }) {
                             onView: (event) => router.visit(route("events.show", event.id)),
 
                             onEdit: (event) => router.visit(route("events.edit", event.id)),
+
+
+                            onRegistrations: (event) =>
+                                router.visit(
+                                    route("events.registrations.index", event.id)
+                                ),
 
                             onDelete: handleDelete,
                         }}

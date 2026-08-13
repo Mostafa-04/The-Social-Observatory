@@ -13,6 +13,7 @@ use App\Models\Publication;
 use App\Models\Project;
 use App\Models\Country;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ClientController extends Controller
 {
@@ -20,17 +21,31 @@ class ClientController extends Controller
     public function home()
     {
         $researches = Research::latest()->take(3)->get();
-        Log::info('Researches:', $researches->toArray());
+        
 
         $insights = Insight::latest()->take(3)->get();
 
-        $events = Event::latest()->take(3)->get();
+        $today = Carbon::today();
+
+        $events = Event::query()
+            ->where(function ($query) use ($today) {
+
+                
+                $query->whereDate('date', '>=', $today);
+
+            })
+            ->orderBy('date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->take(3)
+            ->get();
 
         $publications = Publication::latest('published_at')
             ->take(3)
             ->get();
 
-        $partners = Partner::all();
+        $partners = Partner::query()
+            ->select(['id', 'name', 'logo'])
+            ->get();
 
         $settings = Setting::first();
 

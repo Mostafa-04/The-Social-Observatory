@@ -15,6 +15,10 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsletterSubscriberController;
+use App\Http\Controllers\RegistrationFormController;
+use App\Http\Controllers\FormFieldController;
+use App\Http\Controllers\EventRegistrationController;
+use App\Http\Controllers\EventEmailCampaignController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +95,55 @@ Route::resource('countries', CountryController::class)
     ])->names('countries');
 Route::resource('categories', CategoryController::class)->names('categories');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+
+Route::get(
+    '/events/{event}/registration-form/create',
+    [RegistrationFormController::class, 'create']
+)->name('registration-forms.create');
+
+Route::post(
+    '/events/{event}/registration-form',
+    [RegistrationFormController::class, 'store']
+)->name('registration-forms.store');
+
+Route::get(
+    '/registration-forms/{registrationForm}/fields/create',
+    [FormFieldController::class, 'create']
+)->name('registration-forms.fields.create');
+
+Route::post(
+    '/registration-forms/{registrationForm}/fields',
+    [FormFieldController::class, 'store']
+)->name('registration-forms.fields.store');
+
+Route::get(
+    '/events/{event}/registrations',
+    [EventRegistrationController::class, 'index']
+)->name('events.registrations.index');
+
+Route::get(
+    '/events/{event}/emails/create',
+    [EventEmailCampaignController::class, 'create']
+)->name('events.emails.create');
+
+Route::post(
+    '/events/{event}/emails',
+    [EventEmailCampaignController::class, 'store']
+)->name('events.emails.store');
+
+
+
+Route::get(
+    '/events/{event}/emails',
+    [EventEmailCampaignController::class, 'index']
+)->name('events.emails.index');
+
+
+Route::get(
+    '/events/{event}/emails/{campaign}',
+    [EventEmailCampaignController::class, 'show']
+)->name('events.emails.show');
 
 
 });

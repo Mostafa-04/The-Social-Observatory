@@ -5,10 +5,6 @@ import {
     Mail,
     Phone,
     MapPin,
-    Facebook,
-    Linkedin,
-    Twitter,
-    Youtube,
     Server,
     Hash,
     User,
@@ -16,6 +12,8 @@ import {
     AtSign,
     Tag,
 } from "lucide-react";
+
+import { Facebook, Linkedin, Twitter,Youtube } from "@/Components/icons/BrandIcons";
 
 const fieldClass =
     "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white";

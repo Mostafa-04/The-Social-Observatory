@@ -13,8 +13,7 @@ import {
   Target,
 } from 'lucide-react';
 
-// أيقونات وتدرجات يتم التناوب عليها حسب ترتيب العنصر
-// لأن جدول insights لا يحتوي على عمود خاص بالأيقونة أو التدرج
+
 const ICONS = [Globe, Heart, Lightbulb, TrendingUp, Sparkles, Target];
 const GRADIENTS = [
   'from-[#324949]/15 to-[#1f2d2d]/5',
@@ -30,7 +29,7 @@ const formatDate = (dateString) => {
   });
 };
 
-// تقدير مدة القراءة من طول المحتوى (لا يوجد عمود لها في قاعدة البيانات)
+
 const estimateReadTime = (content) => {
   if (!content) return '1 min read';
   const words = content.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;

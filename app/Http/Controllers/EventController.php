@@ -37,42 +37,49 @@ class EventController extends Controller
     /**
      * Store event.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'slug' => 'required|string|max:255|unique:events,slug',
 
-            'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
+        'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
 
-            'country_id' => 'required|exists:countries,id',
+        'country_id' => 'required|exists:countries,id',
 
-            'city' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+        'city' => 'required|string|max:255',
+        'location' => 'required|string|max:255',
 
-            'date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+        'date' => 'required|date',
+        'start_time' => 'required|date_format:H:i',
+        'end_time' => 'required|date_format:H:i|after:start_time',
 
-            'registration_link' => 'nullable|url|max:255',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+        'status' => 'required|in:upcoming,ongoing,completed,cancelled',
+    ]);
 
-            'status' => 'required|in:upcoming,ongoing,completed,cancelled',
-        ]);
+    if ($request->hasFile('image')) {
+        $validated['image'] = $request
+            ->file('image')
+            ->store('events/images', 'public');
+    }
 
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request
-                ->file('image')
-                ->store('events/images', 'public');
-        }
+    $event = Event::create($validated);
 
-        Event::create($validated);
+    $event->update([
+        'registration_link' => route(
+            'events.register',
+            $event->slug
+        ),
+    ]);
+
 
         return redirect()
-            ->route('events.index')
-            ->with('success', 'Event created successfully.');
-    }
+            ->route('registration-forms.create', ['event' => $event->id])
+            ->with('success', 'Event created successfully. You can now create the registration form.');
+}
 
     /**
      * Show event.
@@ -110,6 +117,7 @@ class EventController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'slug' => 'required|string|max:255|unique:events,slug,' . $event->id,
 
             'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
 

@@ -3,6 +3,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\PublicEventRegistrationController;
+use App\Models\Event;
 
 Route::get('/', [ClientController::class, 'home'])->name('client.home');
 Route::get('/researches', [ClientController::class, 'researches'])->name('research.index');
@@ -25,4 +27,28 @@ Route::get('/publication/{id}', [ClientController::class, 'publication'])->name(
 
 // Route::get('/projects', [ClientController::class, 'projects'])->name('project.index.client');
 // Route::get('/projects/{id}', [ClientController::class, 'project'])->name('project.show.client');
+
+
+
+Route::get(
+    '/events/{event:slug}/register',
+    [PublicEventRegistrationController::class, 'create']
+)->name('events.register');
+
+Route::post(
+    '/events/{event:slug}/register',
+    [PublicEventRegistrationController::class, 'store']
+)->name('events.register.store');
+
+Route::get(
+    '/events/{event:slug}/register/success',
+    function (Event $event) {
+        return Inertia::render(
+            'admin/Events/RegistrationSuccess',
+            [
+                'event' => $event,
+            ]
+        );
+    }
+)->name('events.register.success');
 

@@ -209,6 +209,8 @@ const Navbar = () => {
               <img
                 src="/logo.png"
                 alt="Logo"
+                    width="36"
+                height="36"
                 className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
               />
               <span

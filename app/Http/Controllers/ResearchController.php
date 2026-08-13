@@ -48,7 +48,7 @@ class ResearchController extends Controller
             'content' => 'required|string',
 
             'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'pdf' => 'nullable|mimes:pdf|',
 
             'author_id' => 'required|exists:authors,id',
             'category_id' => 'required|exists:categories,id',
@@ -118,7 +118,7 @@ class ResearchController extends Controller
             'content' => 'required|string',
 
             'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'pdf' => 'nullable|mimes:pdf|',
 
             'author_id' => 'required|exists:authors,id',
             'category_id' => 'required|exists:categories,id',

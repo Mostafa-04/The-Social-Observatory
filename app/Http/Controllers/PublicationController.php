@@ -43,7 +43,7 @@ class PublicationController extends Controller
 
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'pdf' => 'nullable|mimes:pdf|',
 
             'pages' => 'nullable|integer|min:1',
 
@@ -111,7 +111,7 @@ class PublicationController extends Controller
 
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'pdf' => 'nullable|mimes:pdf|',
 
             'pages' => 'nullable|integer|min:1',
 

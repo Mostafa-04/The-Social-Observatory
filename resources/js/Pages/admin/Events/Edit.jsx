@@ -41,6 +41,7 @@ export default function Edit({ event, countries }) {
 
         title: event.title || "",
         description: event.description || "",
+        slug: event.slug || "",
 
         event_type: event.event_type || "conference",
 
@@ -112,6 +113,19 @@ export default function Edit({ event, countries }) {
                                         placeholder="Titre de l'événement"
                                     />
                                     {errors.title && <p className="mt-1 text-[12px] text-red-500">{errors.title}</p>}
+                                </div>
+
+                                {/* Slug */}
+                                <div>
+                                    <label className={labelClass}>Slug</label>
+                                    <input
+                                        type="text"
+                                        value={data.slug}
+                                        onChange={(e) => setData("slug", e.target.value)}
+                                        className={fieldClass}
+                                        placeholder="slug-de-levenement"
+                                    />
+                                    {errors.slug && <p className="mt-1 text-[12px] text-red-500">{errors.slug}</p>}
                                 </div>
 
                                 {/* Description */}

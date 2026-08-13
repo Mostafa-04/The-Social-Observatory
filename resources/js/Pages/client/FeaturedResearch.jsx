@@ -13,8 +13,6 @@ import {
   FileText,
 } from 'lucide-react';
 
-// أيقونات وتدرجات لونية يتم التناوب عليها حسب ترتيب البحث (index)
-// لأن جدول researches لا يحتوي على عمود خاص بالأيقونة أو التدرج
 const ICONS = [Map, Briefcase, Users, TrendingUp, Award, BookOpen];
 const GRADIENTS = [
   'from-[#1f2d2d] to-[#bf5429]/80',

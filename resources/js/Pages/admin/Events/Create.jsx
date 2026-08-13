@@ -39,6 +39,7 @@ export default function Create({ countries }) {
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         description: "",
+        slug: "",
 
         event_type: "conference",
 
@@ -51,8 +52,6 @@ export default function Create({ countries }) {
 
         start_time: "",
         end_time: "",
-
-        registration_link: "",
 
         image: null,
 
@@ -113,6 +112,19 @@ export default function Create({ countries }) {
                                     {errors.title && <p className="mt-1 text-[12px] text-red-500">{errors.title}</p>}
                                 </div>
 
+                                {/* Slug */}
+                                <div>
+                                    <label className={labelClass}>Slug</label>
+                                    <input
+                                        type="text"
+                                        value={data.slug}
+                                        onChange={(e) => setData("slug", e.target.value)}
+                                        className={fieldClass}
+                                        placeholder="Slug de l'événement"
+                                    />
+                                    {errors.slug && <p className="mt-1 text-[12px] text-red-500">{errors.slug}</p>}
+                                </div>
+
                                 {/* Description */}
                                 <div>
                                     <label className={labelClass}>Description</label>
@@ -124,26 +136,6 @@ export default function Create({ countries }) {
                                     />
                                     {errors.description && (
                                         <p className="mt-1 text-[12px] text-red-500">{errors.description}</p>
-                                    )}
-                                </div>
-
-                                {/* Registration link */}
-                                <div>
-                                    <label className={labelClass}>
-                                        <span className="flex items-center gap-1.5">
-                                            <Link2 size={13} strokeWidth={1.8} />
-                                            Lien d'inscription
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="url"
-                                        value={data.registration_link}
-                                        onChange={(e) => setData("registration_link", e.target.value)}
-                                        className={fieldClass}
-                                        placeholder="https://..."
-                                    />
-                                    {errors.registration_link && (
-                                        <p className="mt-1 text-[12px] text-red-500">{errors.registration_link}</p>
                                     )}
                                 </div>
                             </div>
