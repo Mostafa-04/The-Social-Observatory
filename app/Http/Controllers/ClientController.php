@@ -49,10 +49,9 @@ class ClientController extends Controller
 
         $settings = Setting::first();
 
-            $projectCountries = Country::whereHas('projects')
-        ->pluck('iso_code')
-        ->map(fn ($code) => strtoupper($code))
-        ->values();
+        $projectCountries = Country::pluck('iso_code')
+            ->map(fn ($code) => strtoupper($code))
+            ->values();
 
         return inertia('client/index', [
             'researches' => $researches,

@@ -12,6 +12,7 @@ import {
     AtSign,
     Tag,
 } from "lucide-react";
+import { FaFacebook, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa";
 
 import { Facebook, Linkedin, Twitter,Youtube } from "@/Components/icons/BrandIcons";
 
@@ -133,10 +134,10 @@ export default function Create() {
                     </SectionCard>
 
                     {/* ================= SOCIAL MEDIA ================= */}
-                    <SectionCard icon={Facebook} title="Réseaux sociaux">
+                    <SectionCard icon={FaFacebook} title="Réseaux sociaux">
                         <div>
                             <label className={labelClass}>
-                                <Facebook size={13} strokeWidth={1.8} />
+                                <FaFacebook size={13} strokeWidth={1.8} />
                                 Facebook
                             </label>
                             <input
@@ -151,7 +152,7 @@ export default function Create() {
 
                         <div>
                             <label className={labelClass}>
-                                <Linkedin size={13} strokeWidth={1.8} />
+                                <FaLinkedin size={13} strokeWidth={1.8} />
                                 LinkedIn
                             </label>
                             <input
@@ -166,7 +167,7 @@ export default function Create() {
 
                         <div>
                             <label className={labelClass}>
-                                <Twitter size={13} strokeWidth={1.8} />
+                                <FaTwitter size={13} strokeWidth={1.8} />
                                 Twitter / X
                             </label>
                             <input
@@ -181,7 +182,7 @@ export default function Create() {
 
                         <div>
                             <label className={labelClass}>
-                                <Youtube size={13} strokeWidth={1.8} />
+                                <FaYoutube size={13} strokeWidth={1.8} />
                                 YouTube
                             </label>
                             <input

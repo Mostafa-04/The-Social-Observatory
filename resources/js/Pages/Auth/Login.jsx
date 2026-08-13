@@ -75,7 +75,7 @@ export default function Login({ status, canResetPassword }) {
 
                         {/* Logo mobile */}
                         <div className="mb-8 flex justify-center lg:hidden">
-                            <img src="./logo.png" alt="Logo" className="h-9 w-auto" />
+                            <img src="/logo.png" alt="Logo" className="h-9 w-auto" />
                         </div>
 
                         {/* Carte */}
