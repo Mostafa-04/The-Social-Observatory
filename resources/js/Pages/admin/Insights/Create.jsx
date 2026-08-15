@@ -73,7 +73,7 @@ export default function Create({ categories, authors }) {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className={labelClass}>Titre</label>
+                                    <label className={labelClass}>Titre  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.title}
@@ -90,6 +90,7 @@ export default function Create({ categories, authors }) {
                                         <span className="flex items-center gap-1.5">
                                             <Link2 size={13} strokeWidth={1.8} />
                                             Slug
+                                             <span className="text-red-500">*</span>
                                         </span>
                                     </label>
                                     <input
@@ -118,7 +119,7 @@ export default function Create({ categories, authors }) {
 
                                 {/* Content */}
                                 <div>
-                                    <label className={labelClass}>Contenu</label>
+                                    <label className={labelClass}>Contenu  <span className="text-red-500">*</span></label>
                                     <textarea
                                         rows={10}
                                         value={data.content}

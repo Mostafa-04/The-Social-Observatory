@@ -2,17 +2,18 @@ import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft } from "lucide-react";
 
-// Les `value` restent identiques (envoyées au backend) — seul le label est traduit.
+// Les `value` restent identiques (ce sont elles qui sont envoyées au backend) —
+// seul le texte affiché est traduit.
 const CONTINENTS = [
     { value: "Africa", label: "Afrique" },
-    { value: "Asia", label: "Asie" },
-    { value: "Europe", label: "Europe" },
-    { value: "North America", label: "Amérique du Nord" },
-    { value: "South America", label: "Amérique du Sud" },
-    { value: "Oceania", label: "Océanie" },
+    // { value: "Asia", label: "Asie" },
+    // { value: "Europe", label: "Europe" },
+    // { value: "North America", label: "Amérique du Nord" },
+    // { value: "South America", label: "Amérique du Sud" },
+    // { value: "Oceania", label: "Océanie" },
 ];
 
-export default function Edit({ country }) {
+export default function Edit({ country, countries }) {
     const { data, setData, put, processing, errors } = useForm({
         name: country.name || "",
         iso_code: country.iso_code || "",
@@ -58,13 +59,33 @@ export default function Edit({ country }) {
                         <div>
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Nom du pays
+                                 <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 value={data.name}
-                                onChange={(e) => setData("name", e.target.value)}
+                                onChange={(e) => {
+                                    const selected = countries.find(
+                                        (c) => c.name === e.target.value
+                                    );
+
+                                    setData({
+                                        ...data,
+                                        name: selected?.name ?? "",
+                                        iso_code: selected?.iso_code ?? "",
+                                    });
+                                }}
                                 className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white"
-                            />
+                            >
+                                <option value="">
+                                    Sélectionner un pays
+                                </option>
+
+                                {countries.map((c) => (
+                                    <option key={c.iso_code} value={c.name}>
+                                        {c.name} ({c.iso_code})
+                                    </option>
+                                ))}
+                            </select>
                             {errors.name && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.name}</p>
                             )}
@@ -74,13 +95,13 @@ export default function Edit({ country }) {
                         <div>
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Code ISO
+                                 <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                maxLength={3}
                                 value={data.iso_code}
-                                onChange={(e) => setData("iso_code", e.target.value.toUpperCase())}
-                                className="w-40 rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 font-mono uppercase tracking-wider text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white"
+                                readOnly
+                                className="w-40 rounded-lg border border-[#D6D9D8] bg-[#F1F2F0] px-4 py-2.5 font-mono uppercase tracking-wider text-[14px] text-[#1f2d2d] outline-none"
                             />
                             {errors.iso_code && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.iso_code}</p>

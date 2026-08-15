@@ -69,7 +69,7 @@ export default function Edit({ partner }) {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Name */}
                                 <div>
-                                    <label className={labelClass}>Nom du partenaire</label>
+                                    <label className={labelClass}>Nom du partenaire  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.name}

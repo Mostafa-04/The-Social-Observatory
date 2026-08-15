@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft } from "lucide-react";
@@ -6,19 +7,20 @@ import { ArrowLeft } from "lucide-react";
 // seul le texte affiché est traduit.
 const CONTINENTS = [
     { value: "Africa", label: "Afrique" },
-    { value: "Asia", label: "Asie" },
-    { value: "Europe", label: "Europe" },
-    { value: "North America", label: "Amérique du Nord" },
-    { value: "South America", label: "Amérique du Sud" },
-    { value: "Oceania", label: "Océanie" },
+    // { value: "Asia", label: "Asie" },
+    // { value: "Europe", label: "Europe" },
+    // { value: "North America", label: "Amérique du Nord" },
+    // { value: "South America", label: "Amérique du Sud" },
+    // { value: "Oceania", label: "Océanie" },
 ];
 
-export default function Create() {
+export default function Create({ countries }) {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         iso_code: "",
         continent: "Africa",
     });
+    
 
     const submit = (e) => {
         e.preventDefault();
@@ -59,14 +61,36 @@ export default function Create() {
                         <div>
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Nom du pays
+                                <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 value={data.name}
-                                onChange={(e) => setData("name", e.target.value)}
+                                onChange={(e) => {
+                                    const country = countries.find(
+                                        (c) => c.name === e.target.value
+                                    );
+
+                                    setData({
+                                        ...data,
+                                        name: country?.name ?? "",
+                                        iso_code: country?.iso_code ?? "",
+                                    });
+                                }}
                                 className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white"
-                                placeholder="Maroc"
-                            />
+                            >
+                                <option value="">
+                                    Sélectionner un pays
+                                </option>
+
+                                {countries.map((country) => (
+                                    <option
+                                        key={country.iso_code}
+                                        value={country.name}
+                                    >
+                                        {country.name} ({country.iso_code})
+                                    </option>
+                                ))}
+                            </select>
                             {errors.name && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.name}</p>
                             )}
@@ -76,14 +100,13 @@ export default function Create() {
                         <div>
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Code ISO
+                                 <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                maxLength={3}
                                 value={data.iso_code}
-                                onChange={(e) => setData("iso_code", e.target.value.toUpperCase())}
-                                className="w-40 rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 font-mono uppercase tracking-wider text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white"
-                                placeholder="MAR"
+                                readOnly
+                                className="w-40 rounded-lg border border-[#D6D9D8] bg-[#F1F2F0] px-4 py-2.5 font-mono uppercase tracking-wider text-[14px] text-[#1f2d2d] outline-none"
                             />
                             {errors.iso_code && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.iso_code}</p>

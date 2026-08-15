@@ -139,6 +139,9 @@ Route::get(
     [EventEmailCampaignController::class, 'index']
 )->name('events.emails.index');
 
+Route::get('/admin/countries/{country}/cities', [CountryController::class, 'cities'])
+    ->name('countries.cities');
+
 
 Route::get(
     '/events/{event}/emails/{campaign}',

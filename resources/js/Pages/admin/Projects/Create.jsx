@@ -66,7 +66,7 @@ export default function Create({ countries, partners }) {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className={labelClass}>Titre</label>
+                                    <label className={labelClass}>Titre  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.title}
@@ -93,7 +93,7 @@ export default function Create({ countries, partners }) {
 
                                 {/* Objective */}
                                 <div>
-                                    <label className={labelClass}>Objectif</label>
+                                    <label className={labelClass}>Objectif  <span className="text-red-500">*</span></label>
                                     <textarea
                                         rows={4}
                                         value={data.objective}
@@ -200,6 +200,7 @@ export default function Create({ countries, partners }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <Globe2 size={13} strokeWidth={1.8} />
                                         Pays
+                                         <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={data.country_id}

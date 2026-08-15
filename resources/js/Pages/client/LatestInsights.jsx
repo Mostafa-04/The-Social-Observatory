@@ -41,6 +41,7 @@ const LatestInsights = ({ insights = [] }) => {
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const cardsRef = useRef([]);
+  const isEmpty = !insights || insights.length === 0;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -67,10 +68,6 @@ const LatestInsights = ({ insights = [] }) => {
 
     return () => observer.disconnect();
   }, [insights]);
-
-  if (!insights || insights.length === 0) {
-    return null;
-  }
 
   return (
     <section
@@ -113,165 +110,182 @@ const LatestInsights = ({ insights = [] }) => {
           </h2>
         </div>
 
-        {/* Insights Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {insights.map((insight, index) => {
-            const Icon = ICONS[index % ICONS.length];
-            const gradient = GRADIENTS[index % GRADIENTS.length];
-            const categoryName = insight.category?.name ?? 'Insight';
-            const readTime = estimateReadTime(insight.content);
+        {isEmpty ? (
+          /* Empty state */
+          <div className="max-w-2xl mx-auto text-center py-12 px-8 rounded-2xl border border-dashed ">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#bf5429]/10 mb-5">
+              <Lightbulb className="w-7 h-7 text-[#bf5429]" />
+            </div>
+            <h3 className="font-display text-xl text-[#1f2d2d] mb-2">
+              No insights published yet
+            </h3>
+            <p className="text-sm text-[#5f6967] leading-relaxed max-w-md mx-auto">
+              Our research teams haven't shared any commentary yet. New insights are coming soon.
+            </p>
+          </div>
+        ) : (
+          /* Insights Grid */
+          <div className="grid md:grid-cols-3 gap-8">
+            {insights.map((insight, index) => {
+              const Icon = ICONS[index % ICONS.length];
+              const gradient = GRADIENTS[index % GRADIENTS.length];
+              const categoryName = insight.category?.name ?? 'Insight';
+              const readTime = estimateReadTime(insight.content);
 
-            return (
-              <div
-                key={insight.id}
-                ref={(el) => (cardsRef.current[index] = el)}
-                className="group opacity-0 translate-y-8 transition-all duration-700 ease-out"
-                style={{ transitionDelay: `${200 + index * 100}ms` }}
-              >
-                <Link
-                  href={route('insight.show.client', insight.id)}
-                  className="group cursor-pointer h-full block"
+              return (
+                <div
+                  key={insight.id}
+                  ref={(el) => (cardsRef.current[index] = el)}
+                  className="group opacity-0 translate-y-8 transition-all duration-700 ease-out"
+                  style={{ transitionDelay: `${200 + index * 100}ms` }}
                 >
-                  <article className="h-full">
-                    <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[#eaece9] transition-all duration-500 group-hover:shadow-xl">
-                      {insight.featured_image ? (
-                        <img
-                          src={`/storage/${insight.featured_image}`}
-                          alt={insight.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        <>
-                          {/* Gradient overlay */}
-                          <div className={`absolute inset-0 bg-gradient-to-tr ${gradient}`}></div>
+                  <Link
+                    href={route('insight.show.client', insight.id)}
+                    className="group cursor-pointer h-full block"
+                  >
+                    <article className="h-full">
+                      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[#eaece9] transition-all duration-500 group-hover:shadow-xl">
+                        {insight.featured_image ? (
+                          <img
+                            src={`/storage/${insight.featured_image}`}
+                            alt={insight.title}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <>
+                            {/* Gradient overlay */}
+                            <div className={`absolute inset-0 bg-gradient-to-tr ${gradient}`}></div>
 
-                          {/* Animated background pattern */}
-                          <div className="absolute inset-0 opacity-10">
-                            <div
-                              className="absolute inset-0"
-                              style={{
-                                backgroundImage: `
-                                  radial-gradient(circle at 20% 30%, rgba(191,84,41,0.2) 0%, transparent 50%),
-                                  radial-gradient(circle at 80% 70%, rgba(191,84,41,0.1) 0%, transparent 50%)
-                                `,
-                              }}
-                            ></div>
-                          </div>
-
-                          {/* Icon container */}
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="relative">
-                              {/* Glow ring */}
-                              <div className="absolute inset-0 rounded-full bg-[#bf5429]/20 blur-xl scale-0 group-hover:scale-150 transition-transform duration-700"></div>
-
-                              {/* Main circle */}
-                              <div className="relative w-20 h-20 rounded-full border-2 border-[#bf5429]/30 group-hover:border-[#bf5429]/60 flex items-center justify-center group-hover:scale-110 transition-all duration-500 bg-white/10 backdrop-blur-sm">
-                                <Icon className="w-8 h-8 text-[#bf5429] group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
-                              </div>
-
-                              {/* Dot indicator */}
-                              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#bf5429] group-hover:scale-150 transition-transform duration-300"></div>
+                            {/* Animated background pattern */}
+                            <div className="absolute inset-0 opacity-10">
+                              <div
+                                className="absolute inset-0"
+                                style={{
+                                  backgroundImage: `
+                                    radial-gradient(circle at 20% 30%, rgba(191,84,41,0.2) 0%, transparent 50%),
+                                    radial-gradient(circle at 80% 70%, rgba(191,84,41,0.1) 0%, transparent 50%)
+                                  `,
+                                }}
+                              ></div>
                             </div>
-                          </div>
-                        </>
-                      )}
 
-                      {/* Category badge (read time) */}
-                      <div className="absolute top-4 left-4">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-[#1f2d2d] shadow-sm">
-                          <Clock className="w-3 h-3 text-[#bf5429]" />
-                          {readTime}
-                        </span>
-                      </div>
+                            {/* Icon container */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="relative">
+                                {/* Glow ring */}
+                                <div className="absolute inset-0 rounded-full bg-[#bf5429]/20 blur-xl scale-0 group-hover:scale-150 transition-transform duration-700"></div>
 
-                      {/* Tag */}
-                      <div className="absolute bottom-4 left-4">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#bf5429]/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                          <Target className="w-3 h-3" />
-                          {categoryName}
-                        </span>
-                      </div>
+                                {/* Main circle */}
+                                <div className="relative w-20 h-20 rounded-full border-2 border-[#bf5429]/30 group-hover:border-[#bf5429]/60 flex items-center justify-center group-hover:scale-110 transition-all duration-500 bg-white/10 backdrop-blur-sm">
+                                  <Icon className="w-8 h-8 text-[#bf5429] group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                                </div>
 
-                      {/* Date */}
-                      {insight.published_at && (
-                        <div className="absolute bottom-4 right-4">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-xs text-white/90 border border-white/10">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(insight.published_at)}
+                                {/* Dot indicator */}
+                                <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#bf5429] group-hover:scale-150 transition-transform duration-300"></div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Category badge (read time) */}
+                        <div className="absolute top-4 left-4">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-[#1f2d2d] shadow-sm">
+                            <Clock className="w-3 h-3 text-[#bf5429]" />
+                            {readTime}
                           </span>
                         </div>
-                      )}
 
-                      {/* Shine effect on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    </div>
+                        {/* Tag */}
+                        <div className="absolute bottom-4 left-4">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#bf5429]/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                            <Target className="w-3 h-3" />
+                            {categoryName}
+                          </span>
+                        </div>
 
-                    {/* Content */}
-                    <div className="mt-6">
-                      {/* Category */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs font-medium tracking-wider uppercase text-[#bf5429]">
-                          {categoryName}
-                        </span>
-                        <span className="w-1 h-1 rounded-full bg-[#bf5429]/30"></span>
-                        <span className="text-xs text-[#5f6967]">{readTime}</span>
+                        {/* Date */}
+                        {insight.published_at && (
+                          <div className="absolute bottom-4 right-4">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-xs text-white/90 border border-white/10">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(insight.published_at)}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Shine effect on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                       </div>
 
-                      {/* Title */}
-                      <h3 className="font-display text-xl text-[#1f2d2d] mb-2 leading-snug group-hover:text-[#bf5429] transition-colors duration-300">
-                        {insight.title}
-                      </h3>
+                      {/* Content */}
+                      <div className="mt-6">
+                        {/* Category */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs font-medium tracking-wider uppercase text-[#bf5429]">
+                            {categoryName}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-[#bf5429]/30"></span>
+                          <span className="text-xs text-[#5f6967]">{readTime}</span>
+                        </div>
 
-                      {/* Excerpt */}
-                      <p className="text-sm text-[#5f6967] leading-relaxed group-hover:text-[#1f2d2d] transition-colors duration-300">
-                        {insight.excerpt}
-                      </p>
+                        {/* Title */}
+                        <h3 className="font-display text-xl text-[#1f2d2d] mb-2 leading-snug group-hover:text-[#bf5429] transition-colors duration-300">
+                          {insight.title}
+                        </h3>
 
-                      {/* Read More */}
-                      <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#bf5429] opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 -translate-x-2">
-                        <span>Read more</span>
-                        <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        {/* Excerpt */}
+                        <p className="text-sm text-[#5f6967] leading-relaxed group-hover:text-[#1f2d2d] transition-colors duration-300">
+                          {insight.excerpt}
+                        </p>
+
+                        {/* Read More */}
+                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#bf5429] opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 -translate-x-2">
+                          <span>Read more</span>
+                          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+                    </article>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Bottom CTA */}
-        <div
-          className="mt-16 text-center opacity-0 translate-y-8 transition-all duration-700 delay-700 ease-out"
-          ref={(el) => {
-            if (el) {
-              const observer = new IntersectionObserver(
-                (entries) => {
-                  entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                      entry.target.classList.add('opacity-100', 'translate-y-0');
-                      entry.target.classList.remove('opacity-0', 'translate-y-8');
-                    }
-                  });
-                },
-                { threshold: 0.1 }
-              );
-              observer.observe(el);
-            }
-          }}
-        >
-          <div className="inline-flex items-center gap-6 px-8 py-4 bg-[#eaece9]/30 rounded-full border border-[#d6d9d8]/30 hover:border-[#bf5429]/30 transition-all duration-300 hover:shadow-lg group">
-            <span className="text-sm text-[#5f6967]">Stay updated with our latest research</span>
-            <div className="w-px h-6 bg-[#d6d9d8]"></div>
-            <Link
-              href={route('insight.index')}
-              className="inline-flex items-center gap-2 text-[#bf5429] font-semibold transition-all duration-300 group-hover:gap-3"
-            >
-              <span>Insights</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
+        {!isEmpty && (
+          <div
+            className="mt-16 text-center opacity-0 translate-y-8 transition-all duration-700 delay-700 ease-out"
+            ref={(el) => {
+              if (el) {
+                const observer = new IntersectionObserver(
+                  (entries) => {
+                    entries.forEach((entry) => {
+                      if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-8');
+                      }
+                    });
+                  },
+                  { threshold: 0.1 }
+                );
+                observer.observe(el);
+              }
+            }}
+          >
+            <div className="inline-flex items-center gap-6 px-8 py-4 bg-[#eaece9]/30 rounded-full border border-[#d6d9d8]/30 hover:border-[#bf5429]/30 transition-all duration-300 hover:shadow-lg group">
+              <span className="text-sm text-[#5f6967]">Stay updated with our latest research</span>
+              <div className="w-px h-6 bg-[#d6d9d8]"></div>
+              <Link
+                href={route('insight.index')}
+                className="inline-flex items-center gap-2 text-[#bf5429] font-semibold transition-all duration-300 group-hover:gap-3"
+              >
+                <span>Insights</span>
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <style jsx>{`

@@ -30,6 +30,7 @@ const FeaturedResearch = ({ researches = [] }) => {
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const cardsRef = useRef([]);
+  const isEmpty = !researches || researches.length === 0;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -56,10 +57,6 @@ const FeaturedResearch = ({ researches = [] }) => {
 
     return () => observer.disconnect();
   }, [researches]);
-
-  if (!researches || researches.length === 0) {
-    return null;
-  }
 
   return (
     <section
@@ -92,173 +89,193 @@ const FeaturedResearch = ({ researches = [] }) => {
               Recent <span className="text-[#bf5429]">flagship</span> studies
             </h2>
           </div>
-          <Link
-             href= {route('research.index')}
-            className="group inline-flex items-center gap-2 text-sm font-semibold text-[#1f2d2d] hover:text-[#bf5429] transition-colors duration-300 whitespace-nowrap"
-          >
-            <span className="relative">
-              View all publications
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#bf5429] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-            </span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
+
+          {!isEmpty && (
+            <Link
+              href={route('research.index')}
+              className="group inline-flex items-center gap-2 text-sm font-semibold text-[#1f2d2d] hover:text-[#bf5429] transition-colors duration-300 whitespace-nowrap"
+            >
+              <span className="relative">
+                View all publications
+                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#bf5429] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              </span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          )}
         </div>
 
-        {/* Research Cards Grid */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {researches.map((research, index) => {
-            const CategoryIcon = ICONS[index % ICONS.length];
-            const gradient = GRADIENTS[index % GRADIENTS.length];
-            const categoryName = research.category?.name ?? 'Research';
+        {isEmpty ? (
+          /* Empty state */
+          <div className="max-w-2xl mx-auto text-center py-12 px-8 rounded-2xl border border-dashed">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#bf5429]/10 mb-5">
+              <BookOpen className="w-7 h-7 text-[#bf5429]" />
+            </div>
+            <h3 className="font-display text-xl text-[#1f2d2d] mb-2">
+              No research published yet
+            </h3>
+            <p className="text-sm text-[#5f6967] leading-relaxed max-w-md mx-auto lg:mx-0">
+              We don't have any flagship studies to show right now. New research is in the pipeline — check back soon.
+            </p>
+          </div>
+        ) : (
+          /* Research Cards Grid */
+          <div className="grid lg:grid-cols-3 gap-8">
+            {researches.map((research, index) => {
+              const CategoryIcon = ICONS[index % ICONS.length];
+              const gradient = GRADIENTS[index % GRADIENTS.length];
+              const categoryName = research.category?.name ?? 'Research';
 
-            return (
-              <div
-                key={research.id}
-                ref={(el) => (cardsRef.current[index] = el)}
-                className="group opacity-0 translate-y-8 transition-all duration-700 ease-out"
-                style={{ transitionDelay: `${200 + index * 100}ms` }}
-              >
-                <article className="relative bg-white rounded-2xl border border-[#d6d9d8]/30 hover:border-[#bf5429]/50 overflow-hidden flex flex-col h-full transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
-                  {/* Image / Gradient Header */}
-                  <div className={`relative h-48 bg-gradient-to-br ${gradient} overflow-hidden`}>
-                    {research.featured_image ? (
-                      <img
-                        src={`/storage/${research.featured_image}`}
-                        alt={research.title}
-                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 opacity-30">
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            backgroundImage: `radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2), transparent 40%), radial-gradient(circle at 80% 70%, rgba(191,84,41,0.3), transparent 45%)`,
-                          }}
-                        ></div>
-                      </div>
-                    )}
-
-                    {/* Floating icon decoration */}
-                    <div className="absolute top-4 right-4">
-                      <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                        <CategoryIcon className="w-6 h-6 text-white/80" />
-                      </div>
-                    </div>
-
-                    {/* Date badge */}
-                    {research.published_at && (
-                      <div className="absolute bottom-4 left-4">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-xs text-white/90 border border-white/10">
-                          <Calendar className="w-3 h-3" />
-                          {formatYear(research.published_at)}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Tag */}
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#bf5429]/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                        <Award className="w-3 h-3" />
-                        Research Report
-                      </span>
-                    </div>
-
-                    {/* Animated shine effect on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-7 flex flex-col flex-1 relative">
-                    {/* Category */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <CategoryIcon className="w-4 h-4 text-[#bf5429]" />
-                      <span className="text-xs font-medium tracking-wider uppercase text-[#bf5429]">
-                        {categoryName}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-display text-xl text-[#1f2d2d] mb-3 leading-snug group-hover:text-[#bf5429] transition-colors duration-300">
-                      {research.title}
-                    </h3>
-
-                    {/* Summary */}
-                    <p className="text-sm text-[#5f6967] leading-relaxed flex-1">
-                      {research.summary}
-                    </p>
-
-                    {/* Read More Link */}
-                    <div className="mt-6 pt-4 border-t border-[#d6d9d8]/30 flex items-center justify-between">
-                      <Link
-                        href={route('research.show.client', research.id)}
-                        className="group/link inline-flex items-center gap-2 text-sm font-semibold text-[#1f2d2d] hover:text-[#bf5429] transition-colors duration-300"
-                      >
-                        <span className="relative">
-                          Read More
-                          <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#bf5429] scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left"></span>
-                        </span>
-                        <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
-                      </Link>
-
-                      {/* PDF indicator if available, otherwise the original "Trending" indicator */}
-                      {research.pdf ? (
-                        <a
-                          href={`/storage/${research.pdf}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs text-[#5f6967] hover:text-[#bf5429] transition-colors duration-300"
-                        >
-                          <FileText className="w-3 h-3" />
-                          PDF
-                        </a>
+              return (
+                <div
+                  key={research.id}
+                  ref={(el) => (cardsRef.current[index] = el)}
+                  className="group opacity-0 translate-y-8 transition-all duration-700 ease-out"
+                  style={{ transitionDelay: `${200 + index * 100}ms` }}
+                >
+                  <article className="relative bg-white rounded-2xl border border-[#d6d9d8]/30 hover:border-[#bf5429]/50 overflow-hidden flex flex-col h-full transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
+                    {/* Image / Gradient Header */}
+                    <div className={`relative h-48 bg-gradient-to-br ${gradient} overflow-hidden`}>
+                      {research.featured_image ? (
+                        <img
+                          src={`/storage/${research.featured_image}`}
+                          alt={research.title}
+                          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80"
+                        />
                       ) : (
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3 text-[#5f6967] group-hover:text-[#bf5429] transition-colors duration-300" />
-                          <span className="text-xs text-[#5f6967] group-hover:text-[#bf5429] transition-colors duration-300">
-                            Trending
+                        <div className="absolute inset-0 opacity-30">
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              backgroundImage: `radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2), transparent 40%), radial-gradient(circle at 80% 70%, rgba(191,84,41,0.3), transparent 45%)`,
+                            }}
+                          ></div>
+                        </div>
+                      )}
+
+                      {/* Floating icon decoration */}
+                      <div className="absolute top-4 right-4">
+                        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                          <CategoryIcon className="w-6 h-6 text-white/80" />
+                        </div>
+                      </div>
+
+                      {/* Date badge */}
+                      {research.published_at && (
+                        <div className="absolute bottom-4 left-4">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black/30 backdrop-blur-sm rounded-full text-xs text-white/90 border border-white/10">
+                            <Calendar className="w-3 h-3" />
+                            {formatYear(research.published_at)}
                           </span>
                         </div>
                       )}
+
+                      {/* Tag */}
+                      <div className="absolute top-4 left-4">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#bf5429]/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                          <Award className="w-3 h-3" />
+                          Research Report
+                        </span>
+                      </div>
+
+                      {/* Animated shine effect on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     </div>
-                  </div>
-                </article>
-              </div>
-            );
-          })}
-        </div>
+
+                    {/* Content */}
+                    <div className="p-7 flex flex-col flex-1 relative">
+                      {/* Category */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <CategoryIcon className="w-4 h-4 text-[#bf5429]" />
+                        <span className="text-xs font-medium tracking-wider uppercase text-[#bf5429]">
+                          {categoryName}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="font-display text-xl text-[#1f2d2d] mb-3 leading-snug group-hover:text-[#bf5429] transition-colors duration-300">
+                        {research.title}
+                      </h3>
+
+                      {/* Summary */}
+                      <p className="text-sm text-[#5f6967] leading-relaxed flex-1">
+                        {research.summary}
+                      </p>
+
+                      {/* Read More Link */}
+                      <div className="mt-6 pt-4 border-t border-[#d6d9d8]/30 flex items-center justify-between">
+                        <Link
+                          href={route('research.show.client', research.id)}
+                          className="group/link inline-flex items-center gap-2 text-sm font-semibold text-[#1f2d2d] hover:text-[#bf5429] transition-colors duration-300"
+                        >
+                          <span className="relative">
+                            Read More
+                            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#bf5429] scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left"></span>
+                          </span>
+                          <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+                        </Link>
+
+                        {/* PDF indicator if available, otherwise the original "Trending" indicator */}
+                        {research.pdf ? (
+                          <a
+                            href={`/storage/${research.pdf}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-[#5f6967] hover:text-[#bf5429] transition-colors duration-300"
+                          >
+                            <FileText className="w-3 h-3" />
+                            PDF
+                          </a>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3 text-[#5f6967] group-hover:text-[#bf5429] transition-colors duration-300" />
+                            <span className="text-xs text-[#5f6967] group-hover:text-[#bf5429] transition-colors duration-300">
+                              Trending
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Bottom CTA */}
-        <div
-          className="mt-16 text-center opacity-0 translate-y-8 transition-all duration-700 delay-700 ease-out"
-          ref={(el) => {
-            if (el) {
-              const observer = new IntersectionObserver(
-                (entries) => {
-                  entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                      entry.target.classList.add('opacity-100', 'translate-y-0');
-                      entry.target.classList.remove('opacity-0', 'translate-y-8');
-                    }
-                  });
-                },
-                { threshold: 0.1 }
-              );
-              observer.observe(el);
-            }
-          }}
-        >
-          <div className="inline-flex items-center gap-6 px-8 py-4 bg-[#eaece9]/30 rounded-full border border-[#d6d9d8]/30 hover:border-[#bf5429]/30 transition-all duration-300 hover:shadow-lg group">
-            <span className="text-sm text-[#5f6967]">Explore our full research portfolio</span>
-            <div className="w-px h-6 bg-[#d6d9d8]"></div>
-            <Link
-              href={route('research.index')}
-              className="inline-flex items-center gap-2 text-[#bf5429] font-semibold transition-all duration-300 group-hover:gap-3"
-            >
-              <span>View all publications</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
+        {!isEmpty && (
+          <div
+            className="mt-16 text-center opacity-0 translate-y-8 transition-all duration-700 delay-700 ease-out"
+            ref={(el) => {
+              if (el) {
+                const observer = new IntersectionObserver(
+                  (entries) => {
+                    entries.forEach((entry) => {
+                      if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-8');
+                      }
+                    });
+                  },
+                  { threshold: 0.1 }
+                );
+                observer.observe(el);
+              }
+            }}
+          >
+            <div className="inline-flex items-center gap-6 px-8 py-4 bg-[#eaece9]/30 rounded-full border border-[#d6d9d8]/30 hover:border-[#bf5429]/30 transition-all duration-300 hover:shadow-lg group">
+              <span className="text-sm text-[#5f6967]">Explore our full research portfolio</span>
+              <div className="w-px h-6 bg-[#d6d9d8]"></div>
+              <Link
+                href={route('research.index')}
+                className="inline-flex items-center gap-2 text-[#bf5429] font-semibold transition-all duration-300 group-hover:gap-3"
+              >
+                <span>View all publications</span>
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

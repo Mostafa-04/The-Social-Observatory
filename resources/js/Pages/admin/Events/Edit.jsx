@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
+import axios from "axios";
 import {
     ArrowLeft,
     ImagePlus,
@@ -32,7 +34,7 @@ const STATUS_OPTIONS = [
 ];
 
 const fieldClass =
-    "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white";
+    "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
 const labelClass = "mb-1.5 block text-[12px] font-medium text-[#5B6462]";
 
 export default function Edit({ event, countries }) {
@@ -60,6 +62,41 @@ export default function Edit({ event, countries }) {
 
         status: event.status || "upcoming",
     });
+
+    const [cities, setCities] = useState([]);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const isFirstRun = useRef(true);
+
+    // Récupère la liste des villes à chaque changement de pays.
+    // Au premier rendu (chargement de l'événement existant), on ne
+    // réinitialise pas la ville déjà enregistrée.
+    useEffect(() => {
+        if (!data.country_id) {
+            setCities([]);
+            isFirstRun.current = false;
+            return;
+        }
+
+        setLoadingCities(true);
+
+        if (!isFirstRun.current) {
+            setData((prev) => ({ ...prev, city: "" }));
+        }
+
+        axios
+            .get(route("countries.cities", data.country_id))
+            .then((res) => {
+                setCities(res.data.cities ?? []);
+            })
+            .catch(() => {
+                setCities([]);
+            })
+            .finally(() => {
+                setLoadingCities(false);
+                isFirstRun.current = false;
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.country_id]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -104,7 +141,9 @@ export default function Edit({ event, countries }) {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className={labelClass}>Titre</label>
+                                    <label className={labelClass}>
+                                        Titre <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.title}
@@ -117,7 +156,9 @@ export default function Edit({ event, countries }) {
 
                                 {/* Slug */}
                                 <div>
-                                    <label className={labelClass}>Slug</label>
+                                    <label className={labelClass}>
+                                        Slug <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={data.slug}
@@ -130,7 +171,9 @@ export default function Edit({ event, countries }) {
 
                                 {/* Description */}
                                 <div>
-                                    <label className={labelClass}>Description</label>
+                                    <label className={labelClass}>
+                                        Description <span className="text-red-500">*</span>
+                                    </label>
                                     <textarea
                                         rows={5}
                                         value={data.description}
@@ -139,26 +182,6 @@ export default function Edit({ event, countries }) {
                                     />
                                     {errors.description && (
                                         <p className="mt-1 text-[12px] text-red-500">{errors.description}</p>
-                                    )}
-                                </div>
-
-                                {/* Registration link */}
-                                <div>
-                                    <label className={labelClass}>
-                                        <span className="flex items-center gap-1.5">
-                                            <Link2 size={13} strokeWidth={1.8} />
-                                            Lien d'inscription
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="url"
-                                        value={data.registration_link}
-                                        onChange={(e) => setData("registration_link", e.target.value)}
-                                        className={fieldClass}
-                                        placeholder="https://..."
-                                    />
-                                    {errors.registration_link && (
-                                        <p className="mt-1 text-[12px] text-red-500">{errors.registration_link}</p>
                                     )}
                                 </div>
                             </div>
@@ -244,7 +267,7 @@ export default function Edit({ event, countries }) {
                                         Date et heure
                                     </p>
                                     <div>
-                                        <label className={labelClass}>Date</label>
+                                        <label className={labelClass}>Date  <span className="text-red-500">*</span></label>
                                         <input
                                             type="date"
                                             value={data.date}
@@ -261,6 +284,7 @@ export default function Edit({ event, countries }) {
                                                 <span className="flex items-center gap-1">
                                                     <Clock size={11} strokeWidth={1.8} />
                                                     Début
+                                                     <span className="text-red-500">*</span>
                                                 </span>
                                             </label>
                                             <input
@@ -277,7 +301,7 @@ export default function Edit({ event, countries }) {
                                             <label className={labelClass}>
                                                 <span className="flex items-center gap-1">
                                                     <Clock size={11} strokeWidth={1.8} />
-                                                    Fin
+                                                    Fin <span className="text-red-500">*</span>
                                                 </span>
                                             </label>
                                             <input
@@ -316,6 +340,7 @@ export default function Edit({ event, countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <Globe2 size={13} strokeWidth={1.8} />
                                         Pays
+                                        <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={data.country_id}
@@ -338,13 +363,34 @@ export default function Edit({ event, countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <Building2 size={13} strokeWidth={1.8} />
                                         Ville
+                                        <span className="text-red-500">*</span>
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         value={data.city}
                                         onChange={(e) => setData("city", e.target.value)}
+                                        disabled={!data.country_id || loadingCities}
                                         className={fieldClass}
-                                    />
+                                    >
+                                        <option value="">
+                                            {!data.country_id
+                                                ? "Sélectionnez d'abord un pays"
+                                                : loadingCities
+                                                ? "Chargement des villes..."
+                                                : cities.length === 0
+                                                ? "Aucune ville trouvée"
+                                                : "Sélectionner une ville"}
+                                        </option>
+                                        {/* Si la ville enregistrée n'est pas (encore) dans la liste
+                                            chargée, on l'ajoute quand même pour ne pas la perdre. */}
+                                        {data.city && !cities.includes(data.city) && (
+                                            <option value={data.city}>{data.city}</option>
+                                        )}
+                                        {cities.map((city) => (
+                                            <option key={city} value={city}>
+                                                {city}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.city && <p className="mt-1 text-[12px] text-red-500">{errors.city}</p>}
                                 </div>
 
@@ -352,6 +398,7 @@ export default function Edit({ event, countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <MapPin size={13} strokeWidth={1.8} />
                                         Lieu
+                                         <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"

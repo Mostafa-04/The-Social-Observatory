@@ -63,6 +63,7 @@ export default function Create({ event }) {
                                         <span className="flex items-center gap-1.5">
                                             <FileText size={13} strokeWidth={1.8} />
                                             Titre du formulaire
+                                             <span className="text-red-500">*</span>
                                         </span>
                                     </label>
                                     <input
@@ -83,6 +84,7 @@ export default function Create({ event }) {
                                         <span className="flex items-center gap-1.5">
                                             <AlignLeft size={13} strokeWidth={1.8} />
                                             Description
+                                             <span className="text-red-500">*</span>
                                         </span>
                                     </label>
                                     <textarea

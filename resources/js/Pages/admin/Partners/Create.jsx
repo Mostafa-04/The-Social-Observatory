@@ -96,7 +96,7 @@ export default function Create() {
                                 {/* Name */}
                                 <div>
                                     <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
-                                        Nom du partenaire
+                                        Nom du partenaire  <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"

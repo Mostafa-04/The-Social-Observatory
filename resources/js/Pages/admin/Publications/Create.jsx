@@ -75,7 +75,7 @@ export default function Create() {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className={labelClass}>Titre</label>
+                                    <label className={labelClass}>Titre  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.title}

@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
+import axios from "axios";
 import {
     ArrowLeft,
     ImagePlus,
@@ -32,7 +34,7 @@ const STATUS_OPTIONS = [
 ];
 
 const fieldClass =
-    "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white";
+    "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
 const labelClass = "mb-1.5 block text-[12px] font-medium text-[#5B6462]";
 
 export default function Create({ countries }) {
@@ -57,6 +59,33 @@ export default function Create({ countries }) {
 
         status: "upcoming",
     });
+
+    const [cities, setCities] = useState([]);
+    const [loadingCities, setLoadingCities] = useState(false);
+
+    // Récupère la liste des villes à chaque changement de pays
+    useEffect(() => {
+        if (!data.country_id) {
+            setCities([]);
+            return;
+        }
+
+        setLoadingCities(true);
+        setData((prev) => ({ ...prev, city: "" }));
+
+        axios
+            .get(route("countries.cities", data.country_id))
+            .then((res) => {
+                setCities(res.data.cities ?? []);
+            })
+            .catch(() => {
+                setCities([]);
+            })
+            .finally(() => {
+                setLoadingCities(false);
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.country_id]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -101,7 +130,7 @@ export default function Create({ countries }) {
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm space-y-6">
                                 {/* Title */}
                                 <div>
-                                    <label className={labelClass}>Titre</label>
+                                    <label className={labelClass}>Titre  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.title}
@@ -114,7 +143,7 @@ export default function Create({ countries }) {
 
                                 {/* Slug */}
                                 <div>
-                                    <label className={labelClass}>Slug</label>
+                                    <label className={labelClass}>Slug  <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         value={data.slug}
@@ -127,7 +156,7 @@ export default function Create({ countries }) {
 
                                 {/* Description */}
                                 <div>
-                                    <label className={labelClass}>Description</label>
+                                    <label className={labelClass}>Description  <span className="text-red-500">*</span></label>
                                     <textarea
                                         rows={5}
                                         value={data.description}
@@ -142,7 +171,7 @@ export default function Create({ countries }) {
 
                             {/* Image */}
                             <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm">
-                                <label className={labelClass}>Image de l'événement</label>
+                                <label className={labelClass}>Image de l'événement  </label>
                                 <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-[#D6D9D8] bg-[#F7F8F6] px-4 py-3 text-[13px] text-[#5B6462] transition hover:border-[#BF5429]/50">
                                     <ImagePlus size={16} strokeWidth={1.8} />
                                     {data.image ? data.image.name : "Choisir un fichier..."}
@@ -209,7 +238,7 @@ export default function Create({ countries }) {
                                         Date et heure
                                     </p>
                                     <div>
-                                        <label className={labelClass}>Date</label>
+                                        <label className={labelClass}>Date  <span className="text-red-500">*</span></label>
                                         <input
                                             type="date"
                                             value={data.date}
@@ -225,7 +254,7 @@ export default function Create({ countries }) {
                                             <label className={labelClass}>
                                                 <span className="flex items-center gap-1">
                                                     <Clock size={11} strokeWidth={1.8} />
-                                                    Début
+                                                    Début <span className="text-red-500">*</span>
                                                 </span>
                                             </label>
                                             <input
@@ -243,6 +272,7 @@ export default function Create({ countries }) {
                                                 <span className="flex items-center gap-1">
                                                     <Clock size={11} strokeWidth={1.8} />
                                                     Fin
+                                                     <span className="text-red-500">*</span>
                                                 </span>
                                             </label>
                                             <input
@@ -281,6 +311,7 @@ export default function Create({ countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <Globe2 size={13} strokeWidth={1.8} />
                                         Pays
+                                         <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={data.country_id}
@@ -303,13 +334,29 @@ export default function Create({ countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <Building2 size={13} strokeWidth={1.8} />
                                         Ville
+                                         <span className="text-red-500">*</span>
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         value={data.city}
                                         onChange={(e) => setData("city", e.target.value)}
+                                        disabled={!data.country_id || loadingCities}
                                         className={fieldClass}
-                                    />
+                                    >
+                                        <option value="">
+                                            {!data.country_id
+                                                ? "Sélectionnez d'abord un pays"
+                                                : loadingCities
+                                                ? "Chargement des villes..."
+                                                : cities.length === 0
+                                                ? "Aucune ville trouvée"
+                                                : "Sélectionner une ville"}
+                                        </option>
+                                        {cities.map((city) => (
+                                            <option key={city} value={city}>
+                                                {city}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.city && <p className="mt-1 text-[12px] text-red-500">{errors.city}</p>}
                                 </div>
 
@@ -317,6 +364,7 @@ export default function Create({ countries }) {
                                     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#5B6462]">
                                         <MapPin size={13} strokeWidth={1.8} />
                                         Lieu
+                                         <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
