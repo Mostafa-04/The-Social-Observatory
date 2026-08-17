@@ -146,7 +146,7 @@ export default function PublicRegistration({ event, registrationForm }) {
                         <div className="grid gap-5 md:grid-cols-2">
                             {/* First name */}
                             <div>
-                                <label className={labelClass}>Prénom *</label>
+                                <label className={labelClass}>Prénom <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <User
                                         size={16}
@@ -171,7 +171,7 @@ export default function PublicRegistration({ event, registrationForm }) {
 
                             {/* Last name */}
                             <div>
-                                <label className={labelClass}>Nom *</label>
+                                <label className={labelClass}>Nom <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <User
                                         size={16}
@@ -196,7 +196,7 @@ export default function PublicRegistration({ event, registrationForm }) {
 
                             {/* Phone */}
                             <div>
-                                <label className={labelClass}>Téléphone *</label>
+                                <label className={labelClass}>Téléphone <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Phone
                                         size={16}
@@ -221,7 +221,7 @@ export default function PublicRegistration({ event, registrationForm }) {
 
                             {/* Email */}
                             <div>
-                                <label className={labelClass}>Email *</label>
+                                <label className={labelClass}>Email <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Mail
                                         size={16}
@@ -280,7 +280,7 @@ export default function PublicRegistration({ event, registrationForm }) {
                             </button>
 
                             <p className="mt-3 text-center text-[12px] text-[#8A9290]">
-                                Les champs marqués d'un * sont obligatoires.
+                                Les champs marqués d'un <span className="text-red-500">*</span> sont obligatoires.
                             </p>
                         </div>
                     </form>
