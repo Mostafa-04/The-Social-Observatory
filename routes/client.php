@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PublicEventRegistrationController;
 use App\Models\Event;
+use App\Http\Controllers\AssociationClientController;
 
 Route::get('/', [ClientController::class, 'home'])->name('client.home');
 Route::get('/researches', [ClientController::class, 'researches'])->name('research.index');
@@ -52,3 +53,12 @@ Route::get(
     }
 )->name('events.register.success');
 
+
+Route::get('/ecosystem', [AssociationClientController::class, 'index'])
+    ->name('ecosystem.index');
+ 
+Route::get('/api/ecosystem/stats', [AssociationClientController::class, 'stats'])
+    ->name('ecosystem.stats');
+
+Route::get('/ecosystem/{slug}', [AssociationClientController::class, 'show'])
+    ->name('ecosystem.show.client');

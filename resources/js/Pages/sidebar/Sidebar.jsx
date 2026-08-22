@@ -34,6 +34,7 @@ const NAV = [
       { label: "Projets", icon: Briefcase, route: "projects.index"},
       { label: "Événements", icon: Calendar, route: "events.index" },
       { label: "Insights", icon: PenLine, route: "insights.index" },
+      { label: "Associations", icon: Handshake, route: "associations.index" },
     ],
   },
   {

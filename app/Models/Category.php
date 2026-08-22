@@ -20,4 +20,11 @@ class Category extends Model
     {
         return $this->hasMany(Research::class);
     }
+    public function associations()
+    {
+        return $this->morphedByMany(
+            Association::class,
+            'categorizable'
+        );
+    }
 }

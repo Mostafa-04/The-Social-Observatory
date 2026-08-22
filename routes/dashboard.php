@@ -19,7 +19,7 @@ use App\Http\Controllers\RegistrationFormController;
 use App\Http\Controllers\FormFieldController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\EventEmailCampaignController;
-
+use App\Http\Controllers\AssociationController;
 /*
 |--------------------------------------------------------------------------
 | Frontend (Client)
@@ -147,6 +147,8 @@ Route::get(
     '/events/{event}/emails/{campaign}',
     [EventEmailCampaignController::class, 'show']
 )->name('events.emails.show');
+
+Route::resource('associations', AssociationController::class);
 
 
 });

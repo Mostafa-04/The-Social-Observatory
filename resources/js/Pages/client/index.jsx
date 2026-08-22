@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 
 import Navbar from './navbar';
 import Hero from './hero';
+import StatsCards from './StatsCards';
 
 const About = lazy(() => import('./about'));
 const AfricaProjectsSection = lazy(() => import('./AfricaProjectsSection'));
@@ -23,6 +24,7 @@ function Index({
     partners,
     publications,
     africaProjectCountries,
+    stats,
 }) {
     return (
         <div className="bg-[#eaece9]">
@@ -39,6 +41,8 @@ function Index({
                 />
 
                 <AreasOfFocus />
+
+                <StatsCards stats={stats} />
 
                 <FeaturedResearch
                     researches={researches}

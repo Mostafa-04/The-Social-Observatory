@@ -14,6 +14,7 @@ use App\Models\Project;
 use App\Models\Country;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Http\Controllers\AssociationClientController;
 
 class ClientController extends Controller
 {
@@ -61,6 +62,7 @@ class ClientController extends Controller
             'settings' => $settings,
             'publications' => $publications,
              'africaProjectCountries' => $projectCountries,
+              'stats' => (new AssociationClientController)->stats()->getData(true),
         ]);
     }
 
