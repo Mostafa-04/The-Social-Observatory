@@ -1,11 +1,27 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
     ArrowLeft,
     Mail,
     Users,
     Send,
+    Paperclip,
+    X,
 } from "lucide-react";
+
+const quillModules = {
+    toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: [] }],
+        ["link", ],
+        ["clean"],
+    ],
+};
 
 export default function Create({
     event,
@@ -14,13 +30,29 @@ export default function Create({
     const { data, setData, post, processing, errors } = useForm({
         subject: "",
         content: "",
+        attachments: [],
     });
 
     const submit = (e) => {
         e.preventDefault();
 
         post(
-            route("events.emails.store", event.id)
+            route("events.emails.store", event.id),
+            {
+                forceFormData: true,
+            }
+        );
+    };
+
+    const handleFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        setData("attachments", [...data.attachments, ...files]);
+    };
+
+    const removeFile = (index) => {
+        setData(
+            "attachments",
+            data.attachments.filter((_, i) => i !== index)
         );
     };
 
@@ -143,7 +175,7 @@ export default function Create({
                     </div>
 
 
-                    {/* Content */}
+                    {/* Content - Rich Text Editor */}
 
                     <div className="mb-6">
 
@@ -151,22 +183,78 @@ export default function Create({
                             Message
                         </label>
 
-                        <textarea
-                            rows={10}
-                            value={data.content}
-                            onChange={(e) =>
-                                setData(
-                                    "content",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Écrivez votre message..."
-                            className="w-full resize-y rounded-xl border border-[#D6D9D8] px-4 py-3 text-sm outline-none focus:border-[#BF5429] focus:ring-2 focus:ring-[#BF5429]/10"
-                        />
+                        <div className="rounded-xl border border-[#D6D9D8] overflow-hidden focus-within:border-[#BF5429] focus-within:ring-2 focus-within:ring-[#BF5429]/10">
+                            <ReactQuill
+                                theme="snow"
+                                value={data.content}
+                                onChange={(value) =>
+                                    setData("content", value)
+                                }
+                                modules={quillModules}
+                                placeholder="Écrivez votre message..."
+                                className="bg-white [&_.ql-container]:min-h-[220px] [&_.ql-toolbar]:border-0 [&_.ql-container]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#D6D9D8]"
+                            />
+                        </div>
 
                         {errors.content && (
                             <p className="mt-1 text-xs text-red-600">
                                 {errors.content}
+                            </p>
+                        )}
+
+                    </div>
+
+
+                    {/* Attachments */}
+
+                    <div className="mb-6">
+
+                        <label className="mb-2 block text-sm font-medium text-[#1f2d2d]">
+                            Pièces jointes (images, fichiers)
+                        </label>
+
+                        <label
+                            htmlFor="attachments"
+                            className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#D6D9D8] px-4 py-6 text-sm text-[#5B6462] hover:border-[#BF5429] hover:text-[#BF5429]"
+                        >
+                            <Paperclip size={16} />
+                            Cliquez pour sélectionner des fichiers
+                        </label>
+
+                        <input
+                            id="attachments"
+                            type="file"
+                            multiple
+                            onChange={handleFilesChange}
+                            className="hidden"
+                        />
+
+                        {data.attachments.length > 0 && (
+                            <ul className="mt-3 space-y-2">
+                                {data.attachments.map((file, index) => (
+                                    <li
+                                        key={index}
+                                        className="flex items-center justify-between rounded-lg bg-[#F7F8F7] px-3 py-2 text-xs text-[#5B6462]"
+                                    >
+                                        <span className="truncate">
+                                            {file.name}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            className="ml-2 text-[#8A9290] hover:text-red-600"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {errors["attachments.0"] && (
+                            <p className="mt-1 text-xs text-red-600">
+                                {errors["attachments.0"]}
                             </p>
                         )}
 

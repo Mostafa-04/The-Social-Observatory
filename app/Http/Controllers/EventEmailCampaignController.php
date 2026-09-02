@@ -8,6 +8,10 @@ use App\Models\EventEmailLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use App\Jobs\SendEventCampaignEmailJob;
+use App\Jobs\FinalizeEventCampaignJob;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Storage;
 
 class EventEmailCampaignController extends Controller
 {
@@ -60,232 +64,179 @@ class EventEmailCampaignController extends Controller
     /**
      * Store and send campaign.
      */
-    public function store(Request $request, Event $event)
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | Validate
-        |--------------------------------------------------------------------------
-        */
+public function store(Request $request, Event $event)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Validate
+    |--------------------------------------------------------------------------
+    */
 
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get registrations
-        |--------------------------------------------------------------------------
-        */
-
-        $registrations = $event->registrations()->get();
+    $validated = $request->validate([
+        'subject' => 'required|string|max:255',
+        'content' => 'required|string',
+        'attachments' => 'nullable|array',
+        'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip',
+    ]);
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Create campaign
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | Get registrations
+    |--------------------------------------------------------------------------
+    */
 
-        $campaign = $event->emailCampaigns()->create([
-            'subject' => $validated['subject'],
-            'content' => $validated['content'],
-            'status' => 'sending',
-
-            'total_recipients' => $registrations->count(),
-            'sent_count' => 0,
-            'failed_count' => 0,
-        ]);
+    $registrations = $event->registrations()->get();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Send emails
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | Store attachments on disk
+    |--------------------------------------------------------------------------
+    */
 
-        foreach ($registrations as $registration) {
+    $attachmentPaths = [];
+    $storedRelativePaths = [];
 
-            /*
-            |--------------------------------------------------------------------------
-            | Get email directly from event_registrations
-            |--------------------------------------------------------------------------
-            */
+    if ($request->hasFile('attachments')) {
 
-            $email = trim((string) $registration->email);
+        foreach ($request->file('attachments') as $file) {
 
+            $path = $file->store('email-campaigns/attachments', 'local');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Clean Markdown mailto format if exists
-            |--------------------------------------------------------------------------
-            |
-            | Example:
-            | [test@gmail.com](mailto:test@gmail.com)
-            |
-            | becomes:
-            | test@gmail.com
-            |
-            */
+            $storedRelativePaths[] = $path;
 
-            if (
-                preg_match(
-                    '/^\[([^\]]+)\]\(mailto:[^)]+\)$/',
-                    $email,
-                    $matches
-                )
-            ) {
-                $email = trim($matches[1]);
-            }
+            $attachmentPaths[] = [
+                'path' => Storage::disk('local')->path($path),
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+            ];
+        }
+    }
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create failed log if email is missing
-            |--------------------------------------------------------------------------
-            */
+    /*
+    |--------------------------------------------------------------------------
+    | Create campaign
+    |--------------------------------------------------------------------------
+    */
 
-            if (!$email) {
+    $campaign = $event->emailCampaigns()->create([
+        'subject' => $validated['subject'],
+        'content' => $validated['content'],
+        'status' => 'sending',
 
-                $campaign->logs()->create([
-                    'event_registration_id' => $registration->id,
-                    'email' => '',
-                    'status' => 'failed',
-                    'error' => 'Participant has no email address.',
-                ]);
-
-                continue;
-            }
+        'total_recipients' => $registrations->count(),
+        'sent_count' => 0,
+        'failed_count' => 0,
+    ]);
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create email log
-            |--------------------------------------------------------------------------
-            */
+    /*
+    |--------------------------------------------------------------------------
+    | Create logs + build jobs list
+    |--------------------------------------------------------------------------
+    */
 
-            $log = $campaign->logs()->create([
+    $jobs = [];
+
+    foreach ($registrations as $registration) {
+
+        $email = trim((string) $registration->email);
+
+        if (
+            preg_match(
+                '/^\[([^\]]+)\]\(mailto:[^)]+\)$/',
+                $email,
+                $matches
+            )
+        ) {
+            $email = trim($matches[1]);
+        }
+
+        if (!$email) {
+
+            $campaign->logs()->create([
                 'event_registration_id' => $registration->id,
-                'email' => $email,
-                'status' => 'pending',
+                'email' => '',
+                'status' => 'failed',
+                'error' => 'Participant has no email address.',
             ]);
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Send email
-            |--------------------------------------------------------------------------
-            */
-
-            try {
-
-                Mail::raw(
-                    $validated['content'],
-                    function ($message) use ($email, $validated) {
-
-                        $message
-                            ->to($email)
-                            ->subject($validated['subject']);
-                    }
-                );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Mark as sent
-                |--------------------------------------------------------------------------
-                */
-
-                $log->update([
-                    'status' => 'sent',
-                    'sent_at' => now(),
-                    'error' => null,
-                ]);
-
-            } catch (\Throwable $e) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Mark as failed
-                |--------------------------------------------------------------------------
-                */
-
-                $log->update([
-                    'status' => 'failed',
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            continue;
         }
 
+        $log = $campaign->logs()->create([
+            'event_registration_id' => $registration->id,
+            'email' => $email,
+            'status' => 'pending',
+        ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Calculate statistics
-        |--------------------------------------------------------------------------
-        */
-
-        $sentCount = $campaign->logs()
-            ->where('status', 'sent')
-            ->count();
-
-        $failedCount = $campaign->logs()
-            ->where('status', 'failed')
-            ->count();
-
-        $pendingCount = $campaign->logs()
-            ->where('status', 'pending')
-            ->count();
+        $jobs[] = new SendEventCampaignEmailJob(
+            logId: $log->id,
+            subject: $validated['subject'],
+            content: $validated['content'],
+            attachmentPaths: $attachmentPaths,
+        );
+    }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Determine campaign status
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | Dispatch batch
+    |--------------------------------------------------------------------------
+    */
 
-        if ($sentCount === 0 && $failedCount > 0) {
-
-            $status = 'failed';
-
-        } elseif ($pendingCount > 0) {
-
-            $status = 'sending';
-
-        } else {
-
-            $status = 'sent';
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update campaign
-        |--------------------------------------------------------------------------
-        */
+    if (empty($jobs)) {
 
         $campaign->update([
-            'sent_count' => $sentCount,
-            'failed_count' => $failedCount,
-            'status' => $status,
+            'status' => 'failed',
             'sent_at' => now(),
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Redirect
-        |--------------------------------------------------------------------------
-        */
+        foreach ($storedRelativePaths as $relativePath) {
+            Storage::disk('local')->delete($relativePath);
+        }
 
         return redirect()
             ->route('events.emails.index', $event)
-            ->with(
-                'success',
-                "Campagne terminée : {$sentCount} email(s) envoyé(s), {$failedCount} échec(s)."
-            );
+            ->with('success', "Aucun participant avec une adresse email valide.");
     }
+
+    $batch = Bus::batch($jobs)
+        ->then(function () {
+            //
+        })
+        ->catch(function () {
+            //
+        })
+        ->finally(function () use ($campaign, $storedRelativePaths) {
+            FinalizeEventCampaignJob::dispatch(
+                $campaign->id,
+                $storedRelativePaths,
+            );
+        })
+        ->name("Campaign #{$campaign->id} - {$event->title}")
+        ->dispatch();
+
+    $campaign->update([
+        'batch_id' => $batch->id,
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect فورًا
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()
+        ->route('events.emails.index', $event)
+        ->with(
+            'success',
+            "L'envoi de {$campaign->total_recipients} email(s) a démarré en arrière-plan."
+        );
+}
 
 
     /**

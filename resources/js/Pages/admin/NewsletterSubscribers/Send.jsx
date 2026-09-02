@@ -1,16 +1,45 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
-import { ArrowLeft, Send as SendIcon, Info } from "lucide-react";
+import { ArrowLeft, Send as SendIcon, Info, Paperclip, X } from "lucide-react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+const quillModules = {
+    toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ color: [] }, { background: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: [] }],
+        ["link"],
+        ["clean"],
+    ],
+};
 
 export default function Send() {
     const { data, setData, post, processing, errors } = useForm({
         subject: "",
         message: "",
+        attachments: [],
     });
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("newsletter-subscribers.send"));
+        post(route("newsletter-subscribers.send"), {
+            forceFormData: true,
+        });
+    };
+
+    const handleFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        setData("attachments", [...data.attachments, ...files]);
+    };
+
+    const removeFile = (index) => {
+        setData(
+            "attachments",
+            data.attachments.filter((_, i) => i !== index)
+        );
     };
 
     return (
@@ -69,20 +98,72 @@ export default function Send() {
                             )}
                         </div>
 
-                        {/* Message */}
+                        {/* Message - Rich Text Editor */}
                         <div>
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Message
                             </label>
-                            <textarea
-                                rows={12}
-                                value={data.message}
-                                onChange={(e) => setData("message", e.target.value)}
-                                className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white resize-none"
-                                placeholder="Rédigez votre newsletter..."
-                            />
+                            <div className="rounded-lg border border-[#D6D9D8] overflow-hidden focus-within:border-[#324949]/40">
+                                <ReactQuill
+                                    theme="snow"
+                                    value={data.message}
+                                    onChange={(value) => setData("message", value)}
+                                    modules={quillModules}
+                                    placeholder="Rédigez votre newsletter..."
+                                    className="bg-white [&_.ql-container]:min-h-[260px] [&_.ql-toolbar]:border-0 [&_.ql-container]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#D6D9D8]"
+                                />
+                            </div>
                             {errors.message && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.message}</p>
+                            )}
+                        </div>
+
+                        {/* Attachments */}
+                        <div>
+                            <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
+                                Pièces jointes (images, fichiers)
+                            </label>
+
+                            <label
+                                htmlFor="attachments"
+                                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#D6D9D8] px-4 py-6 text-[13px] text-[#5B6462] hover:border-[#BF5429] hover:text-[#BF5429]"
+                            >
+                                <Paperclip size={16} />
+                                Cliquez pour sélectionner des fichiers
+                            </label>
+
+                            <input
+                                id="attachments"
+                                type="file"
+                                multiple
+                                onChange={handleFilesChange}
+                                className="hidden"
+                            />
+
+                            {data.attachments.length > 0 && (
+                                <ul className="mt-3 space-y-2">
+                                    {data.attachments.map((file, index) => (
+                                        <li
+                                            key={index}
+                                            className="flex items-center justify-between rounded-lg bg-[#F7F8F6] px-3 py-2 text-[12px] text-[#5B6462]"
+                                        >
+                                            <span className="truncate">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                className="ml-2 text-[#8A9290] hover:text-red-600"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            {errors["attachments.0"] && (
+                                <p className="mt-1 text-[12px] text-red-500">
+                                    {errors["attachments.0"]}
+                                </p>
                             )}
                         </div>
 

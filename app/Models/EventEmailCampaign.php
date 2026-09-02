@@ -13,6 +13,7 @@ class EventEmailCampaign extends Model
         'subject',
         'content',
         'status',
+        'batch_id',
         'sent_at',
         'total_recipients',
         'sent_count',
@@ -23,7 +24,7 @@ class EventEmailCampaign extends Model
         'sent_at' => 'datetime',
     ];
 
-   public function event(): BelongsTo
+    public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
