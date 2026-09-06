@@ -1,14 +1,155 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import DataTable from "@/Components/DataTable";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import {
     Plus,
     Globe2,
     MapPin,
     Users,
+    Upload,
+    AlertCircle,
 } from "lucide-react";
+import { useState } from "react";
 
-export default function Index({ associations }) {
+
+export default function Index({ associations, countries = [] }) {
+    const TYPES = [
+        {
+            value: "association",
+            label: "Association",
+        },
+        {
+            value: "initiative",
+            label: "Initiative",
+        },
+        {
+            value: "cooperative_sociale",
+            label: "Coopérative sociale",
+        },
+        {
+            value: "fondation",
+            label: "Fondation",
+        },
+        {
+            value: "reseau",
+            label: "Réseau",
+        },
+        {
+            value: "autre",
+            label: "Autre",
+        },
+    ];
+
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importMessage, setImportMessage] = useState(null);
+
+    const {
+        data: importData,
+        setData: setImportData,
+        post: importPost,
+        processing: importProcessing,
+        errors: importErrors,
+        reset: resetImport,
+    } = useForm({
+        country_id: "",
+        type: "association",
+        file: null,
+    });
+
+    const handleImport = (e) => {
+        e.preventDefault();
+
+        
+        if (!importData.country_id) {
+            setImportMessage({
+                type: "error",
+                text: "Un pays doit être sélectionné."
+            });
+            return;
+        }
+
+        if (!importData.type) {
+            setImportMessage({
+                type: "error",
+                text: "Il faut choisir un type"
+            });
+            return;
+        }
+
+        if (!importData.file) {
+            setImportMessage({
+                type: "error",
+                text: "Il faut choisir un fichier Excel"
+            });
+            return;
+        }
+
+        console.log("IMPORT DATA:", importData);
+
+        importPost(route("associations.import"), {
+            forceFormData: true,
+
+            onStart: () => {
+                console.log("Import démarré");
+                setImportMessage({
+                    type: "loading",
+                    text: "Import en cours..."
+                });
+            },
+
+onSuccess: (page) => {
+    console.log("Import réussi", page);
+
+    const flashSuccess = page.props.flash?.success;
+    const flashError = page.props.flash?.error;
+
+    if (flashError) {
+        
+        setImportMessage({
+            type: "error",
+            text: flashError,
+        });
+        return; 
+    }
+
+    setImportMessage({
+        type: "success",
+        text: flashSuccess || "Import des associations réussi",
+    });
+
+    setTimeout(() => {
+        setShowImportModal(false);
+        resetImport();
+        setImportMessage(null);
+    }, 2000);
+},
+
+            onError: (errors) => {
+                console.log("ERREURS:", errors);
+                
+                // Gérer les erreurs de validation
+                let errorMessage = "Erreur lors de l'import";
+                
+                if (errors.file) {
+                    errorMessage = errors.file[0] || errorMessage;
+                } else if (errors.country_id) {
+                    errorMessage = errors.country_id[0] || errorMessage;
+                } else if (errors.type) {
+                    errorMessage = errors.type[0] || errorMessage;
+                }
+                
+                setImportMessage({
+                    type: "error",
+                    text: errorMessage
+                });
+            },
+
+            onFinish: () => {
+                console.log("Import terminé");
+            },
+        });
+    };
+
     const columns = [
         {
             key: "name",
@@ -151,8 +292,8 @@ export default function Index({ associations }) {
                 <span className="text-[13px] text-[#5B6462]">
                     {association.created_at
                         ? new Date(
-                              association.created_at
-                          ).toLocaleDateString("fr-FR")
+                            association.created_at
+                        ).toLocaleDateString("fr-FR")
                         : "—"}
                 </span>
             ),
@@ -174,21 +315,6 @@ export default function Index({ associations }) {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | Laravel pagination
-    |--------------------------------------------------------------------------
-    |
-    | Controller:
-    |
-    | $associations = Association::paginate(15);
-    |
-    | لذلك البيانات الحقيقية موجودة داخل:
-    |
-    | associations.data
-    |
-    */
-
     const associationData =
         associations?.data ?? associations ?? [];
 
@@ -198,41 +324,49 @@ export default function Index({ associations }) {
 
             <div className="mx-auto max-w-7xl space-y-6 p-6">
 
-                {/* ---------------------------------------------------------
-                    Header
-                --------------------------------------------------------- */}
+            {/* ---------------------------------------------------------
+                Header
+            --------------------------------------------------------- */}
 
-                <div className="mb-2 flex items-center justify-between gap-4">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-                    <div>
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#BF5429]">
-                            Contenu — Associations
-                        </p>
+                {/* Left content */}
+                <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-[#BF5429]">
+                        Contenu — Associations
+                    </p>
 
-                        <h1 className="font-display text-2xl text-[#1f2d2d]">
-                            Associations
-                        </h1>
+                    <h1 className="font-display text-2xl font-semibold text-[#1f2d2d]">
+                        Associations
+                    </h1>
 
-                        <p className="mt-1 text-[13px] text-[#5B6462]">
-                            Gérer l'ensemble des associations
-                            et acteurs sociaux.
-                        </p>
-                    </div>
+                    <p className="mt-1 max-w-md text-sm text-[#5B6462]">
+                        Gérez facilement toutes les associations et les acteurs sociaux.
+                    </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+
+                    <button
+                        type="button"
+                        onClick={() => setShowImportModal(true)}
+                        className="flex items-center gap-2 rounded-lg border border-[#D6D9D8] bg-white px-4 py-2 text-sm font-medium text-[#324949] transition hover:bg-[#F7F8F6]"
+                    >
+                        <Upload size={16} strokeWidth={2} />
+                        Importer
+                    </button>
 
                     <Link
-                        href={route(
-                            "associations.create"
-                        )}
-                        className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
+                        href={route("associations.create")}
+                        className="flex items-center gap-2 rounded-lg bg-[#BF5429] px-4 py-2 text-sm font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
                     >
-                        <Plus
-                            size={15}
-                            strokeWidth={2}
-                        />
-
-                        Ajouter une association
+                        <Plus size={16} strokeWidth={2} />
+                        Ajouter
                     </Link>
+
                 </div>
+            </div>
 
                 {/* ---------------------------------------------------------
                     Table
@@ -268,6 +402,200 @@ export default function Index({ associations }) {
                 </div>
 
             </div>
+
+            {/* Modal */}
+            {showImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+                    <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-[#D6D9D8] px-6 py-4">
+
+                            <div>
+                                <h2 className="text-[16px] font-semibold text-[#1f2d2d]">
+                                    Importer des associations
+                                </h2>
+
+                                <p className="mt-1 text-[12px] text-[#8A9290]">
+                                    Importer plusieurs associations depuis un fichier Excel.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowImportModal(false);
+                                    setImportMessage(null);
+                                }}
+                                className="text-xl text-[#8A9290] hover:text-[#1f2d2d]"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+                        {/* Messages */}
+                        {importMessage && (
+                            <div className={`mx-6 mt-4 flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
+                                importMessage.type === "error"
+                                    ? "bg-red-50 text-red-700"
+                                    : importMessage.type === "success"
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-blue-50 text-blue-700"
+                            }`}>
+                                <AlertCircle size={16} />
+                                <span>{importMessage.text}</span>
+                            </div>
+                        )}
+
+                        {/* Body */}
+                        <form onSubmit={handleImport} className="space-y-5 p-6">
+
+                            {/* Pays */}
+                            <div>
+                                <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
+                                    Pays
+                                    <span className="ml-1 text-red-500">*</span>
+                                </label>
+
+                                <select
+                                    value={importData.country_id}
+                                    onChange={(e) =>
+                                        setImportData(
+                                            "country_id",
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] outline-none"
+                                >
+                                    <option value="">
+                                        Sélectionner un pays
+                                    </option>
+
+                                    {countries.map((country) => (
+                                        <option key={country.id} value={country.id}>
+                                            {country.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {importErrors.country_id && (
+                                    <p className="mt-1 text-[12px] text-red-500">
+                                        {importErrors.country_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Type */}
+                            <div>
+                                <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
+                                    Type
+                                    <span className="ml-1 text-red-500">*</span>
+                                </label>
+
+                                <select
+                                    value={importData.type}
+                                    onChange={(e) =>
+                                        setImportData(
+                                            "type",
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] outline-none"
+                                >
+                                    {TYPES.map((type) => (
+                                        <option
+                                            key={type.value}
+                                            value={type.value}
+                                        >
+                                            {type.label}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {importErrors.type && (
+                                    <p className="mt-1 text-[12px] text-red-500">
+                                        {importErrors.type}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Excel */}
+                            <div>
+                                <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
+                                    Fichier Excel
+                                    <span className="ml-1 text-red-500">*</span>
+                                </label>
+
+                                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#D6D9D8] bg-[#F7F8F6] px-6 py-8 transition hover:border-[#BF5429]/50">
+
+                                    <Upload
+                                        size={24}
+                                        className="mb-2 text-[#8A9290]"
+                                    />
+
+                                    <span className="text-[13px] font-medium text-[#324949]">
+                                        {importData.file
+                                            ? importData.file.name
+                                            : "choisir un fichier"}
+                                    </span>
+
+                                    <span className="mt-1 text-[11px] text-[#8A9290]">
+                                        .xlsx ou .xls
+                                    </span>
+
+                                    <input
+                                        type="file"
+                                        accept=".xlsx,.xls"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            setImportData(
+                                                "file",
+                                                e.target.files?.[0] || null
+                                            );
+                                        }}
+                                    />
+
+                                </label>
+
+                                {importErrors.file && (
+                                    <p className="mt-1 text-[12px] text-red-500">
+                                        {importErrors.file}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex justify-end gap-3 border-t border-[#D6D9D8] pt-5">
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowImportModal(false);
+                                        setImportMessage(null);
+                                    }}
+                                    className="rounded-lg border border-[#D6D9D8] px-5 py-2.5 text-[13px] text-[#324949]"
+                                >
+                                    Annuler
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    disabled={importProcessing}
+                                    className={`rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] ${importProcessing ? "opacity-50 cursor-not-allowed" : ""
+                                        }`}
+                                >
+                                    {importProcessing ? "Import en cours..." : "Import"}
+                                </button>
+
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </AdminLayout>
     );
 }

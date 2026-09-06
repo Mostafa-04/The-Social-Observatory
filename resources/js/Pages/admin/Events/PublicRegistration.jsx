@@ -106,7 +106,7 @@ export default function PublicRegistration({ event, registrationForm }) {
                                 <InfoItem
                                     icon={Calendar}
                                     label="Date"
-                                    value={event.date}
+                                    value={new Date(event.date).toLocaleDateString()}
                                 />
                                 <InfoItem
                                     icon={Clock}

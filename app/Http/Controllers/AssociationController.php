@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Imports\AssociationsImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
 
 class AssociationController extends Controller
 {
@@ -304,7 +307,7 @@ class AssociationController extends Controller
 
             'data_source' => [
                 'required',
-                'in:manual,import_data_gov_ma,import_odco,autre',
+                'in:manual,import_data_gov_ma,import_odco,import_excel,autre',
             ],
 
             'source_reference' => [
@@ -553,7 +556,7 @@ class AssociationController extends Controller
 
             'data_source' => [
                 'required',
-                'in:manual,import_data_gov_ma,import_odco,autre',
+                'in:manual,import_data_gov_ma,import_odco,import_excel,autre',
             ],
 
             'source_reference' => [
@@ -652,5 +655,109 @@ class AssociationController extends Controller
         return redirect()
             ->route('associations.index')
             ->with('success', 'Association supprimée avec succès.');
+    }
+    /**
+     * Import associations from a file.
+     */
+    public function import(Request $request)
+    {
+    try {
+
+        $validated = $request->validate([
+            'country_id' => [
+                'required',
+                'integer',
+                'exists:countries,id',
+            ],
+
+            'type' => [
+                'required',
+                'string',
+                'in:association,initiative,cooperative_sociale,fondation,reseau,autre',
+            ],
+
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:10240', // 10MB
+            ],
+        ], [
+            'country_id.required' => 'Un pays doit être sélectionné.',
+            'country_id.exists' => 'Le pays sélectionné est invalide.',
+            'type.required' => 'Il faut choisir un type',
+            'type.in' => 'Le type choisi est incorrect',
+            'file.required' => 'Il faut choisir un fichier',
+            'file.mimes' => 'Le fichier doit être un Excel (.xlsx, .xls) ou un CSV',
+            'file.max' => 'La taille du fichier ne doit pas dépasser 10MB',
+        ]);
+
+        // إنشاء instance من الاستيراد
+        $import = new AssociationsImport(
+            $validated['country_id'],
+            $validated['type']
+        );
+
+        Excel::import($import, $validated['file']);
+
+        $successCount = $import->getSuccessCount();
+        $failedRows = $import->getFailedRows();
+
+       
+        if ($successCount === 0) {
+            Log::warning('Association Import: 0 rows saved', [
+                'failed_rows' => $failedRows,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Aucune association n\'a été importée. Vérifiez le format du fichier et les noms des colonnes (nom, ville, adresse...).')
+                ->withErrors([
+                    'file' => count($failedRows) . ' lignes échouées. Le motif le plus courant est : ' .
+                        ($failedRows[0]['error'] ?? 'Erreur inconnue'),
+                ])
+                ->withInput();
+        }
+
+        $message = (string) $successCount . ' associations importées avec succès.';
+
+        if (!empty($failedRows)) {
+            $message .= " (" . count($failedRows) . " surfils)";
+        }
+
+        return redirect()
+            ->route('associations.index')
+            ->with('success', $message);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+
+        return redirect()
+            ->back()
+            ->withErrors($e->errors())
+            ->withInput();
+
+    } catch (\Exception $e) {
+
+        Log::error('Association Import Error: ' . $e->getMessage(), [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('error',  'Une erreur est survenue lors de l\'importation du fichier: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+ 
+
+    public function importTemplate()
+    {
+        
+        return response()->download(
+            storage_path('app/templates/associations_template.xlsx'),
+            'associations_template.xlsx'
+        );
     }
 }

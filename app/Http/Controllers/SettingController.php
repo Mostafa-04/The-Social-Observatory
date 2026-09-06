@@ -120,11 +120,6 @@ class SettingController extends Controller
         $setting = Setting::findOrFail($id);
 
         $validated = $request->validate([
-            'site_name' => 'required|string|max:255',
-            'site_description' => 'nullable|string',
-
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:4096',
-            'favicon' => 'nullable|image|mimes:jpg,jpeg,png,ico,svg|max:2048',
 
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
@@ -147,35 +142,8 @@ class SettingController extends Controller
             'mail_from_name' => 'nullable|string|max:255',
         ]);
 
-        if ($request->hasFile('logo')) {
 
-            if (
-                $setting->logo &&
-                Storage::disk('public')->exists($setting->logo)
-            ) {
-                Storage::disk('public')->delete($setting->logo);
-            }
 
-            $validated['logo'] = $request->file('logo')
-                ->store('settings/logo', 'public');
-        } else {
-            $validated['logo'] = $setting->logo;
-        }
-
-        if ($request->hasFile('favicon')) {
-
-            if (
-                $setting->favicon &&
-                Storage::disk('public')->exists($setting->favicon)
-            ) {
-                Storage::disk('public')->delete($setting->favicon);
-            }
-
-            $validated['favicon'] = $request->file('favicon')
-                ->store('settings/favicon', 'public');
-        } else {
-            $validated['favicon'] = $setting->favicon;
-        }
 
         if ($request->filled('mail_password')) {
             $validated['mail_password'] = Crypt::encryptString($request->mail_password);

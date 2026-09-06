@@ -150,6 +150,11 @@ Route::get(
 
 Route::resource('associations', AssociationController::class);
 
+Route::post(
+    '/associations/import',
+    [AssociationController::class, 'import']
+)->name('associations.import');
+
 
 });
 

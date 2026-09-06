@@ -15,6 +15,7 @@ const ContactForm = lazy(() => import('./contact'));
 const Partners = lazy(() => import('./Partners'));
 const CTA = lazy(() => import('./CTA'));
 const Footer = lazy(() => import('./footer'));
+import LatestContent from './LatestContent';
 
 function Index({
     settings,
@@ -25,12 +26,14 @@ function Index({
     publications,
     africaProjectCountries,
     stats,
+    latestContent,
 }) {
     return (
         <div className="bg-[#eaece9]">
             {/* Critical content */}
             <Navbar />
             <Hero />
+            <LatestContent content={latestContent} />
 
             {/* Sections */}
             <Suspense fallback={null}>

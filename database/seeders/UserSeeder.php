@@ -18,5 +18,12 @@ class UserSeeder extends Seeder
             'role' => 'admin',
         ]);
 
+        User::create([
+            'name' => 'Mostafa Al Mannani',
+            'email' => 'mostafaalmannani@gmail.com',
+            'password' => Hash::make('password123'),
+            'role' => 'admin',
+        ]);
+
     }
 }

@@ -19,6 +19,95 @@ use App\Http\Controllers\AssociationClientController;
 class ClientController extends Controller
 {
 
+private function getLatestContent(): ?array
+{
+    $contents = collect();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Latest Research
+    |--------------------------------------------------------------------------
+    */
+    $research = Research::query()
+        ->latest('created_at')
+        ->first();
+
+    if ($research) {
+        $contents->push([
+            'type' => 'research',
+            'title' => $research->title,
+            'message' => 'Nous avons publié une nouvelle recherche.',
+            'url' => route('research.show.client', $research->id),
+            'created_at' => $research->created_at,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Latest Insight
+    |--------------------------------------------------------------------------
+    */
+    $insight = Insight::query()
+        ->latest('created_at')
+        ->first();
+
+    if ($insight) {
+        $contents->push([
+            'type' => 'insight',
+            'title' => $insight->title,
+            'message' => 'Nous avons publié un nouvel insight.',
+            'url' => route('insight.show.client', $insight->id),
+            'created_at' => $insight->created_at,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Latest Publication
+    |--------------------------------------------------------------------------
+    */
+    $publication = Publication::query()
+        ->latest('created_at')
+        ->first();
+
+    if ($publication) {
+        $contents->push([
+            'type' => 'publication',
+            'title' => $publication->title,
+            'message' => 'Nous avons publié une nouvelle publication.',
+            'url' => route('publication.show.client', $publication->id),
+            'created_at' => $publication->created_at,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Latest Event
+    |--------------------------------------------------------------------------
+    */
+    $event = Event::query()
+        ->latest('created_at')
+        ->first();
+
+    if ($event) {
+        $contents->push([
+            'type' => 'event',
+            'title' => $event->title,
+            'message' => 'Un nouvel événement vient d’être annoncé.',
+            'url' => route('events.register', $event->slug),
+            'created_at' => $event->created_at,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return only the latest content
+    |--------------------------------------------------------------------------
+    */
+    return $contents
+        ->sortByDesc('created_at')
+        ->first();
+}
     public function home()
     {
         $researches = Research::latest()->take(3)->get();
@@ -54,6 +143,8 @@ class ClientController extends Controller
             ->map(fn ($code) => strtoupper($code))
             ->values();
 
+            $latestContent = $this->getLatestContent();
+
         return inertia('client/index', [
             'researches' => $researches,
             'insights' => $insights,
@@ -63,6 +154,7 @@ class ClientController extends Controller
             'publications' => $publications,
              'africaProjectCountries' => $projectCountries,
               'stats' => (new AssociationClientController)->stats()->getData(true),
+              'latestContent' => $latestContent,
         ]);
     }
 

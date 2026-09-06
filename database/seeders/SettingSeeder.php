@@ -10,12 +10,12 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         Setting::create([
-            'email' => 'contact@example.com',
+            'email' => 'contact@the-social-observatory.com',
             'phone' => '+212 5 22 00 00 00',
             'address' => 'Casablanca, Morocco',
 
-            'facebook' => null,
-            'linkedin' => null,
+            'facebook' => "https://www.instagram.com/thesocialobservatory/",
+            'linkedin' => "https://www.linkedin.com/company/thesocialobservatory/",
             'twitter' => null,
             'youtube' => null,
 
@@ -25,12 +25,12 @@ class SettingSeeder extends Seeder
             |--------------------------------------------------------------------------
             */
 
-            'mail_host' => 'smtp.gmail.com',
-            'mail_port' => 587,
-            'mail_username' => 'mostafaalmannani@gmail.com',
-            'mail_password' => 'lukudfdyziqwawaf',
+            'mail_host' => 'smtp.mail.ovh.net',
+            'mail_port' => 465,
+            'mail_username' => 'contact@the-social-observatory.com',
+            'mail_password' => 'Aymane123456@',
 
-            'mail_from_address' => 'mostafaalmannani@gmail.com',
+            'mail_from_address' => 'contact@the-social-observatory.com',
             'mail_from_name' => 'The Social Observatory',
         ]);
     }

@@ -36,12 +36,6 @@ export default function Edit({ setting }) {
     const { data, setData, post, processing, errors } = useForm({
         _method: "put",
 
-        site_name: setting.site_name || "",
-        site_description: setting.site_description || "",
-
-        logo: null,
-        favicon: null,
-
         email: setting.email || "",
         phone: setting.phone || "",
         address: setting.address || "",
@@ -100,40 +94,6 @@ export default function Edit({ setting }) {
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    {/* ================= GENERAL ================= */}
-                    <SectionCard icon={Globe2} title="Informations générales">
-                        <div>
-                            <label className={labelClass}>
-                                <Tag size={13} strokeWidth={1.8} />
-                                Nom du site
-                            </label>
-                            <input
-                                type="text"
-                                value={data.site_name}
-                                onChange={(e) => setData("site_name", e.target.value)}
-                                className={fieldClass}
-                            />
-                            {errors.site_name && (
-                                <p className="mt-1 text-[12px] text-red-500">{errors.site_name}</p>
-                            )}
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className={labelClass}>
-                                <FileText size={13} strokeWidth={1.8} />
-                                Description du site
-                            </label>
-                            <textarea
-                                rows={4}
-                                value={data.site_description}
-                                onChange={(e) => setData("site_description", e.target.value)}
-                                className={`${fieldClass} resize-none`}
-                            />
-                            {errors.site_description && (
-                                <p className="mt-1 text-[12px] text-red-500">{errors.site_description}</p>
-                            )}
-                        </div>
-                    </SectionCard>
 
                     {/* ================= CONTACT ================= */}
                     <SectionCard icon={Phone} title="Coordonnées">
