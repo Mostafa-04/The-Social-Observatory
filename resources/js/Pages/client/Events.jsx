@@ -313,7 +313,7 @@ const Events = ({ events = [] }) => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
           33% { transform: translate(10px, -20px) rotate(5deg); }

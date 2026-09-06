@@ -143,7 +143,7 @@ const Partners = ({ partners = [] }) => {
       {/* Bottom decorative line */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#bf5429]/20 to-transparent"></div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes marquee {
           0% {
             transform: translateX(0);

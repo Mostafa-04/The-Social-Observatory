@@ -256,7 +256,7 @@ const CTA = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#bf5429] to-transparent animate-[pulse_3s_ease-in-out_infinite]"></div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
           33% { transform: translate(10px, -20px) rotate(5deg); }
