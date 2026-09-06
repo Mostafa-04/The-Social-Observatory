@@ -15,12 +15,13 @@ class NewsletterSubscriber extends Model
         'unsubscribed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-            'subscribed_at' => 'datetime',
-            'unsubscribed_at' => 'datetime',
-        ];
-    }
+protected function casts(): array
+{
+    return [
+        'email' => 'encrypted',
+        'is_active' => 'boolean',
+        'subscribed_at' => 'datetime',
+        'unsubscribed_at' => 'datetime',
+    ];
+}
 }
