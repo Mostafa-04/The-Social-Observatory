@@ -22,6 +22,7 @@ class Contact extends Model
     protected function casts(): array
     {
         return [
+            'email' => 'encrypted',
             'is_read' => 'boolean',
             'read_at' => 'datetime',
         ];

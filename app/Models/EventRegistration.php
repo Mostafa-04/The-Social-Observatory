@@ -20,6 +20,7 @@ class EventRegistration extends Model
     ];
 
     protected $casts = [
+        'email' => 'encrypted',
         'registered_at' => 'datetime',
     ];
 
