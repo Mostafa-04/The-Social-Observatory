@@ -45,6 +45,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
 COPY . .
 COPY --from=frontend /app/public/build ./public/build
 COPY --from=frontend /app/bootstrap/ssr ./bootstrap/ssr
+COPY --from=frontend /app/node_modules ./node_modules
 
 RUN composer dump-autoload --optimize --no-dev \
     && php artisan storage:link \
