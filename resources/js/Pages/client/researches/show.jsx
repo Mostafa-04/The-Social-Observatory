@@ -48,7 +48,51 @@ const ResearchShow = ({ research }) => {
 
   return (
     <>
-      <Head title={research.title} />
+      <Head title={research.title}>
+        <meta
+          name="description"
+          content={research.summary?.slice(0, 160) ?? 'Research from The Social Observatory.'}
+        />
+        <link
+          rel="canonical"
+          href={`https://the-social-observatory.com/research/${research.id}`}
+        />
+
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={research.title} />
+        <meta
+          property="og:description"
+          content={research.summary?.slice(0, 160) ?? ''}
+        />
+        {research.featured_image && (
+          <meta
+            property="og:image"
+            content={`https://the-social-observatory.com/storage/${research.featured_image}`}
+          />
+        )}
+        <meta
+          property="og:url"
+          content={`https://the-social-observatory.com/research/${research.slug ?? research.id}`}
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={research.title} />
+        <meta name="twitter:description" content={research.summary?.slice(0, 160) ?? ''} />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: research.title,
+            description: research.summary,
+            image: research.featured_image
+              ? `https://the-social-observatory.com/storage/${research.featured_image}`
+              : undefined,
+            author: research.author ? { '@type': 'Person', name: research.author.name } : undefined,
+            datePublished: research.published_at,
+          })}
+        </script>
+      </Head>
       <Nav />
       <article className="relative">
         {/* ===== HERO ===== */}

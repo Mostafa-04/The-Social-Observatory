@@ -6,6 +6,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PublicEventRegistrationController;
 use App\Models\Event;
 use App\Http\Controllers\AssociationClientController;
+use App\Http\Controllers\ContactController;
 
 Route::get('/', [ClientController::class, 'home'])->name('client.home');
 Route::get('/researches', [ClientController::class, 'researches'])->name('research.index');
@@ -62,3 +63,6 @@ Route::get('/api/ecosystem/stats', [AssociationClientController::class, 'stats']
 
 Route::get('/ecosystem/{slug}', [AssociationClientController::class, 'show'])
     ->name('ecosystem.show.client');
+
+    Route::post('/contact', [ContactController::class, 'store'])
+    ->name('contact.store');

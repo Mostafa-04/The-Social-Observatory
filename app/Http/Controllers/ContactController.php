@@ -94,28 +94,30 @@ class ContactController extends Controller
             ->with('success', 'Reply sent successfully.');
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:30',
-            'organization' => 'nullable|string|max:255',
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string|max:5000',
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'nullable|string|max:30',
+        'country' => 'nullable|string|max:5',
+        'organization' => 'nullable|string|max:255',
+        'subject' => 'required|string|max:255',
+        'message' => 'required|string|max:5000',
+        'consent' => 'accepted', // يتحقق أن القيمة true/1/on
+    ]);
 
-        Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'] ?? null,
-            'organization' => $validated['organization'] ?? null,
-            'subject' => $validated['subject'],
-            'message' => $validated['message'],
-            'is_read' => false,
-            'read_at' => null,
-        ]);
+    Contact::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'phone' => $validated['phone'] ?? null, // يصل مدموجاً مع الإندكاتيف مثل: +212612345678
+        'organization' => $validated['organization'] ?? null,
+        'subject' => $validated['subject'],
+        'message' => $validated['message'],
+        'is_read' => false,
+        'read_at' => null,
+    ]);
 
-        return back()->with('success', 'Your message has been sent successfully.');
+    return back()->with('success', 'Your message has been sent successfully.');
 }
 }

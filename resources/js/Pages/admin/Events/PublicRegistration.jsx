@@ -71,7 +71,67 @@ export default function PublicRegistration({ event, registrationForm }) {
 
     return (
         <>
-            <Head title={`Inscription — ${event.title}`} />
+            <Head title={`Register — ${event.title}`}>
+                <meta
+                    name="description"
+                    content={event.description?.slice(0, 160) ?? `Register for ${event.title} at The Social Observatory.`}
+                />
+                <link
+                    rel="canonical"
+                    href={`https://the-social-observatory.com/events/${event.slug}/register`}
+                />
+
+                <meta property="og:type" content="website" />
+                <meta property="og:title" content={`Register — ${event.title}`} />
+                <meta
+                    property="og:description"
+                    content={event.description?.slice(0, 160) ?? ''}
+                />
+                {event.image && (
+                    <meta
+                        property="og:image"
+                        content={`https://the-social-observatory.com/storage/${event.image}`}
+                    />
+                )}
+                <meta
+                    property="og:url"
+                    content={`https://the-social-observatory.com/events/${event.slug}/register`}
+                />
+
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`Register — ${event.title}`} />
+                <meta name="twitter:description" content={event.description?.slice(0, 160) ?? ''} />
+
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'Event',
+                        name: event.title,
+                        description: event.description,
+                        startDate: `${event.date}T${event.start_time}`,
+                        endDate: `${event.date}T${event.end_time}`,
+                        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                        eventStatus: 'https://schema.org/EventScheduled',
+                        location: {
+                            '@type': 'Place',
+                            name: event.location,
+                            address: {
+                                '@type': 'PostalAddress',
+                                streetAddress: event.location,
+                                addressLocality: event.city,
+                            },
+                        },
+                        image: event.image
+                            ? `https://the-social-observatory.com/storage/${event.image}`
+                            : undefined,
+                        organizer: {
+                            '@type': 'Organization',
+                            name: 'The Social Observatory',
+                            url: 'https://the-social-observatory.com',
+                        },
+                    })}
+                </script>
+            </Head>
 
             <div className="min-h-screen bg-[#F7F8F6] py-10">
                 <div className="mx-auto max-w-3xl px-6">

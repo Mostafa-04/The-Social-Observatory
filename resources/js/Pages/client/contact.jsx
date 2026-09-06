@@ -22,8 +22,66 @@ const SOCIAL_NETWORKS = [
     { key: "youtube", icon: FaYoutube, label: "YouTube" },
 ];
 
-// مكون Toast المخصص
-const Toast = ({ message, type = "success", onClose, autoClose = 5000 }) => {
+// Liste des pays africains avec indicatif téléphonique (Maroc par défaut en premier)
+const COUNTRIES = [
+    { code: "MA", name: "Maroc", dial: "+212", flag: "🇲🇦" },
+    { code: "DZ", name: "Algérie", dial: "+213", flag: "🇩🇿" },
+    { code: "AO", name: "Angola", dial: "+244", flag: "🇦🇴" },
+    { code: "BJ", name: "Bénin", dial: "+229", flag: "🇧🇯" },
+    { code: "BW", name: "Botswana", dial: "+267", flag: "🇧🇼" },
+    { code: "BF", name: "Burkina Faso", dial: "+226", flag: "🇧🇫" },
+    { code: "BI", name: "Burundi", dial: "+257", flag: "🇧🇮" },
+    { code: "CV", name: "Cap-Vert", dial: "+238", flag: "🇨🇻" },
+    { code: "CM", name: "Cameroun", dial: "+237", flag: "🇨🇲" },
+    { code: "CF", name: "République centrafricaine", dial: "+236", flag: "🇨🇫" },
+    { code: "TD", name: "Tchad", dial: "+235", flag: "🇹🇩" },
+    { code: "KM", name: "Comores", dial: "+269", flag: "🇰🇲" },
+    { code: "CG", name: "Congo-Brazzaville", dial: "+242", flag: "🇨🇬" },
+    { code: "CD", name: "Congo-Kinshasa", dial: "+243", flag: "🇨🇩" },
+    { code: "DJ", name: "Djibouti", dial: "+253", flag: "🇩🇯" },
+    { code: "EG", name: "Égypte", dial: "+20", flag: "🇪🇬" },
+    { code: "GQ", name: "Guinée équatoriale", dial: "+240", flag: "🇬🇶" },
+    { code: "ER", name: "Érythrée", dial: "+291", flag: "🇪🇷" },
+    { code: "SZ", name: "Eswatini", dial: "+268", flag: "🇸🇿" },
+    { code: "ET", name: "Éthiopie", dial: "+251", flag: "🇪🇹" },
+    { code: "GA", name: "Gabon", dial: "+241", flag: "🇬🇦" },
+    { code: "GM", name: "Gambie", dial: "+220", flag: "🇬🇲" },
+    { code: "GH", name: "Ghana", dial: "+233", flag: "🇬🇭" },
+    { code: "GN", name: "Guinée", dial: "+224", flag: "🇬🇳" },
+    { code: "GW", name: "Guinée-Bissau", dial: "+245", flag: "🇬🇼" },
+    { code: "CI", name: "Côte d'Ivoire", dial: "+225", flag: "🇨🇮" },
+    { code: "KE", name: "Kenya", dial: "+254", flag: "🇰🇪" },
+    { code: "LS", name: "Lesotho", dial: "+266", flag: "🇱🇸" },
+    { code: "LR", name: "Liberia", dial: "+231", flag: "🇱🇷" },
+    { code: "LY", name: "Libye", dial: "+218", flag: "🇱🇾" },
+    { code: "MG", name: "Madagascar", dial: "+261", flag: "🇲🇬" },
+    { code: "MW", name: "Malawi", dial: "+265", flag: "🇲🇼" },
+    { code: "ML", name: "Mali", dial: "+223", flag: "🇲🇱" },
+    { code: "MR", name: "Mauritanie", dial: "+222", flag: "🇲🇷" },
+    { code: "MU", name: "Maurice", dial: "+230", flag: "🇲🇺" },
+    { code: "MZ", name: "Mozambique", dial: "+258", flag: "🇲🇿" },
+    { code: "NA", name: "Namibie", dial: "+264", flag: "🇳🇦" },
+    { code: "NE", name: "Niger", dial: "+227", flag: "🇳🇪" },
+    { code: "NG", name: "Nigeria", dial: "+234", flag: "🇳🇬" },
+    { code: "RW", name: "Rwanda", dial: "+250", flag: "🇷🇼" },
+    { code: "ST", name: "Sao Tomé-et-Principe", dial: "+239", flag: "🇸🇹" },
+    { code: "SN", name: "Sénégal", dial: "+221", flag: "🇸🇳" },
+    { code: "SC", name: "Seychelles", dial: "+248", flag: "🇸🇨" },
+    { code: "SL", name: "Sierra Leone", dial: "+232", flag: "🇸🇱" },
+    { code: "SO", name: "Somalie", dial: "+252", flag: "🇸🇴" },
+    { code: "ZA", name: "Afrique du Sud", dial: "+27", flag: "🇿🇦" },
+    { code: "SS", name: "Soudan du Sud", dial: "+211", flag: "🇸🇸" },
+    { code: "SD", name: "Soudan", dial: "+249", flag: "🇸🇩" },
+    { code: "TZ", name: "Tanzanie", dial: "+255", flag: "🇹🇿" },
+    { code: "TG", name: "Togo", dial: "+228", flag: "🇹🇬" },
+    { code: "TN", name: "Tunisie", dial: "+216", flag: "🇹🇳" },
+    { code: "UG", name: "Ouganda", dial: "+256", flag: "🇺🇬" },
+    { code: "ZM", name: "Zambie", dial: "+260", flag: "🇿🇲" },
+    { code: "ZW", name: "Zimbabwe", dial: "+263", flag: "🇿🇼" },
+];
+
+// Composant Toast personnalisé
+const Toast = ({ message, type = "success", onClose, autoClose = 7000 }) => {
     const [isExiting, setIsExiting] = useState(false);
 
     useEffect(() => {
@@ -36,7 +94,9 @@ const Toast = ({ message, type = "success", onClose, autoClose = 5000 }) => {
     }, [autoClose, onClose]);
 
     const isSuccess = type === "success";
-    const bgColor = isSuccess ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-red-500 to-orange-500";
+    const bgColor = isSuccess
+        ? "bg-gradient-to-r from-green-500 to-emerald-500"
+        : "bg-gradient-to-r from-red-500 to-orange-500";
     const Icon = isSuccess ? CheckCircle : AlertCircle;
 
     return (
@@ -45,37 +105,26 @@ const Toast = ({ message, type = "success", onClose, autoClose = 5000 }) => {
                 isExiting ? "opacity-0 translate-x-full" : "opacity-100 translate-x-0"
             }`}
         >
-            <div className={`${bgColor} text-white rounded-xl p-4 shadow-2xl flex items-center gap-3 min-w-80 backdrop-blur-sm border border-white/20`}>
-                {/* Icon with animation */}
-                <div className="flex-shrink-0">
+            <div className={`${bgColor} text-white rounded-xl p-4 shadow-2xl flex gap-3 max-w-md backdrop-blur-sm border border-white/20`}>
+                <div className="flex-shrink-0 mt-1">
                     <Icon className={`w-6 h-6 ${isSuccess ? "animate-bounce" : "animate-pulse"}`} />
                 </div>
-
-                {/* Message */}
                 <div className="flex-grow">
-                    <p className="font-semibold text-sm leading-tight">{message}</p>
+                    <p className="font-semibold text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
                 </div>
-
-                {/* Close button */}
                 <button
                     onClick={() => {
                         setIsExiting(true);
                         setTimeout(onClose, 300);
                     }}
-                    className="flex-shrink-0 hover:bg-white/20 rounded-lg p-1 transition-colors duration-200"
+                    className="flex-shrink-0 hover:bg-white/20 rounded-lg p-1 transition-colors duration-200 mt-1"
                 >
                     <X className="w-4 h-4" />
                 </button>
-
-                {/* Progress bar */}
                 <style>{`
                     @keyframes progress {
-                        from {
-                            width: 100%;
-                        }
-                        to {
-                            width: 0%;
-                        }
+                        from { width: 100%; }
+                        to { width: 0%; }
                     }
                     .toast-progress {
                         animation: progress ${autoClose}ms linear forwards;
@@ -91,15 +140,28 @@ export default function ContactForm({ settings = {} }) {
     const sectionRef = useRef(null);
     const leftRef = useRef(null);
     const formRef = useRef(null);
-    const [toasts, setToasts] = useState([]);
+    const [localErrors, setLocalErrors] = useState({}); // للأخطاء المحلية
+    const [formMessage, setFormMessage] = useState(null); // لرسالة النجاح فقط
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, transform } = useForm({
         name: "",
         email: "",
         phone: "",
+        country: "MA",
         organization: "",
         subject: "",
         message: "",
+        consent: false,
+    });
+
+    // Fusionne l'indicatif téléphonique avec le numéro uniquement au moment de l'envoi
+    transform((formData) => {
+        const selected = COUNTRIES.find((c) => c.code === formData.country);
+        const dial = selected ? selected.dial : "";
+        return {
+            ...formData,
+            phone: formData.phone ? `${dial}${formData.phone.replace(/^0+/, "")}` : "",
+        };
     });
 
     useEffect(() => {
@@ -122,37 +184,70 @@ export default function ContactForm({ settings = {} }) {
         return () => observer.disconnect();
     }, []);
 
-    const addToast = (message, type = "success") => {
-        const id = Date.now();
-        setToasts((prev) => [...prev, { id, message, type }]);
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     };
 
-    const removeToast = (id) => {
-        setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    const validatePhone = (phone) => {
+        if (!phone.trim()) return true;
+        const cleanPhone = phone.replace(/[\s-]/g, "");
+        return cleanPhone.length >= 9 && cleanPhone.length <= 15 && /^\d+$/.test(cleanPhone);
     };
 
     const submit = (e) => {
         e.preventDefault();
+        setFormMessage(null);
 
-        // التحقق من الأخطاء قبل الإرسال
         const newErrors = {};
-        if (!data.name.trim()) newErrors.name = "Name is required";
-        if (!data.email.trim()) newErrors.email = "Email is required";
-        if (!data.message.trim()) newErrors.message = "Message is required";
+
+        if (!data.name.trim()) {
+            newErrors.name = "Name is required";
+        } else if (data.name.trim().length < 3) {
+            newErrors.name = "Name must be at least 3 characters";
+        }
+
+        if (!data.email.trim()) {
+            newErrors.email = "Email is required";
+        } else if (!validateEmail(data.email)) {
+            newErrors.email = "Please enter a valid email address";
+        }
+
+        if (data.phone.trim() && !validatePhone(data.phone)) {
+            newErrors.phone = "Phone number must be 9-15 digits";
+        }
+
+        if (!data.message.trim()) {
+            newErrors.message = "Message is required";
+        } else if (data.message.trim().length < 10) {
+            newErrors.message = "Message must be at least 10 characters";
+        }
+
+        if (!data.consent) {
+            newErrors.consent = "You must accept the terms to continue";
+        }
 
         if (Object.keys(newErrors).length > 0) {
-            addToast("Please fill in all required fields", "error");
+            setLocalErrors(newErrors);
             return;
         }
+
+        setLocalErrors({});
 
         post(route("contact.store"), {
             preserveScroll: true,
             onSuccess: () => {
-                addToast("Message sent successfully! We'll get back to you soon.", "success");
+                setFormMessage({
+                    type: "success",
+                    message: "Thank you! Your message has been sent successfully.\nWe'll get back to you soon."
+                });
                 reset();
             },
             onError: () => {
-                addToast("Failed to send message. Please try again.", "error");
+                setFormMessage({
+                    type: "error",
+                    message: "Failed to send message.\nPlease try again later."
+                });
             },
         });
     };
@@ -163,30 +258,12 @@ export default function ContactForm({ settings = {} }) {
         "w-full rounded-xl border border-[#d6d9d8] bg-white py-3 pl-12 pr-4 text-[#1f2d2d] placeholder:text-[#5f6967]/50 transition-all duration-300 focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20 hover:border-[#bf5429]/50";
 
     return (
-        <section
-            id="contact"
-            ref={sectionRef}
-            className="relative overflow-hidden py-24 lg:py-32"
-        >
-            {/* Toast Container */}
-            <div className="fixed top-6 right-6 z-40 flex flex-col gap-3">
-                {toasts.map((toast) => (
-                    <Toast
-                        key={toast.id}
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => removeToast(toast.id)}
-                    />
-                ))}
-            </div>
-
-            {/* Background decorative elements */}
+        <section id="contact" ref={sectionRef} className="relative overflow-hidden py-24 lg:py-32">
             <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-[#bf5429]/5 to-transparent rounded-full blur-3xl animate-pulse"></div>
             <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-tl from-[#324949]/5 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
             <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23bf5429%22 fill-opacity=%220.02%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
 
             <div className="max-w-7xl mx-auto px-6 lg:px-10 relative">
-                {/* Header */}
                 <div className="max-w-2xl mb-16">
                     <div className="flex items-center gap-3 mb-6">
                         <span className="w-8 h-[2px] bg-gradient-to-r from-[#bf5429] to-transparent"></span>
@@ -209,25 +286,14 @@ export default function ContactForm({ settings = {} }) {
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-5">
-                    {/* Left panel */}
-                    <div
-                        ref={leftRef}
-                        className="lg:col-span-2 opacity-0 translate-y-8 transition-all duration-700 ease-out"
-                    >
+                    <div ref={leftRef} className="lg:col-span-2 opacity-0 translate-y-8 transition-all duration-700 ease-out">
                         <div className="relative h-full rounded-2xl bg-gradient-to-br from-[#1f2d2d] to-[#162020] p-10 overflow-hidden group hover:shadow-2xl transition-all duration-500">
-                            {/* Animated background gradient */}
                             <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#bf5429]/20 blur-3xl group-hover:bg-[#bf5429]/30 transition-all duration-500"></div>
                             <div
                                 className="absolute inset-0 opacity-40 group-hover:opacity-50 transition-opacity duration-500"
-                                style={{
-                                    backgroundImage:
-                                        "radial-gradient(circle at 80% 20%, rgba(191,84,41,0.25), transparent 45%)",
-                                }}
+                                style={{ backgroundImage: "radial-gradient(circle at 80% 20%, rgba(191,84,41,0.25), transparent 45%)" }}
                             ></div>
-                            <MessageSquare
-                                className="absolute -bottom-6 -right-6 w-40 h-40 text-white/[0.04] rotate-12 group-hover:text-white/[0.06] transition-all duration-500"
-                                strokeWidth={1}
-                            />
+                            <MessageSquare className="absolute -bottom-6 -right-6 w-40 h-40 text-white/[0.04] rotate-12 group-hover:text-white/[0.06] transition-all duration-500" strokeWidth={1} />
 
                             <div className="relative space-y-8">
                                 <div>
@@ -235,17 +301,13 @@ export default function ContactForm({ settings = {} }) {
                                         We're always happy to hear from you.
                                     </h3>
                                     <p className="mt-3 text-white/60 leading-relaxed text-sm">
-                                        Reach out directly, or use the form — whichever is easier
-                                        for you.
+                                        Reach out directly, or use the form — whichever is easier for you.
                                     </p>
                                 </div>
 
                                 <div className="space-y-4">
                                     {settings.email && (
-                                        <a
-                                            href={`mailto:${settings.email}`}
-                                            className="group/item flex items-center gap-4 text-white/90 hover:text-white transition-all duration-300 p-3 rounded-lg hover:bg-white/5 cursor-pointer"
-                                        >
+                                        <a href={`mailto:${settings.email}`} className="group/item flex items-center gap-4 text-white/90 hover:text-white transition-all duration-300 p-3 rounded-lg hover:bg-white/5 cursor-pointer">
                                             <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 border border-white/10 group-hover/item:bg-[#bf5429] group-hover/item:border-[#bf5429] transition-all duration-300 flex-shrink-0">
                                                 <Mail className="h-5 w-5" />
                                             </span>
@@ -258,10 +320,7 @@ export default function ContactForm({ settings = {} }) {
                                     )}
 
                                     {settings.phone && (
-                                        <a
-                                            href={`tel:${settings.phone}`}
-                                            className="group/item flex items-center gap-4 text-white/90 hover:text-white transition-all duration-300 p-3 rounded-lg hover:bg-white/5 cursor-pointer"
-                                        >
+                                        <a href={`tel:${settings.phone}`} className="group/item flex items-center gap-4 text-white/90 hover:text-white transition-all duration-300 p-3 rounded-lg hover:bg-white/5 cursor-pointer">
                                             <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 border border-white/10 group-hover/item:bg-[#bf5429] group-hover/item:border-[#bf5429] transition-all duration-300 flex-shrink-0">
                                                 <Phone className="h-5 w-5" />
                                             </span>
@@ -286,7 +345,6 @@ export default function ContactForm({ settings = {} }) {
                                     )}
                                 </div>
 
-                                {/* Social links */}
                                 {activeSocials.length > 0 && (
                                     <div className="pt-6 border-t border-white/10">
                                         <p className="text-xs text-white/50 font-medium mb-3">Follow us</p>
@@ -310,20 +368,15 @@ export default function ContactForm({ settings = {} }) {
                         </div>
                     </div>
 
-                    {/* Form */}
-                    <div
-                        ref={formRef}
-                        className="lg:col-span-3 opacity-0 translate-y-8 transition-all duration-700 delay-150 ease-out"
-                    >
+                    <div ref={formRef} className="lg:col-span-3 opacity-0 translate-y-8 transition-all duration-700 delay-150 ease-out">
                         <div className="rounded-2xl bg-white border border-[#d6d9d8]/30 p-8 lg:p-10 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                            {/* Form header decoration */}
                             <div className="absolute top-0 left-0 w-1 h-12 bg-gradient-to-b from-[#bf5429] to-transparent rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                             <form onSubmit={submit} className="space-y-6">
                                 <div className="grid gap-6 md:grid-cols-2">
                                     <div className="group/field">
                                         <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
-                                            Full Name
+                                            Full Name <span className="text-[#bf5429]">*</span>
                                         </label>
                                         <div className="relative">
                                             <User className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
@@ -331,21 +384,21 @@ export default function ContactForm({ settings = {} }) {
                                                 type="text"
                                                 value={data.name}
                                                 onChange={(e) => setData("name", e.target.value)}
-                                                className={`${inputClasses} ${errors.name ? "border-[#bf5429]/50 ring-2 ring-[#bf5429]/20" : ""}`}
+                                                className={`${inputClasses} ${localErrors.name ? "border-red-500 ring-2 ring-red-200" : ""}`}
                                                 placeholder="John Doe"
                                             />
                                         </div>
-                                        {errors.name && (
-                                            <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.name}
+                                        {localErrors.name && (
+                                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1 font-medium">
+                                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                {localErrors.name}
                                             </p>
                                         )}
                                     </div>
 
                                     <div className="group/field">
                                         <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
-                                            Email
+                                            Email <span className="text-[#bf5429]">*</span>
                                         </label>
                                         <div className="relative">
                                             <Mail className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
@@ -353,14 +406,14 @@ export default function ContactForm({ settings = {} }) {
                                                 type="email"
                                                 value={data.email}
                                                 onChange={(e) => setData("email", e.target.value)}
-                                                className={`${inputClasses} ${errors.email ? "border-[#bf5429]/50 ring-2 ring-[#bf5429]/20" : ""}`}
-                                                placeholder="john@email.com"
+                                                className={`${inputClasses} ${localErrors.email ? "border-red-500 ring-2 ring-red-200" : ""}`}
+                                                placeholder="example@email.com"
                                             />
                                         </div>
-                                        {errors.email && (
-                                            <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.email}
+                                        {localErrors.email && (
+                                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1 font-medium">
+                                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                {localErrors.email}
                                             </p>
                                         )}
                                     </div>
@@ -371,20 +424,33 @@ export default function ContactForm({ settings = {} }) {
                                         <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
                                             Phone
                                         </label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
-                                            <input
-                                                type="text"
-                                                value={data.phone}
-                                                onChange={(e) => setData("phone", e.target.value)}
-                                                className={inputClasses}
-                                                placeholder="+212 6XX XXX XXX"
-                                            />
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={data.country}
+                                                onChange={(e) => setData("country", e.target.value)}
+                                                className="rounded-xl border border-[#d6d9d8] bg-white px-2 text-sm text-[#1f2d2d] focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20 hover:border-[#bf5429]/50 transition-all duration-300 max-w-[160px]"
+                                            >
+                                                {COUNTRIES.map((c) => (
+                                                    <option key={c.code} value={c.code}>
+                                                        {c.flag} {c.name} ({c.dial})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="relative flex-grow">
+                                                <Phone className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
+                                                <input
+                                                    type="text"
+                                                    value={data.phone}
+                                                    onChange={(e) => setData("phone", e.target.value)}
+                                                    className={`${inputClasses} ${localErrors.phone ? "border-red-500 ring-2 ring-red-200" : ""}`}
+                                                    placeholder="6XX XXX XXX"
+                                                />
+                                            </div>
                                         </div>
-                                        {errors.phone && (
-                                            <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.phone}
+                                        {localErrors.phone && (
+                                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1 font-medium">
+                                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                {localErrors.phone}
                                             </p>
                                         )}
                                     </div>
@@ -398,19 +464,12 @@ export default function ContactForm({ settings = {} }) {
                                             <input
                                                 type="text"
                                                 value={data.organization}
-                                                onChange={(e) =>
-                                                    setData("organization", e.target.value)
-                                                }
+                                                onChange={(e) => setData("organization", e.target.value)}
                                                 className={inputClasses}
-                                                placeholder="Your organization"
+                                                placeholder="Your organization (optional)"
                                             />
                                         </div>
-                                        {errors.organization && (
-                                            <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                {errors.organization}
-                                            </p>
-                                        )}
+
                                     </div>
                                 </div>
 
@@ -423,19 +482,14 @@ export default function ContactForm({ settings = {} }) {
                                         value={data.subject}
                                         onChange={(e) => setData("subject", e.target.value)}
                                         className={`w-full rounded-xl border border-[#d6d9d8] bg-white p-3 text-[#1f2d2d] placeholder:text-[#5f6967]/50 transition-all duration-300 focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20 hover:border-[#bf5429]/50 ${errors.subject ? "border-[#bf5429]/50 ring-2 ring-[#bf5429]/20" : ""}`}
-                                        placeholder="How can we help?"
+                                        placeholder="How can we help? (optional)"
                                     />
-                                    {errors.subject && (
-                                        <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                            <AlertCircle className="w-4 h-4" />
-                                            {errors.subject}
-                                        </p>
-                                    )}
+
                                 </div>
 
                                 <div className="group/field">
                                     <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
-                                        Message
+                                        Message <span className="text-[#bf5429]">*</span>
                                     </label>
                                     <div className="relative">
                                         <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
@@ -443,29 +497,48 @@ export default function ContactForm({ settings = {} }) {
                                             rows={6}
                                             value={data.message}
                                             onChange={(e) => setData("message", e.target.value)}
-                                            className={`${inputClasses} resize-none ${errors.message ? "border-[#bf5429]/50 ring-2 ring-[#bf5429]/20" : ""}`}
-                                            placeholder="Write your message..."
+                                            className={`${inputClasses} resize-none ${localErrors.message ? "border-red-500 ring-2 ring-red-200" : ""}`}
+                                            placeholder="Write your message here... (minimum 10 characters)"
                                         />
                                     </div>
-                                    {errors.message && (
-                                        <p className="mt-2 text-sm text-[#bf5429] flex items-center gap-1">
-                                            <AlertCircle className="w-4 h-4" />
-                                            {errors.message}
+                                    {localErrors.message && (
+                                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1 font-medium">
+                                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                            {localErrors.message}
                                         </p>
                                     )}
                                 </div>
+
+                                <div className={`flex items-start gap-3 p-3 bg-[#f8f9f8] rounded-lg border ${localErrors.consent ? "border-red-500 bg-red-50" : "border-[#d6d9d8]"}`}>
+                                    <input
+                                        type="checkbox"
+                                        id="consent"
+                                        checked={data.consent}
+                                        onChange={(e) => setData("consent", e.target.checked)}
+                                        className="mt-1 h-4 w-4 rounded border-[#d6d9d8] text-[#bf5429] focus:ring-[#bf5429]/30 cursor-pointer"
+                                    />
+                                    <label htmlFor="consent" className="text-sm text-[#1f2d2d] leading-relaxed cursor-pointer flex-grow font-medium">
+                                        I agree to use my contact information to respond to my request
+                                    </label>
+                                </div>
+                                {localErrors.consent && (
+                                    <p className="text-sm text-red-600 flex items-center gap-1 -mt-4 font-medium">
+                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                        {localErrors.consent}
+                                    </p>
+                                )}
 
                                 <button
                                     type="submit"
                                     disabled={processing}
                                     className="group/btn flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1f2d2d] to-[#2a3a3a] px-6 py-4 font-semibold text-white transition-all duration-300 hover:from-[#bf5429] hover:to-[#a83f1f] hover:shadow-lg hover:shadow-[#bf5429]/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none relative overflow-hidden"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 -translate-x-full group-hover/btn:translate-x-full animation-shimmer"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 -translate-x-full group-hover/btn:translate-x-full animate-shimmer"></div>
                                     <Send className="h-5 w-5 transition-all duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
                                     <span className="transition-all duration-300">
                                         {processing ? (
                                             <>
-                                                <span className="inline-block animate-spin mr-2">⚡</span>
+                                                <span className="inline-block animate-spin ml-2">⚡</span>
                                                 Sending...
                                             </>
                                         ) : (
@@ -473,9 +546,21 @@ export default function ContactForm({ settings = {} }) {
                                         )}
                                     </span>
                                 </button>
+
+                                {formMessage && formMessage.type === 'success' && (
+                                    <div className="p-4 rounded-lg bg-green-50 border-2 border-green-300 flex items-start gap-3">
+                                        <div className="flex-shrink-0 mt-0.5">
+                                            <CheckCircle className="w-5 h-5 text-green-600" />
+                                        </div>
+                                        <div className="flex-grow">
+                                            <p className="text-sm font-medium text-green-800">
+                                                ✓ {formMessage.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </form>
 
-                            {/* Decorative corner accent */}
                             <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#bf5429]/5 to-transparent rounded-full blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </div>
                     </div>
@@ -484,14 +569,10 @@ export default function ContactForm({ settings = {} }) {
 
             <style jsx>{`
                 @keyframes shimmer {
-                    0% {
-                        transform: translateX(-100%);
-                    }
-                    100% {
-                        transform: translateX(100%);
-                    }
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
                 }
-                .animation-shimmer {
+                .animate-shimmer {
                     animation: shimmer 2s infinite;
                 }
             `}</style>

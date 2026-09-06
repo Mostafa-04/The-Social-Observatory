@@ -23,14 +23,59 @@ const formatDate = (dateString) => {
  * Page de détail d'une publication.
  * Attendu depuis le contrôleur (Inertia::render):
  * - publication: { id, title, type, description, cover_image, pdf,
- *                  pages, language, published_at }
+ *                  pages, language, published_at, slug? }
  */
 const PublicationShow = ({ publication }) => {
   if (!publication) return null;
 
   return (
     <>
-      <Head title={publication.title} />
+      <Head title={publication.title}>
+        <meta
+          name="description"
+          content={publication.description?.slice(0, 160) ?? 'Publication from The Social Observatory.'}
+        />
+        <link
+          rel="canonical"
+          href={`https://the-social-observatory.com/publications/${publication.slug ?? publication.id}`}
+        />
+
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={publication.title} />
+        <meta
+          property="og:description"
+          content={publication.description?.slice(0, 160) ?? ''}
+        />
+        {publication.cover_image && (
+          <meta
+            property="og:image"
+            content={`https://the-social-observatory.com/storage/${publication.cover_image}`}
+          />
+        )}
+        <meta
+          property="og:url"
+          content={`https://the-social-observatory.com/publications/${ publication.id}`}
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={publication.title} />
+        <meta name="twitter:description" content={publication.description?.slice(0, 160) ?? ''} />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CreativeWork',
+            headline: publication.title,
+            description: publication.description,
+            image: publication.cover_image
+              ? `https://the-social-observatory.com/storage/${publication.cover_image}`
+              : undefined,
+            inLanguage: publication.language,
+            numberOfPages: publication.pages,
+            datePublished: publication.published_at,
+          })}
+        </script>
+      </Head>
         <Nav />
       <article className="relative py-20 lg:py-28 overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-b from-[#bf5429]/5 to-transparent rounded-full blur-3xl"></div>

@@ -70,8 +70,7 @@ Route::middleware('auth')->group(function () {
 Route::resource('contacts', ContactController::class)
     ->only(['index', 'show', 'destroy']);
 
-Route::post('/contact', [ContactController::class, 'store'])
-    ->name('contact.store');
+
 Route::get(
     'contacts/{contact}/reply',
     [ContactController::class, 'reply']

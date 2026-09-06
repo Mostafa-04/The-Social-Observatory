@@ -22,7 +22,7 @@ const estimateReadTime = (content) => {
  * Page de détail d'un insight.
  * Attendu depuis le contrôleur (Inertia::render):
  * - insight: { id, title, excerpt, content, featured_image,
- *              author: { name, ... } | null, category: { name, ... } | null, published_at }
+ *              author: { name, ... } | null, category: { name, ... } | null, published_at, slug? }
  */
 const InsightShow = ({ insight }) => {
   const contentRef = useRef(null);
@@ -47,7 +47,61 @@ const InsightShow = ({ insight }) => {
 
   return (
     <>
-      <Head title={insight.title} />
+      <Head title={insight.title}>
+        <meta
+          name="description"
+          content={insight.excerpt?.slice(0, 160) ?? 'Insight from The Social Observatory.'}
+        />
+        <link
+          rel="canonical"
+          href={`https://the-social-observatory.com/insights/${ insight.id}`}
+        />
+
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={insight.title} />
+        <meta
+          property="og:description"
+          content={insight.excerpt?.slice(0, 160) ?? ''}
+        />
+        {insight.featured_image && (
+          <meta
+            property="og:image"
+            content={`https://the-social-observatory.com/storage/${insight.featured_image}`}
+          />
+        )}
+        <meta
+          property="og:url"
+          content={`https://the-social-observatory.com/insights/${insight.slug ?? insight.id}`}
+        />
+        {insight.published_at && (
+          <meta property="article:published_time" content={insight.published_at} />
+        )}
+        {insight.author?.name && (
+          <meta property="article:author" content={insight.author.name} />
+        )}
+        {insight.category?.name && (
+          <meta property="article:section" content={insight.category.name} />
+        )}
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={insight.title} />
+        <meta name="twitter:description" content={insight.excerpt?.slice(0, 160) ?? ''} />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: insight.title,
+            description: insight.excerpt,
+            image: insight.featured_image
+              ? `https://the-social-observatory.com/storage/${insight.featured_image}`
+              : undefined,
+            author: insight.author ? { '@type': 'Person', name: insight.author.name } : undefined,
+            articleSection: insight.category?.name,
+            datePublished: insight.published_at,
+          })}
+        </script>
+      </Head>
 
       <article className="relative">
         {/* ===== HERO ===== */}
