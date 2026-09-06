@@ -8,7 +8,7 @@ RUN npm ci
 COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js jsconfig.json ./
 COPY public ./public
-RUN npm run build
+RUN npm run build:ssr
 
 # ---- PHP application ----
 FROM php:8.2-fpm-alpine AS app
@@ -16,6 +16,7 @@ FROM php:8.2-fpm-alpine AS app
 RUN apk add --no-cache \
         nginx \
         supervisor \
+        nodejs \
         icu-dev \
         libzip-dev \
         libpng-dev \
@@ -43,6 +44,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
 
 COPY . .
 COPY --from=frontend /app/public/build ./public/build
+COPY --from=frontend /app/bootstrap/ssr ./bootstrap/ssr
 
 RUN composer dump-autoload --optimize --no-dev \
     && php artisan storage:link \
