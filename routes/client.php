@@ -7,6 +7,13 @@ use App\Http\Controllers\PublicEventRegistrationController;
 use App\Models\Event;
 use App\Http\Controllers\AssociationClientController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PublicationController;
+
+
+
+
+Route::post('/publications/{publication}/download', [PublicationController::class, 'download'])
+    ->name('publication.download.store');
 
 Route::get('/', [ClientController::class, 'home'])->name('client.home');
 Route::get('/researches', [ClientController::class, 'researches'])->name('research.index');

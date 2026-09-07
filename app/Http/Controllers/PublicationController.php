@@ -3,23 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\Publication;
+use App\Models\PublicationDownload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Exports\PublicationDownloadsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PublicationController extends Controller
 {
     /**
      * Display a listing.
      */
-    public function index()
-    {
-        $publications = Publication::latest()->get();
 
-        return Inertia::render('admin/Publications/Index', [
-            'publications' => $publications,
-        ]);
-    }
+
+        public function index()
+        {
+            $publications = Publication::withCount('downloads')
+                ->latest()
+                ->get();
+
+            return Inertia::render('admin/Publications/Index', [
+                'publications' => $publications,
+            ]);
+        }
+
+        public function Indexdownloads(Publication $publication)
+        {
+            $downloads = $publication->downloads()
+                ->latest()
+                ->get(['id', 'name', 'email', 'ip_address', 'created_at']);
+
+            return Inertia::render('admin/Publications/Downloads', [
+                'publication' => $publication->only('id', 'title'),
+                'downloads' => $downloads,
+            ]);
+        }
 
     /**
      * Open create page.
@@ -171,5 +190,33 @@ class PublicationController extends Controller
         return redirect()
             ->route('publications.index')
             ->with('success', 'Publication deleted successfully.');
+    }
+
+        public function download(Request $request, Publication $publication)
+    {
+        $validated = $request->validate([
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        PublicationDownload::create([
+            'publication_id' => $publication->id,
+            'name'           => $validated['name'],
+            'email'          => $validated['email'],
+            'ip_address'     => $request->ip(),
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'download' => $publication->pdf
+                ? asset('storage/' . $publication->pdf)
+                : null,
+        ]);
+    }
+    public function downloadsExport(Publication $publication)
+    {
+        $filename = 'inscriptions-' . str($publication->title)->slug() . '.xlsx';
+
+        return Excel::download(new PublicationDownloadsExport($publication), $filename);
     }
 }

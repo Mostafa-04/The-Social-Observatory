@@ -94,7 +94,11 @@ Route::resource('countries', CountryController::class)
     ])->names('countries');
 Route::resource('categories', CategoryController::class)->names('categories');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/publications/{publication}/downloads', [PublicationController::class, 'Indexdownloads'])
+    ->name('publications.downloads');
 
+Route::get('/publications/{publication}/downloads/export', [PublicationController::class, 'downloadsExport'])
+    ->name('publications.downloads.export');
 
 Route::get(
     '/events/{event}/registration-form/create',

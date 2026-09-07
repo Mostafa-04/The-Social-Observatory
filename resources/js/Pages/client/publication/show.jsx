@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   Download,
 } from 'lucide-react';
 import Nav from '../nav';
+import DownloadRequestModal from '../../../Components/DownloadRequestModal';
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -26,6 +27,8 @@ const formatDate = (dateString) => {
  *                  pages, language, published_at, slug? }
  */
 const PublicationShow = ({ publication }) => {
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+
   if (!publication) return null;
 
   return (
@@ -108,18 +111,17 @@ const PublicationShow = ({ publication }) => {
                   )}
                 </div>
 
-                {publication.pdf && (
-                  <a
-                    href={`/storage/${publication.pdf}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl bg-[#1f2d2d] hover:bg-[#bf5429] text-white font-semibold py-3.5 transition-colors duration-300"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </a>
-                )}
-              </div>
+              {publication.pdf && (
+                <button
+                  type="button"
+                  onClick={() => setShowDownloadModal(true)}
+                  className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl bg-[#1f2d2d] hover:bg-[#bf5429] text-white font-semibold py-3.5 transition-colors duration-300"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
+              )}
+                      </div>
             </div>
 
             {/* Details */}
@@ -161,6 +163,11 @@ const PublicationShow = ({ publication }) => {
             </div>
           </div>
         </div>
+              <DownloadRequestModal
+                isOpen={showDownloadModal}
+                onClose={() => setShowDownloadModal(false)}
+                publicationId={publication.id}
+              />
       </article>
     </>
   );

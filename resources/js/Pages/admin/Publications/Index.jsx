@@ -1,7 +1,7 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import DataTable from "@/Components/DataTable";
 import { Head, Link, router } from "@inertiajs/react";
-import { Plus, FileText, ImageOff } from "lucide-react";
+import { Plus, FileText, ImageOff, Users } from "lucide-react";
 
 export default function Index({ publications }) {
     const columns = [
@@ -75,6 +75,21 @@ export default function Index({ publications }) {
                 ),
         },
 
+        
+        {
+            key: "downloads",
+            label: "Inscriptions",
+            render: (publication) => (
+                <Link
+                    href={route("publications.downloads", publication.id)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#324949]/10 px-3 py-1 text-[11px] font-medium text-[#324949] transition hover:bg-[#324949]/20"
+                >
+                    <Users size={12} strokeWidth={1.8} />
+                    {publication.downloads_count ?? 0}
+                </Link>
+            ),
+        },
+
         {
             key: "published_at",
             label: "Publié le",
@@ -99,7 +114,6 @@ export default function Index({ publications }) {
             <Head title="Publications" />
 
             <div className="mx-auto max-w-6xl space-y-6 p-6">
-                {/* Header */}
                 <div className="mb-2 flex items-center justify-between">
                     <div>
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#BF5429] mb-1">
@@ -122,7 +136,6 @@ export default function Index({ publications }) {
                     </Link>
                 </div>
 
-                {/* Table */}
                 <div className="rounded-xl border border-[#D6D9D8] bg-white p-2 shadow-sm">
                     <DataTable
                         columns={columns}
@@ -130,10 +143,8 @@ export default function Index({ publications }) {
                         actions={{
                             onView: (publication) =>
                                 router.visit(route("publications.show", publication.id)),
-
                             onEdit: (publication) =>
                                 router.visit(route("publications.edit", publication.id)),
-
                             onDelete: handleDelete,
                         }}
                     />

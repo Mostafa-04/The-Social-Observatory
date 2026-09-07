@@ -19,6 +19,11 @@ class Publication extends Model
         'published_at',
     ];
 
+    public function downloads()
+    {
+        return $this->hasMany(PublicationDownload::class);
+    }
+
     protected function casts(): array
     {
         return [
