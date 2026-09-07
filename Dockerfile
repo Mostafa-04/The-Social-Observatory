@@ -55,6 +55,7 @@ RUN composer dump-autoload --optimize --no-dev \
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
