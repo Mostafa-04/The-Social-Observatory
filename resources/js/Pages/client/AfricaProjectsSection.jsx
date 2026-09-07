@@ -63,7 +63,10 @@ const AFRICA_NUMERIC_TO_ISO2 = {
 const AfricaProjectsSection = ({
   title = 'Notre présence en Afrique',
   description = 'Nous travaillons directement avec les gouvernements et la société civile à travers le continent, et dans chaque pays, nous avons un impact concret.',
-  projectCountries = []
+  projectCountries = [],
+  countParteners,
+  countProjets,
+  countCountries
 }) => {
   const sectionRef = useRef(null);
   const titleRef = useRef(null);
@@ -162,21 +165,21 @@ const AfricaProjectsSection = ({
             <div className="mt-8 flex items-center gap-8">
               <div>
                 <div className="text-3xl font-display font-semibold text-[#bf5429]">
-                  {projectCountries.length}
+                  +{countCountries}
                 </div>
                 <div className="text-sm text-[#5f6967] mt-1">Pays actifs</div>
               </div>
               <div className="w-px h-12 bg-[#d6d9d8]"></div>
               <div>
                 <div className="text-3xl font-display font-semibold text-[#bf5429]">
-                  15+
+                  +{countProjets}
                 </div>
                 <div className="text-sm text-[#5f6967] mt-1">Projets en cours</div>
               </div>
               <div className="w-px h-12 bg-[#d6d9d8]"></div>
               <div>
                 <div className="text-3xl font-display font-semibold text-[#bf5429]">
-                  50+
+                  +{countParteners}
                 </div>
                 <div className="text-sm text-[#5f6967] mt-1">Partenaires</div>
               </div>

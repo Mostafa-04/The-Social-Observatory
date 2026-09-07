@@ -22,7 +22,6 @@ class ClientController extends Controller
 private function getLatestContent(): ?array
 {
     $contents = collect();
-
     /*
     |--------------------------------------------------------------------------
     | Latest Research
@@ -144,8 +143,18 @@ private function getLatestContent(): ?array
             ->values();
 
             $latestContent = $this->getLatestContent();
+            $countProjets = Project::count();
+            $countParteners = Partner::count();
+            $countPublications = Publication::count();
+            $countCountries = Country::count();
+            $countResearches = Research::count();
 
         return inertia('client/index', [
+            'countProjets' => $countProjets,
+            'countParteners' => $countParteners,
+            'countPublications' => $countPublications,
+            'countCountries' => $countCountries,
+            'countResearches' => $countResearches,
             'researches' => $researches,
             'insights' => $insights,
             'events' => $events,

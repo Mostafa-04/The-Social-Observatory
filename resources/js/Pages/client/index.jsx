@@ -28,6 +28,11 @@ function Index({
     africaProjectCountries,
     stats,
     latestContent,
+    countCountries,
+    countProjets,
+    countParteners,
+    countPublications,
+    countResearches,
 }) {
     return (
         <div className="bg-[#eaece9]">
@@ -69,13 +74,13 @@ function Index({
 
             {/* Critical content */}
             <Navbar />
-            <Hero />
+            <Hero     countParteners={countParteners} countPublications={countPublications} countCountries={countCountries} countProjets={countProjets} />
             <LatestContent content={latestContent} />
 
             {/* Sections */}
             <Suspense fallback={null}>
-                <About />
-                <AfricaProjectsSection projectCountries={africaProjectCountries} />
+                <About countResearches={countResearches} />
+                <AfricaProjectsSection countParteners={countParteners} countProjets={countProjets} countCountries={countCountries}  projectCountries={africaProjectCountries} />
                 <AreasOfFocus />
                 <StatsCards stats={stats} />
                 <FeaturedResearch researches={researches} />

@@ -172,7 +172,7 @@ const ResearchShow = ({ research }) => {
 
           <div className="max-w-4xl mx-auto px-6 lg:px-10 relative">
             {/* Summary */}
-            <p className="text-lg text-[#324949] leading-relaxed mb-10 font-medium">
+            <p className="text-justify text-lg text-[#324949] leading-relaxed mb-10 font-medium">
               {research.summary}
             </p>
 
@@ -181,7 +181,7 @@ const ResearchShow = ({ research }) => {
               ref={contentRef}
               className="prose prose-lg max-w-none opacity-0 translate-y-8 transition-all duration-700 ease-out
                          prose-headings:font-display prose-headings:text-[#1f2d2d]
-                         prose-p:text-[#5f6967] prose-p:leading-relaxed
+                         prose-p:text-[#5f6967] text-justify prose-p:leading-relaxed 
                          prose-a:text-[#bf5429] prose-a:no-underline hover:prose-a:underline
                          prose-strong:text-[#1f2d2d]
                          prose-img:rounded-2xl"

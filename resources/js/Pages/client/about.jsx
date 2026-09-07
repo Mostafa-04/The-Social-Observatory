@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const About = () => {
+const About = ({ countResearches }) => {
   const sectionRef = useRef(null);
   const titleRef = useRef(null);
   const contentRef = useRef(null);
@@ -103,13 +103,13 @@ const About = () => {
                 <div className="absolute -left-4 -top-4 text-[#bf5429]/10">
                   <span className="text-7xl font-serif">"</span>
                 </div>
-                <p className="text-lg text-[#5f6967] leading-relaxed font-light relative z-10">
+                <p className=" text-justify text-lg text-[#5f6967] leading-relaxed font-light relative z-10">
                   The Social Observatory is an independent, non-partisan institute dedicated to
                   understanding social transformation — from shifting labor markets to demographic
                   change, migration, and civic trust. We combine field research, data science,
                   and policy expertise to give decision-makers a clearer view of what's coming next.
                 </p>
-                <p className="mt-6 text-lg text-[#5f6967] leading-relaxed font-light">
+                <p className=" text-justify mt-6 text-lg text-[#5f6967] leading-relaxed font-light">
                   Our teams work directly with ministries, multilateral organizations, universities,
                   and civil society across Africa, Europe, and the MENA region — grounding every
                   recommendation in evidence gathered on the ground, not assumptions made from afar.
@@ -136,7 +136,7 @@ const About = () => {
                         <h3 className="font-display text-xl text-[#1f2d2d] mb-2 group-hover:text-[#bf5429] transition-colors duration-300">
                           {item.title}
                         </h3>
-                        <p className="text-sm text-[#5f6967] leading-relaxed">{item.description}</p>
+                        <p className="  text-sm text-[#5f6967] leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   );
@@ -146,11 +146,11 @@ const About = () => {
               <div className="mt-12 flex flex-wrap gap-8 items-center justify-center lg:justify-start">
                 <div className="flex items-center gap-2 text-[#5f6967]">
                   <Award className="w-5 h-5 text-[#bf5429]" />
-                  <span className="text-sm font-medium">ISO Certified 2024</span>
+                  <span className="text-sm font-medium">ISO Certified </span>
                 </div>
                 <div className="flex items-center gap-2 text-[#5f6967]">
                   <Users className="w-5 h-5 text-[#bf5429]" />
-                  <span className="text-sm font-medium">50+ Research Fellows</span>
+                  <span className="text-sm font-medium">{countResearches}+ Research Fellows</span>
                 </div>
                 <div className="flex items-center gap-2 text-[#5f6967]">
                   <CheckCircle className="w-5 h-5 text-[#bf5429]" />

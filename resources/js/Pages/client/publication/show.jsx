@@ -157,7 +157,7 @@ const PublicationShow = ({ publication }) => {
                 )}
               </div>
 
-              <p className="text-[#5f6967] leading-relaxed whitespace-pre-line">
+              <p className="text-justify text-[#5f6967] leading-relaxed whitespace-pre-line">
                 {publication.description}
               </p>
             </div>

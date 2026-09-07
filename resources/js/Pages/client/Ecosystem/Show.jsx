@@ -120,7 +120,7 @@ export default function EcosystemShow({ association: a }) {
                   <h2 className="font-display text-xl text-[#1f2d2d] mb-3">
                     About
                   </h2>
-                  <p className="text-[#5f6967] leading-relaxed">
+                  <p className="text-justify text-[#5f6967] leading-relaxed">
                     {a.description}
                   </p>
                 </div>

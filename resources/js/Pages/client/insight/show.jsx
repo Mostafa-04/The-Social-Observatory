@@ -158,7 +158,7 @@ const InsightShow = ({ insight }) => {
                     {formatDate(insight.published_at)}
                   </span>
                 )}
-                <span className="flex items-center gap-2">
+                <span className=" text-justify flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#bf5429]" />
                   {estimateReadTime(insight.content)}
                 </span>
@@ -185,7 +185,7 @@ const InsightShow = ({ insight }) => {
               ref={contentRef}
               className="prose prose-lg max-w-none opacity-0 translate-y-8 transition-all duration-700 ease-out
                          prose-headings:font-display prose-headings:text-[#1f2d2d]
-                         prose-p:text-[#5f6967] prose-p:leading-relaxed
+                         prose-p:text-[#5f6967] text-justify prose-p:leading-relaxed
                          prose-a:text-[#bf5429] prose-a:no-underline hover:prose-a:underline
                          prose-strong:text-[#1f2d2d]
                          prose-img:rounded-2xl"

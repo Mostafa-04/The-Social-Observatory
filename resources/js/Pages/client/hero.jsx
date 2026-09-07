@@ -51,7 +51,7 @@ const Stat = ({ end, suffix = "", label }) => {
     );
 };
 
-const Hero = () => {
+const Hero = ({countParteners, countPublications, countCountries}) => {
   const nodeFieldRef = useRef(null);
   const svgRef = useRef(null);
   const visualRef = useRef(null);
@@ -287,11 +287,11 @@ const Hero = () => {
               </div>
 
               <div className="mt-16 flex flex-wrap items-center gap-10 text-white/60 opacity-0 animate-[fadeInUp_0.6s_ease-out_1s_forwards]">
-                <Stat end={20} suffix="+" label="Countries studied" />
+                <Stat end={countCountries} suffix="+" label="Countries studied" />
                 <div className="w-px h-9 bg-white/10" />
-                <Stat end={60} suffix="+" label="Publications" />
+                <Stat end={countPublications} suffix="+" label="Publications" />
                 <div className="w-px h-9 bg-white/10" />
-                <Stat end={30} suffix="+" label="Strategic partners" />
+                <Stat end={countParteners} suffix="+" label="Strategic partners" />
               </div>
             </div>
 
