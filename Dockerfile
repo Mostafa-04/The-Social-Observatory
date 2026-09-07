@@ -3,6 +3,8 @@
 # ---- Frontend build ----
 FROM node:20-alpine AS frontend
 WORKDIR /app
+ARG VITE_APP_NAME
+ENV VITE_APP_NAME=$VITE_APP_NAME
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY resources ./resources

@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_APP_NAME: ${VITE_APP_NAME}
     ports:
       - "${APP_PORT:-8080}:80"
     env_file:
