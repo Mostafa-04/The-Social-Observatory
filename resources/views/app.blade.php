@@ -4,8 +4,6 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="index, follow">
-
-        <title inertia>The Social Observatory</title>
         <link rel="icon" type="image/x-icon" href="{{ asset('logo.png') }}">
         <link rel="canonical" href="{{ url()->current() }}" />
 
