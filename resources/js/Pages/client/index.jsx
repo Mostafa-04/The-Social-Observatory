@@ -31,7 +31,7 @@ function Index({
 }) {
     return (
         <div className="bg-[#eaece9]">
-            <Head title='The Social Observatory | Research & Social Anticipation'>
+            <Head title='Research & Social Anticipation'>
                 <meta
                     name="description"
                     content="The Social Observatory turns emerging social signals into rigorous evidence — helping governments, institutions, and communities anticipate change and act with confidence."
