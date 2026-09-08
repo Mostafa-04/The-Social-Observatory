@@ -29,7 +29,7 @@ const formatDate = (dateString) => {
  */
 const PublicationShow = ({ publication }) => {
     const [showDownloadModal, setShowDownloadModal] = useState(false);
-    const isIapsPublication = Number(publication.id) === 2;
+    const isIapsPublication = Number(publication.id) === 1;
     
 
   if (!publication) return null;
