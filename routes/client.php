@@ -9,8 +9,18 @@ use App\Http\Controllers\AssociationClientController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\GroupRegistrationController;
+use App\Http\Controllers\IapsSubmissionController;
 
 
+Route::get(
+    '/publications/{publication}/iaps-form',
+    [IapsSubmissionController::class, 'create']
+)->name('iaps.create');
+
+Route::post(
+    '/publications/{publication}/iaps-form',
+    [IapsSubmissionController::class, 'store']
+)->name('iaps.store');
 Route::get('/rejoindre-groupe', [GroupRegistrationController::class, 'create'])
     ->name('groups.join.create');
 Route::post('/rejoindre-groupe', [GroupRegistrationController::class, 'store'])

@@ -7,6 +7,7 @@ import {
   Globe,
   FileText,
   Download,
+  ClipboardList,
 } from 'lucide-react';
 import Nav from '../nav';
 import DownloadRequestModal from '../../../Components/DownloadRequestModal';
@@ -28,6 +29,8 @@ const formatDate = (dateString) => {
  */
 const PublicationShow = ({ publication }) => {
     const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const isIapsPublication = Number(publication.id) === 2;
+    
 
   if (!publication) return null;
 
@@ -120,6 +123,16 @@ const PublicationShow = ({ publication }) => {
                   <Download className="w-4 h-4" />
                   Download PDF
                 </button>
+              )}
+              
+              {isIapsPublication && (
+                <Link
+                  href={route('iaps.create', publication.id)}
+                  className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#bf5429] text-[#bf5429] hover:bg-[#bf5429] hover:text-white font-semibold py-3.5 transition-colors duration-300"
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  Co-construire l'IAPS
+                </Link>
               )}
                       </div>
             </div>

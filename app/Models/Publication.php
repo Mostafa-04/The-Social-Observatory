@@ -24,6 +24,11 @@ class Publication extends Model
         return $this->hasMany(PublicationDownload::class);
     }
 
+    public function iapsSubmissions()
+    {
+        return $this->hasMany(IapsSubmission::class);
+    }
+
     protected function casts(): array
     {
         return [

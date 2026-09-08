@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Form 
 } from "lucide-react";
 import { Link, usePage } from "@inertiajs/react";
 
@@ -44,6 +45,13 @@ const NAV = [
       { label: "Auteurs", icon: User, route: "authors.index" },
       { label: "Pays", icon: Globe, route: "countries.index" },
       { label: "Partenaires", icon: Handshake, route: "partners.index" },
+    ],
+  },
+    {
+    group: "Formulaires",
+    items: [
+      { label: "Soumissions IAPS", icon: Form , route: "iaps-submissions.index" },
+      { label: "Inscriptions de groupe", icon: Form, route: "group-registrations.index" },
     ],
   },
   {

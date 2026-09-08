@@ -20,6 +20,8 @@ use App\Http\Controllers\FormFieldController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\EventEmailCampaignController;
 use App\Http\Controllers\AssociationController;
+use App\Http\Controllers\IapsSubmissionController;
+use App\Http\Controllers\GroupRegistrationController;
 /*
 |--------------------------------------------------------------------------
 | Frontend (Client)
@@ -159,5 +161,16 @@ Route::post(
 )->name('associations.import');
 
 
+    Route::get('iaps-submissions', [IapsSubmissionController::class, 'index'])
+        ->name('iaps-submissions.index');
+
+    Route::get('iaps-submissions/{iapsSubmission}', [IapsSubmissionController::class, 'show'])
+        ->name('iaps-submissions.show');
+
+        Route::get('group-registrations', [GroupRegistrationController::class, 'index'])
+        ->name('group-registrations.index');
+
+    Route::get('group-registrations/{groupRegistration}', [GroupRegistrationController::class, 'show'])
+        ->name('group-registrations.show');
 });
 
