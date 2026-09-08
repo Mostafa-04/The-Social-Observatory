@@ -13,10 +13,174 @@ import {
     AlertCircle,
     X,
 } from "lucide-react";
-import { FaFacebookF, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa";
+import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa";
+
+
+function CountrySelect({ value, onChange, options }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const containerRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const listRef = useRef(null);
+
+    const selected = options.find((c) => c.code === value) || options[0];
+
+    const normalize = (str) =>
+        str
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+    const filtered = search.trim()
+        ? options.filter((c) => {
+              const q = normalize(search.trim());
+              return (
+                  normalize(c.name).includes(q) ||
+                  c.dial.replace("+", "").startsWith(search.replace("+", "").trim())
+              );
+          })
+        : options;
+
+    useEffect(() => {
+        if (isOpen) {
+            setSearch("");
+            setHighlightedIndex(0);
+            const t = setTimeout(() => searchInputRef.current?.focus(), 50);
+            return () => clearTimeout(t);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => setHighlightedIndex(0), [search]);
+
+    useEffect(() => {
+        if (isOpen && listRef.current) {
+            const item = listRef.current.children[highlightedIndex];
+            if (item) item.scrollIntoView({ block: "nearest" });
+        }
+    }, [highlightedIndex, isOpen]);
+
+    const handleKeyDown = (e) => {
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightedIndex((i) => Math.min(i + 1, filtered.length - 1));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightedIndex((i) => Math.max(i - 1, 0));
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            const picked = filtered[highlightedIndex];
+            if (picked) {
+                onChange(picked.code);
+                setIsOpen(false);
+            }
+        } else if (e.key === "Escape") {
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <button
+                type="button"
+                onClick={() => setIsOpen((o) => !o)}
+                className="flex h-full min-w-[92px] items-center gap-1.5 rounded-xl border border-[#d6d9d8] bg-white pl-3 pr-2 text-sm text-[#1f2d2d] transition-all duration-300 hover:border-[#bf5429]/50 focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20"
+            >
+                <span className="text-lg leading-none">{selected.flag}</span>
+                <span className="font-medium">{selected.dial}</span>
+                <svg
+                    className={`ml-auto h-3.5 w-3.5 text-[#5f6967] transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-20 mt-2 w-72 overflow-hidden rounded-xl border border-[#d6d9d8] bg-white shadow-2xl">
+                    <div className="border-b border-[#d6d9d8] p-2">
+                        <div className="relative">
+                            <svg
+                                className="absolute left-3 top-2.5 h-4 w-4 text-[#5f6967]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.35 4.35a7.5 7.5 0 0012.3 12.3z"
+                                />
+                            </svg>
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Pays ou indicatif..."
+                                className="w-full rounded-lg border border-[#d6d9d8] bg-[#f8f9f8] py-2 pl-9 pr-3 text-sm text-[#1f2d2d] placeholder:text-[#5f6967]/60 focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20"
+                            />
+                        </div>
+                    </div>
+
+                    <ul ref={listRef} className="max-h-64 overflow-y-auto py-1">
+                        {filtered.length === 0 && (
+                            <li className="px-4 py-3 text-center text-sm text-[#5f6967]">Aucun résultat</li>
+                        )}
+                        {filtered.map((c, index) => (
+                            <li key={c.code}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(c.code);
+                                        setIsOpen(false);
+                                    }}
+                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-150 ${
+                                        index === highlightedIndex ? "bg-[#bf5429]/10" : ""
+                                    } ${c.code === value ? "font-semibold text-[#bf5429]" : "text-[#1f2d2d]"}`}
+                                >
+                                    <span className="text-lg leading-none">{c.flag}</span>
+                                    <span className="flex-grow truncate">{c.name}</span>
+                                    <span className="text-xs text-[#5f6967]">{c.dial}</span>
+                                    {c.code === value && (
+                                        <svg
+                                            className="h-4 w-4 flex-shrink-0 text-[#bf5429]"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
 
 const SOCIAL_NETWORKS = [
-    { key: "facebook", icon: FaFacebookF, label: "Facebook" },
+    { key: "facebook", icon: FaInstagram, label: "Instagram" },
     { key: "linkedin", icon: FaLinkedin, label: "LinkedIn" },
     { key: "twitter", icon: FaTwitter, label: "Twitter" },
     { key: "youtube", icon: FaYoutube, label: "YouTube" },
@@ -25,6 +189,8 @@ const SOCIAL_NETWORKS = [
 // Liste des pays africains avec indicatif téléphonique (Maroc par défaut en premier)
 const COUNTRIES = [
     { code: "MA", name: "Maroc", dial: "+212", flag: "🇲🇦" },
+
+    // Afrique
     { code: "DZ", name: "Algérie", dial: "+213", flag: "🇩🇿" },
     { code: "AO", name: "Angola", dial: "+244", flag: "🇦🇴" },
     { code: "BJ", name: "Bénin", dial: "+229", flag: "🇧🇯" },
@@ -78,6 +244,157 @@ const COUNTRIES = [
     { code: "UG", name: "Ouganda", dial: "+256", flag: "🇺🇬" },
     { code: "ZM", name: "Zambie", dial: "+260", flag: "🇿🇲" },
     { code: "ZW", name: "Zimbabwe", dial: "+263", flag: "🇿🇼" },
+
+    // Europe
+    { code: "AL", name: "Albanie", dial: "+355", flag: "🇦🇱" },
+    { code: "AD", name: "Andorre", dial: "+376", flag: "🇦🇩" },
+    { code: "AT", name: "Autriche", dial: "+43", flag: "🇦🇹" },
+    { code: "BY", name: "Biélorussie", dial: "+375", flag: "🇧🇾" },
+    { code: "BE", name: "Belgique", dial: "+32", flag: "🇧🇪" },
+    { code: "BA", name: "Bosnie-Herzégovine", dial: "+387", flag: "🇧🇦" },
+    { code: "BG", name: "Bulgarie", dial: "+359", flag: "🇧🇬" },
+    { code: "HR", name: "Croatie", dial: "+385", flag: "🇭🇷" },
+    { code: "CY", name: "Chypre", dial: "+357", flag: "🇨🇾" },
+    { code: "CZ", name: "Tchéquie", dial: "+420", flag: "🇨🇿" },
+    { code: "DK", name: "Danemark", dial: "+45", flag: "🇩🇰" },
+    { code: "EE", name: "Estonie", dial: "+372", flag: "🇪🇪" },
+    { code: "FI", name: "Finlande", dial: "+358", flag: "🇫🇮" },
+    { code: "FR", name: "France", dial: "+33", flag: "🇫🇷" },
+    { code: "DE", name: "Allemagne", dial: "+49", flag: "🇩🇪" },
+    { code: "GR", name: "Grèce", dial: "+30", flag: "🇬🇷" },
+    { code: "HU", name: "Hongrie", dial: "+36", flag: "🇭🇺" },
+    { code: "IS", name: "Islande", dial: "+354", flag: "🇮🇸" },
+    { code: "IE", name: "Irlande", dial: "+353", flag: "🇮🇪" },
+    { code: "IT", name: "Italie", dial: "+39", flag: "🇮🇹" },
+    { code: "XK", name: "Kosovo", dial: "+383", flag: "🇽🇰" },
+    { code: "LV", name: "Lettonie", dial: "+371", flag: "🇱🇻" },
+    { code: "LI", name: "Liechtenstein", dial: "+423", flag: "🇱🇮" },
+    { code: "LT", name: "Lituanie", dial: "+370", flag: "🇱🇹" },
+    { code: "LU", name: "Luxembourg", dial: "+352", flag: "🇱🇺" },
+    { code: "MT", name: "Malte", dial: "+356", flag: "🇲🇹" },
+    { code: "MD", name: "Moldavie", dial: "+373", flag: "🇲🇩" },
+    { code: "MC", name: "Monaco", dial: "+377", flag: "🇲🇨" },
+    { code: "ME", name: "Monténégro", dial: "+382", flag: "🇲🇪" },
+    { code: "NL", name: "Pays-Bas", dial: "+31", flag: "🇳🇱" },
+    { code: "MK", name: "Macédoine du Nord", dial: "+389", flag: "🇲🇰" },
+    { code: "NO", name: "Norvège", dial: "+47", flag: "🇳🇴" },
+    { code: "PL", name: "Pologne", dial: "+48", flag: "🇵🇱" },
+    { code: "PT", name: "Portugal", dial: "+351", flag: "🇵🇹" },
+    { code: "RO", name: "Roumanie", dial: "+40", flag: "🇷🇴" },
+    { code: "RU", name: "Russie", dial: "+7", flag: "🇷🇺" },
+    { code: "SM", name: "Saint-Marin", dial: "+378", flag: "🇸🇲" },
+    { code: "RS", name: "Serbie", dial: "+381", flag: "🇷🇸" },
+    { code: "SK", name: "Slovaquie", dial: "+421", flag: "🇸🇰" },
+    { code: "SI", name: "Slovénie", dial: "+386", flag: "🇸🇮" },
+    { code: "ES", name: "Espagne", dial: "+34", flag: "🇪🇸" },
+    { code: "SE", name: "Suède", dial: "+46", flag: "🇸🇪" },
+    { code: "CH", name: "Suisse", dial: "+41", flag: "🇨🇭" },
+    { code: "UA", name: "Ukraine", dial: "+380", flag: "🇺🇦" },
+    { code: "GB", name: "Royaume-Uni", dial: "+44", flag: "🇬🇧" },
+    { code: "VA", name: "Vatican", dial: "+379", flag: "🇻🇦" },
+
+    // Asie
+    { code: "AF", name: "Afghanistan", dial: "+93", flag: "🇦🇫" },
+    { code: "AM", name: "Arménie", dial: "+374", flag: "🇦🇲" },
+    { code: "AZ", name: "Azerbaïdjan", dial: "+994", flag: "🇦🇿" },
+    { code: "BH", name: "Bahreïn", dial: "+973", flag: "🇧🇭" },
+    { code: "BD", name: "Bangladesh", dial: "+880", flag: "🇧🇩" },
+    { code: "BT", name: "Bhoutan", dial: "+975", flag: "🇧🇹" },
+    { code: "BN", name: "Brunei", dial: "+673", flag: "🇧🇳" },
+    { code: "KH", name: "Cambodge", dial: "+855", flag: "🇰🇭" },
+    { code: "CN", name: "Chine", dial: "+86", flag: "🇨🇳" },
+    { code: "GE", name: "Géorgie", dial: "+995", flag: "🇬🇪" },
+    { code: "IN", name: "Inde", dial: "+91", flag: "🇮🇳" },
+    { code: "ID", name: "Indonésie", dial: "+62", flag: "🇮🇩" },
+    { code: "IR", name: "Iran", dial: "+98", flag: "🇮🇷" },
+    { code: "IQ", name: "Irak", dial: "+964", flag: "🇮🇶" },
+    { code: "IL", name: "Israël", dial: "+972", flag: "🇮🇱" },
+    { code: "JP", name: "Japon", dial: "+81", flag: "🇯🇵" },
+    { code: "JO", name: "Jordanie", dial: "+962", flag: "🇯🇴" },
+    { code: "KZ", name: "Kazakhstan", dial: "+7", flag: "🇰🇿" },
+    { code: "KW", name: "Koweït", dial: "+965", flag: "🇰🇼" },
+    { code: "KG", name: "Kirghizistan", dial: "+996", flag: "🇰🇬" },
+    { code: "LA", name: "Laos", dial: "+856", flag: "🇱🇦" },
+    { code: "LB", name: "Liban", dial: "+961", flag: "🇱🇧" },
+    { code: "MY", name: "Malaisie", dial: "+60", flag: "🇲🇾" },
+    { code: "MV", name: "Maldives", dial: "+960", flag: "🇲🇻" },
+    { code: "MN", name: "Mongolie", dial: "+976", flag: "🇲🇳" },
+    { code: "MM", name: "Myanmar", dial: "+95", flag: "🇲🇲" },
+    { code: "NP", name: "Népal", dial: "+977", flag: "🇳🇵" },
+    { code: "KP", name: "Corée du Nord", dial: "+850", flag: "🇰🇵" },
+    { code: "OM", name: "Oman", dial: "+968", flag: "🇴🇲" },
+    { code: "PK", name: "Pakistan", dial: "+92", flag: "🇵🇰" },
+    { code: "PS", name: "Palestine", dial: "+970", flag: "🇵🇸" },
+    { code: "PH", name: "Philippines", dial: "+63", flag: "🇵🇭" },
+    { code: "QA", name: "Qatar", dial: "+974", flag: "🇶🇦" },
+    { code: "SA", name: "Arabie saoudite", dial: "+966", flag: "🇸🇦" },
+    { code: "SG", name: "Singapour", dial: "+65", flag: "🇸🇬" },
+    { code: "KR", name: "Corée du Sud", dial: "+82", flag: "🇰🇷" },
+    { code: "LK", name: "Sri Lanka", dial: "+94", flag: "🇱🇰" },
+    { code: "SY", name: "Syrie", dial: "+963", flag: "🇸🇾" },
+    { code: "TW", name: "Taïwan", dial: "+886", flag: "🇹🇼" },
+    { code: "TJ", name: "Tadjikistan", dial: "+992", flag: "🇹🇯" },
+    { code: "TH", name: "Thaïlande", dial: "+66", flag: "🇹🇭" },
+    { code: "TL", name: "Timor oriental", dial: "+670", flag: "🇹🇱" },
+    { code: "TR", name: "Turquie", dial: "+90", flag: "🇹🇷" },
+    { code: "TM", name: "Turkménistan", dial: "+993", flag: "🇹🇲" },
+    { code: "AE", name: "Émirats arabes unis", dial: "+971", flag: "🇦🇪" },
+    { code: "UZ", name: "Ouzbékistan", dial: "+998", flag: "🇺🇿" },
+    { code: "VN", name: "Vietnam", dial: "+84", flag: "🇻🇳" },
+    { code: "YE", name: "Yémen", dial: "+967", flag: "🇾🇪" },
+
+    // Amérique
+    { code: "AG", name: "Antigua-et-Barbuda", dial: "+1268", flag: "🇦🇬" },
+    { code: "AR", name: "Argentine", dial: "+54", flag: "🇦🇷" },
+    { code: "BS", name: "Bahamas", dial: "+1242", flag: "🇧🇸" },
+    { code: "BB", name: "Barbade", dial: "+1246", flag: "🇧🇧" },
+    { code: "BZ", name: "Belize", dial: "+501", flag: "🇧🇿" },
+    { code: "BO", name: "Bolivie", dial: "+591", flag: "🇧🇴" },
+    { code: "BR", name: "Brésil", dial: "+55", flag: "🇧🇷" },
+    { code: "CA", name: "Canada", dial: "+1", flag: "🇨🇦" },
+    { code: "CL", name: "Chili", dial: "+56", flag: "🇨🇱" },
+    { code: "CO", name: "Colombie", dial: "+57", flag: "🇨🇴" },
+    { code: "CR", name: "Costa Rica", dial: "+506", flag: "🇨🇷" },
+    { code: "CU", name: "Cuba", dial: "+53", flag: "🇨🇺" },
+    { code: "DM", name: "Dominique", dial: "+1767", flag: "🇩🇲" },
+    { code: "DO", name: "République dominicaine", dial: "+1809", flag: "🇩🇴" },
+    { code: "EC", name: "Équateur", dial: "+593", flag: "🇪🇨" },
+    { code: "SV", name: "Salvador", dial: "+503", flag: "🇸🇻" },
+    { code: "GD", name: "Grenade", dial: "+1473", flag: "🇬🇩" },
+    { code: "GT", name: "Guatemala", dial: "+502", flag: "🇬🇹" },
+    { code: "GY", name: "Guyana", dial: "+592", flag: "🇬🇾" },
+    { code: "HT", name: "Haïti", dial: "+509", flag: "🇭🇹" },
+    { code: "HN", name: "Honduras", dial: "+504", flag: "🇭🇳" },
+    { code: "JM", name: "Jamaïque", dial: "+1876", flag: "🇯🇲" },
+    { code: "MX", name: "Mexique", dial: "+52", flag: "🇲🇽" },
+    { code: "NI", name: "Nicaragua", dial: "+505", flag: "🇳🇮" },
+    { code: "PA", name: "Panama", dial: "+507", flag: "🇵🇦" },
+    { code: "PY", name: "Paraguay", dial: "+595", flag: "🇵🇾" },
+    { code: "PE", name: "Pérou", dial: "+51", flag: "🇵🇪" },
+    { code: "KN", name: "Saint-Christophe-et-Niévès", dial: "+1869", flag: "🇰🇳" },
+    { code: "LC", name: "Sainte-Lucie", dial: "+1758", flag: "🇱🇨" },
+    { code: "VC", name: "Saint-Vincent-et-les-Grenadines", dial: "+1784", flag: "🇻🇨" },
+    { code: "SR", name: "Suriname", dial: "+597", flag: "🇸🇷" },
+    { code: "TT", name: "Trinité-et-Tobago", dial: "+1868", flag: "🇹🇹" },
+    { code: "US", name: "États-Unis", dial: "+1", flag: "🇺🇸" },
+    { code: "UY", name: "Uruguay", dial: "+598", flag: "🇺🇾" },
+    { code: "VE", name: "Venezuela", dial: "+58", flag: "🇻🇪" },
+
+    // Océanie
+    { code: "AU", name: "Australie", dial: "+61", flag: "🇦🇺" },
+    { code: "FJ", name: "Fidji", dial: "+679", flag: "🇫🇯" },
+    { code: "KI", name: "Kiribati", dial: "+686", flag: "🇰🇮" },
+    { code: "MH", name: "Îles Marshall", dial: "+692", flag: "🇲🇭" },
+    { code: "FM", name: "Micronésie", dial: "+691", flag: "🇫🇲" },
+    { code: "NR", name: "Nauru", dial: "+674", flag: "🇳🇷" },
+    { code: "NZ", name: "Nouvelle-Zélande", dial: "+64", flag: "🇳🇿" },
+    { code: "PW", name: "Palaos", dial: "+680", flag: "🇵🇼" },
+    { code: "PG", name: "Papouasie-Nouvelle-Guinée", dial: "+675", flag: "🇵🇬" },
+    { code: "WS", name: "Samoa", dial: "+685", flag: "🇼🇸" },
+    { code: "SB", name: "Îles Salomon", dial: "+677", flag: "🇸🇧" },
+    { code: "TO", name: "Tonga", dial: "+676", flag: "🇹🇴" },
+    { code: "TV", name: "Tuvalu", dial: "+688", flag: "🇹🇻" },
+    { code: "VU", name: "Vanuatu", dial: "+678", flag: "🇻🇺" },
 ];
 
 // Composant Toast personnalisé
@@ -419,57 +736,21 @@ export default function ContactForm({ settings = {} }) {
                                     </div>
                                 </div>
 
-                                <div className="grid gap-6 md:grid-cols-2">
-                                    <div className="group/field">
-                                        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
-                                            Phone
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <select
-                                                value={data.country}
-                                                onChange={(e) => setData("country", e.target.value)}
-                                                className="rounded-xl border border-[#d6d9d8] bg-white px-2 text-sm text-[#1f2d2d] focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20 hover:border-[#bf5429]/50 transition-all duration-300 max-w-[160px]"
-                                            >
-                                                {COUNTRIES.map((c) => (
-                                                    <option key={c.code} value={c.code}>
-                                                        {c.flag} {c.name} ({c.dial})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div className="relative flex-grow">
-                                                <Phone className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
-                                                <input
-                                                    type="text"
-                                                    value={data.phone}
-                                                    onChange={(e) => setData("phone", e.target.value)}
-                                                    className={`${inputClasses} ${localErrors.phone ? "border-red-500 ring-2 ring-red-200" : ""}`}
-                                                    placeholder="6XX XXX XXX"
-                                                />
-                                            </div>
-                                        </div>
-                                        {localErrors.phone && (
-                                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1 font-medium">
-                                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                                {localErrors.phone}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="group/field">
-                                        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d] group-hover/field:text-[#bf5429] transition-colors duration-300">
-                                            Organization
-                                        </label>
-                                        <div className="relative">
-                                            <Building2 className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
-                                            <input
-                                                type="text"
-                                                value={data.organization}
-                                                onChange={(e) => setData("organization", e.target.value)}
-                                                className={inputClasses}
-                                                placeholder="Your organization (optional)"
-                                            />
-                                        </div>
-
+                                <div className="flex gap-2">
+                                    <CountrySelect
+                                        value={data.country}
+                                        onChange={(code) => setData("country", code)}
+                                        options={COUNTRIES}
+                                    />
+                                    <div className="relative flex-grow">
+                                        <Phone className="absolute left-4 top-3.5 h-5 w-5 text-[#5f6967] group-focus-within:text-[#bf5429] transition-colors duration-300" />
+                                        <input
+                                            type="text"
+                                            value={data.phone}
+                                            onChange={(e) => setData("phone", e.target.value)}
+                                            className={`${inputClasses} ${localErrors.phone ? "border-red-500 ring-2 ring-red-200" : ""}`}
+                                            placeholder="6XX XXX XXX"
+                                        />
                                     </div>
                                 </div>
 

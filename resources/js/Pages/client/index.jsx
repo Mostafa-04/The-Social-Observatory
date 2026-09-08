@@ -82,10 +82,10 @@ function Index({
                 <About countResearches={countResearches} />
                 <AfricaProjectsSection countParteners={countParteners} countProjets={countProjets} countCountries={countCountries}  projectCountries={africaProjectCountries} />
                 <AreasOfFocus />
-                <StatsCards stats={stats} />
-                <FeaturedResearch researches={researches} />
+                {/* <StatsCards stats={stats} /> */}
+                {/* <FeaturedResearch researches={researches} /> */}
                 <FeaturedPublications publications={publications} />
-                <LatestInsights insights={insights} />
+                {/* <LatestInsights insights={insights} /> */}
                 <Events events={events} />
                 <ContactForm settings={settings} />
                 <Partners partners={partners} />

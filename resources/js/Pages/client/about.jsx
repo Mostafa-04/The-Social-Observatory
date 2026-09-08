@@ -42,35 +42,33 @@ const About = ({ countResearches }) => {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  const values = [
-    {
-      title: 'Independent',
-      description: 'Non-partisan by charter, funded through diversified research grants.',
-      icon: Shield,
-    },
-    {
-      title: 'Evidence-first',
-      description: 'Every recommendation is traced back to primary data and field research.',
-      icon: BarChart3,
-    },
-    {
-      title: 'Field-rooted',
-      description: 'Researchers embedded across the communities and institutions we study.',
-      icon: Globe,
-    },
-  ];
+const values = [
+{
+title: 'Social Progress',
+description:
+'Our work serves one end: measurable social progress, dignity, cohesion, and shared opportunity for all.                        ',
+icon: TrendingUp,
+},
+{
+title: 'Evidence-Based',
+description:
+'We generate robust evidence through qualitative and quantitative research, grounded in reliable data and diverse perspectives.',
+icon: BarChart3,
+},
+{
+title: 'Human-Centered',
+description:
+'We place people’s lived experiences, needs, and aspirations at the center of policy design, programs, and social innovation.',
+icon: Users,
+},
+];
+
 
   return (
     <section id="about" ref={sectionRef} className="relative py-14 lg:py-16 overflow-hidden">
       <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[#bf5429]/5 blur-3xl" />
       <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-[#324949]/5 blur-3xl" />
 
-      <div className="absolute top-20 left-10 opacity-10 animate-[float_6s_ease-in-out_infinite]">
-        <Sparkles className="w-16 h-16 text-[#bf5429]" />
-      </div>
-      <div className="absolute bottom-20 right-10 opacity-10 animate-[float_8s_ease-in-out_infinite_delay]">
-        <TrendingUp className="w-16 h-16 text-[#bf5429]" />
-      </div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-10 relative">
         <div className="grid lg:grid-cols-12 gap-16 items-start">
@@ -103,17 +101,21 @@ const About = ({ countResearches }) => {
                 <div className="absolute -left-4 -top-4 text-[#bf5429]/10">
                   <span className="text-7xl font-serif">"</span>
                 </div>
-                <p className=" text-justify text-lg text-[#5f6967] leading-relaxed font-light relative z-10">
-                  The Social Observatory is an independent, non-partisan institute dedicated to
-                  understanding social transformation — from shifting labor markets to demographic
-                  change, migration, and civic trust. We combine field research, data science,
-                  and policy expertise to give decision-makers a clearer view of what's coming next.
-                </p>
-                <p className=" text-justify mt-6 text-lg text-[#5f6967] leading-relaxed font-light">
-                  Our teams work directly with ministries, multilateral organizations, universities,
-                  and civil society across Africa, Europe, and the MENA region — grounding every
-                  recommendation in evidence gathered on the ground, not assumptions made from afar.
-                </p>
+                  <p className="text-justify text-lg text-[#5f6967] leading-relaxed font-light relative z-10">
+                    The Social Observatory is a non-partisan association conceived as a Think & Do Tank,
+                    headquartered in Casablanca, Morocco, and working across the African continent.
+                    We are dedicated to understanding social transformation and turning knowledge into action,
+                    with a focus on measurable social progress, dignity, cohesion, and shared opportunity.
+                  </p>
+
+                  <p className="text-justify mt-6 text-lg text-[#5f6967] leading-relaxed font-light">
+                    We combine robust qualitative and quantitative research, social dialogue, social advocacy,
+                    and social audit and social progress assessment to generate evidence, anticipate emerging
+                    trends, and support evidence-based, citizen-centered action. Our work brings together
+                    social intelligence, foresight, and a territorial approach to better understand people's
+                    lived experiences, needs, aspirations, and the realities of communities across Africa.
+                  </p>
+
               </div>
 
               <div className="mt-12 grid sm:grid-cols-3 gap-6 border-t border-[#d6d9d8] pt-12">
@@ -136,26 +138,11 @@ const About = ({ countResearches }) => {
                         <h3 className="font-display text-xl text-[#1f2d2d] mb-2 group-hover:text-[#bf5429] transition-colors duration-300">
                           {item.title}
                         </h3>
-                        <p className="  text-sm text-[#5f6967] leading-relaxed">{item.description}</p>
+                        <p className="text-sm text-[#5f6967] leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-
-              <div className="mt-12 flex flex-wrap gap-8 items-center justify-center lg:justify-start">
-                <div className="flex items-center gap-2 text-[#5f6967]">
-                  <Award className="w-5 h-5 text-[#bf5429]" />
-                  <span className="text-sm font-medium">ISO Certified </span>
-                </div>
-                <div className="flex items-center gap-2 text-[#5f6967]">
-                  <Users className="w-5 h-5 text-[#bf5429]" />
-                  <span className="text-sm font-medium">{countResearches}+ Research Fellows</span>
-                </div>
-                <div className="flex items-center gap-2 text-[#5f6967]">
-                  <CheckCircle className="w-5 h-5 text-[#bf5429]" />
-                  <span className="text-sm font-medium">UN Consultative Status</span>
-                </div>
               </div>
             </div>
           </div>

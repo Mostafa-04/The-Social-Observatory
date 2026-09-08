@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -14,6 +13,10 @@ import {
 
 function LatestContentPopup({ content }) {
     const [visible, setVisible] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [hasLoadedPreview, setHasLoadedPreview] = useState(false);
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+    const hoverTimerRef = useRef(null);
 
     /*
     |--------------------------------------------------------------------------
@@ -28,7 +31,6 @@ function LatestContentPopup({ content }) {
 
         let hideTimer;
 
-        // Première apparition après 1 seconde
         const initialTimer = setTimeout(() => {
             setVisible(true);
 
@@ -37,7 +39,6 @@ function LatestContentPopup({ content }) {
             }, 5000);
         }, 1000);
 
-        // Réapparition toutes les 20 secondes
         const showTimer = setInterval(() => {
             setVisible(true);
 
@@ -53,82 +54,82 @@ function LatestContentPopup({ content }) {
         };
     }, [content]);
 
+    // Déclenche le chargement de l'iframe seulement après un petit délai
+    // au survol, pour éviter de charger inutilement si l'utilisateur ne
+    // fait que passer rapidement au-dessus de la carte.
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+        hoverTimerRef.current = setTimeout(() => {
+            setHasLoadedPreview(true);
+        }, 250);
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+        clearTimeout(hoverTimerRef.current);
+    };
+
     if (!content) {
         return null;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Icon
+    | Icon / Label / Message
     |--------------------------------------------------------------------------
     */
 
     const getIcon = () => {
         switch (content.type) {
             case 'research':
-                return <BookOpen className="w-6 h-6" strokeWidth={1.5} />;
-
+                return <BookOpen className="w-5 h-5" strokeWidth={1.5} />;
             case 'insight':
-                return <Lightbulb className="w-6 h-6" strokeWidth={1.5} />;
-
+                return <Lightbulb className="w-5 h-5" strokeWidth={1.5} />;
             case 'publication':
-                return <FileText className="w-6 h-6" strokeWidth={1.5} />;
-
+                return <FileText className="w-5 h-5" strokeWidth={1.5} />;
             case 'event':
-                return <CalendarDays className="w-6 h-6" strokeWidth={1.5} />;
-
+                return <CalendarDays className="w-5 h-5" strokeWidth={1.5} />;
             default:
-                return <Bell className="w-6 h-6" strokeWidth={1.5} />;
+                return <Bell className="w-5 h-5" strokeWidth={1.5} />;
         }
     };
-
-    /*
-    |--------------------------------------------------------------------------
-    | Label
-    |--------------------------------------------------------------------------
-    */
 
     const getLabel = () => {
         switch (content.type) {
             case 'research':
                 return 'Nouvelle recherche';
-
             case 'insight':
                 return 'Nouvel insight';
-
             case 'publication':
                 return 'Nouvelle publication';
-
             case 'event':
                 return 'Nouvel événement';
-
             default:
                 return 'Nouveau contenu';
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | Message
-    |--------------------------------------------------------------------------
-    */
-
     const getMessage = () => {
         switch (content.type) {
             case 'research':
                 return 'Une nouvelle recherche vient d’être publiée.';
-
             case 'insight':
                 return 'Un nouvel insight vient d’être publié.';
-
             case 'publication':
                 return 'Une nouvelle publication est maintenant disponible.';
-
             case 'event':
                 return 'Un nouvel événement vient d’être annoncé.';
-
             default:
                 return 'Un nouveau contenu vient d’être publié.';
+        }
+    };
+
+    const getPreviewPath = () => {
+        try {
+            const url = new URL(content.url, window.location.origin);
+            return url.pathname;
+        } catch {
+            return content.url;
         }
     };
 
@@ -140,7 +141,7 @@ function LatestContentPopup({ content }) {
                 bottom-5
                 z-[9999]
                 w-[calc(100%-2.5rem)]
-                max-w-[390px]
+                max-w-[320px]
 
                 transition-all
                 duration-700
@@ -153,10 +154,136 @@ function LatestContentPopup({ content }) {
                 }
             `}
         >
-            <div
+            {/* ----------------------------------------------------------- */}
+            {/* Aperçu live de la page (iframe) — flotte au-dessus de la carte */}
+            {/* ----------------------------------------------------------- */}
+            {hasLoadedPreview && (
+                <div
+                    className={`
+                        absolute
+                        bottom-full
+                        right-0
+                        mb-3
+                        w-[340px]
+                        h-[220px]
+
+                        origin-bottom-right
+
+                        transition-all
+                        duration-300
+                        ease-out
+
+                        ${
+                            isHovered
+                                ? 'opacity-100 scale-100 translate-y-0'
+                                : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
+                        }
+                    `}
+                >
+                    <div
+                        className="
+                            relative
+                            h-full
+                            w-full
+                            overflow-hidden
+                            rounded-xl
+
+                            border
+                            border-[#d6d9d8]
+
+                            bg-white
+
+                            shadow-[0_20px_50px_rgba(31,45,45,0.25)]
+                        "
+                    >
+                        {/* Barre de titre façon navigateur */}
+                        <div
+                            className="
+                                flex
+                                items-center
+                                gap-1.5
+                                border-b
+                                border-[#d6d9d8]
+                                bg-[#eaece9]
+                                px-3
+                                py-2
+                            "
+                        >
+                            <span className="w-2 h-2 rounded-full bg-[#d6d9d8]" />
+                            <span className="w-2 h-2 rounded-full bg-[#d6d9d8]" />
+                            <span className="w-2 h-2 rounded-full bg-[#d6d9d8]" />
+                            <span className="ml-2 truncate text-[10px] font-light text-[#5f6967]">
+                                {getPreviewPath()}
+                            </span>
+                        </div>
+
+                        {/* Spinner de chargement */}
+                        {!iframeLoaded && (
+                            <div className="absolute inset-0 top-8 flex items-center justify-center bg-white">
+                                <div
+                                    className="
+                                        h-6
+                                        w-6
+                                        animate-spin
+                                        rounded-full
+                                        border-2
+                                        border-[#d6d9d8]
+                                        border-t-[#bf5429]
+                                    "
+                                />
+                            </div>
+                        )}
+
+                        {/* Iframe mis à l'échelle pour montrer la page complète */}
+                        <div
+                            className="absolute inset-0 top-8 overflow-hidden"
+                            style={{ pointerEvents: 'none' }}
+                        >
+                            <iframe
+                                src={content.url}
+                                title={content.title}
+                                onLoad={() => setIframeLoaded(true)}
+                                loading="lazy"
+                                style={{
+                                    width: '1280px',
+                                    height: '840px',
+                                    border: 'none',
+                                    transform: 'scale(0.266)',
+                                    transformOrigin: 'top left',
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Petite pointe façon bulle, pointant vers la carte */}
+                    <div
+                        className="
+                            absolute
+                            -bottom-1.5
+                            right-8
+                            h-3
+                            w-3
+                            rotate-45
+                            border-b
+                            border-r
+                            border-[#d6d9d8]
+                            bg-white
+                        "
+                    />
+                </div>
+            )}
+
+            {/* ----------------------------------------------------------- */}
+            {/* Carte principale */}
+            {/* ----------------------------------------------------------- */}
+            <Link
+                href={content.url}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 className="
                     group
                     relative
+                    block
                     overflow-hidden
                     rounded-2xl
 
@@ -172,20 +299,16 @@ function LatestContentPopup({ content }) {
 
                     hover:border-[#bf5429]
                     hover:shadow-[0_25px_60px_rgba(31,45,45,0.22)]
+                    hover:-translate-y-1
                 "
             >
-
-                {/* ------------------------------------------------------- */}
-                {/* Decorative background */}
-                {/* ------------------------------------------------------- */}
-
                 <div
                     className="
                         absolute
-                        -top-20
-                        -right-20
-                        w-40
-                        h-40
+                        -top-16
+                        -right-16
+                        w-32
+                        h-32
                         rounded-full
                         bg-[#bf5429]/10
                         blur-3xl
@@ -196,10 +319,10 @@ function LatestContentPopup({ content }) {
                 <div
                     className="
                         absolute
-                        -bottom-20
-                        -left-20
-                        w-40
-                        h-40
+                        -bottom-16
+                        -left-16
+                        w-32
+                        h-32
                         rounded-full
                         bg-[#324949]/10
                         blur-3xl
@@ -207,43 +330,16 @@ function LatestContentPopup({ content }) {
                     "
                 />
 
-                {/* Small decorative sparkle */}
-                <div
-                    className="
-                        absolute
-                        top-4
-                        right-14
-                        opacity-10
-                        pointer-events-none
-                    "
-                >
-                    <Sparkles
-                        className="w-10 h-10 text-[#bf5429]"
-                        strokeWidth={1}
-                    />
+                <div className="absolute top-3 right-12 opacity-10 pointer-events-none">
+                    <Sparkles className="w-8 h-8 text-[#bf5429]" strokeWidth={1} />
                 </div>
-
-                {/* ------------------------------------------------------- */}
-                {/* Top accent */}
-                {/* ------------------------------------------------------- */}
 
                 <div className="h-1 w-full bg-gradient-to-r from-[#bf5429] to-transparent" />
 
-                {/* ------------------------------------------------------- */}
-                {/* Content */}
-                {/* ------------------------------------------------------- */}
-
-                <div className="relative p-5">
-
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-4">
-
-                        <div className="flex items-center gap-3">
-
-                            {/* Icon */}
+                <div className="relative p-4">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
                             <div className="relative">
-
-                                {/* Glow */}
                                 <div
                                     className="
                                         absolute
@@ -257,13 +353,12 @@ function LatestContentPopup({ content }) {
                                         group-hover:opacity-100
                                     "
                                 />
-
                                 <div
                                     className="
                                         relative
                                         flex
-                                        w-12
-                                        h-12
+                                        w-10
+                                        h-10
                                         items-center
                                         justify-center
                                         rounded-full
@@ -284,17 +379,14 @@ function LatestContentPopup({ content }) {
                                 </div>
                             </div>
 
-                            {/* Label */}
                             <div>
-
-                                <div className="flex items-center gap-2">
-
+                                <div className="flex items-center gap-1.5">
                                     <span
                                         className="
-                                            text-xs
+                                            text-[11px]
                                             font-medium
                                             uppercase
-                                            tracking-[0.15em]
+                                            tracking-[0.12em]
                                             text-[#324949]
                                         "
                                     >
@@ -305,10 +397,10 @@ function LatestContentPopup({ content }) {
                                         className="
                                             rounded-full
                                             bg-[#bf5429]
-                                            px-2
+                                            px-1.5
                                             py-0.5
 
-                                            text-[9px]
+                                            text-[8px]
                                             font-bold
                                             tracking-wider
                                             text-white
@@ -316,20 +408,23 @@ function LatestContentPopup({ content }) {
                                     >
                                         NEW
                                     </span>
-
                                 </div>
-
                             </div>
                         </div>
 
-                        {/* Close button */}
                         <button
                             type="button"
-                            onClick={() => setVisible(false)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setVisible(false);
+                            }}
                             className="
+                                relative
+                                z-10
                                 flex
-                                h-8
-                                w-8
+                                h-7
+                                w-7
                                 shrink-0
                                 items-center
                                 justify-center
@@ -346,24 +441,16 @@ function LatestContentPopup({ content }) {
                             "
                             aria-label="Fermer"
                         >
-                            <X
-                                className="w-4 h-4"
-                                strokeWidth={1.8}
-                            />
+                            <X className="w-3.5 h-3.5" strokeWidth={1.8} />
                         </button>
                     </div>
 
-                    {/* --------------------------------------------------- */}
-                    {/* Title */}
-                    {/* --------------------------------------------------- */}
-
-                    <div className="mt-5">
-
+                    <div className="mt-4">
                         <h3
                             className="
                                 line-clamp-2
                                 font-display
-                                text-xl
+                                text-base
                                 leading-snug
                                 font-medium
                                 text-[#1f2d2d]
@@ -377,12 +464,11 @@ function LatestContentPopup({ content }) {
                             {content.title}
                         </h3>
 
-                        {/* Small separator */}
                         <div
                             className="
-                                mt-3
+                                mt-2.5
                                 h-[2px]
-                                w-12
+                                w-10
                                 bg-gradient-to-r
                                 from-[#bf5429]
                                 to-transparent
@@ -391,8 +477,8 @@ function LatestContentPopup({ content }) {
 
                         <p
                             className="
-                                mt-3
-                                text-sm
+                                mt-2.5
+                                text-[13px]
                                 leading-relaxed
                                 font-light
                                 text-[#5f6967]
@@ -402,15 +488,10 @@ function LatestContentPopup({ content }) {
                         </p>
                     </div>
 
-                    {/* --------------------------------------------------- */}
-                    {/* Footer / CTA */}
-                    {/* --------------------------------------------------- */}
-
-                    <div className="mt-5 flex items-center justify-between">
-
+                    <div className="mt-4 flex items-center justify-between">
                         <span
                             className="
-                                text-[10px]
+                                text-[9px]
                                 uppercase
                                 tracking-widest
                                 text-[#5f6967]
@@ -419,45 +500,41 @@ function LatestContentPopup({ content }) {
                             The Social Observatory
                         </span>
 
-                        <Link
-                            href={content.url}
+                        <span
                             className="
-                                group/link
                                 inline-flex
                                 items-center
-                                gap-2
+                                gap-1.5
 
-                                text-sm
+                                text-[13px]
                                 font-medium
                                 text-[#1f2d2d]
 
                                 transition-colors
                                 duration-300
 
-                                hover:text-[#bf5429]
+                                group-hover:text-[#bf5429]
                             "
                         >
                             Découvrir
-
                             <ArrowRight
                                 className="
-                                    w-4
-                                    h-4
+                                    w-3.5
+                                    h-3.5
 
                                     transition-transform
                                     duration-300
 
-                                    group-hover/link:translate-x-1
+                                    group-hover:translate-x-1
                                 "
                                 strokeWidth={1.8}
                             />
-                        </Link>
+                        </span>
                     </div>
                 </div>
-            </div>
+            </Link>
         </div>
     );
 }
 
 export default LatestContentPopup;
-

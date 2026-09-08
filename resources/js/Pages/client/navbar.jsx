@@ -137,9 +137,9 @@ const Navbar = () => {
   const navLinks = [
     { href: "#about", label: "About" },
     { href: "#focus", label: "Projects" },
-    { href: "#research", label: "Research" },
+    // { href: "#research", label: "Research" },
     { href: "#publications", label: "Publications" },
-    { href: "#insights", label: "Insights" },
+    // { href: "#insights", label: "Insights" },
     { href: "#events", label: "Events" },
     { href: "#contact", label: "Contact" },
   ];
@@ -203,15 +203,13 @@ const Navbar = () => {
         }`}
       >
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
-          <div className="flex h-16 sm:h-20 items-center justify-between">
+          <div className="flex h-20 sm:h-24 items-center justify-between">
             {/* Logo */}
             <a href="#top" className="flex items-center gap-3 group">
               <img
                 src="/logo.png"
                 alt="Logo"
-                    width="36"
-                height="36"
-                className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
+                className="h-14 w-14 object-contain transition-transform duration-300 group-hover:scale-110"
               />
               <span
                 className={`text-base sm:text-lg font-semibold tracking-tight transition-colors duration-300 ${

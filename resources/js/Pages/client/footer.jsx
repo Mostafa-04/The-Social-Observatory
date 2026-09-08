@@ -21,7 +21,7 @@ const SOCIAL_NETWORKS = [
   { key: 'linkedin', icon: FaLinkedin, label: 'LinkedIn' },
   { key: 'twitter', icon: FaTwitter, label: 'Twitter' },
   { key: 'youtube', icon: FaYoutube, label: 'YouTube' },
-  { key: 'facebook', icon: FaFacebookF, label: 'Facebook' },
+  { key: 'facebook', icon: FaInstagram, label: 'Facebook' },
   { key: 'instagram', icon: FaInstagram, label: 'Instagram' },
   { key: 'github', icon: FaGithub, label: 'GitHub' },
 ];

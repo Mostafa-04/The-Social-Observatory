@@ -152,24 +152,6 @@ const CTA = () => {
           </p>
         </div>
 
-        {/* Trust indicators */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-white/50">
-          <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-[#bf5429]" />
-            <span className="text-xs font-medium">ISO Certified</span>
-          </div>
-          <div className="w-px h-4 bg-white/10"></div>
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-[#bf5429]" />
-            <span className="text-xs font-medium">42 Countries</span>
-          </div>
-          <div className="w-px h-4 bg-white/10"></div>
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#bf5429]" />
-            <span className="text-xs font-medium">65+ Partners</span>
-          </div>
-        </div>
-
         {/* Form */}
         <div
           ref={formRef}

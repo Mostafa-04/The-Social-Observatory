@@ -8,8 +8,13 @@ use App\Models\Event;
 use App\Http\Controllers\AssociationClientController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PublicationController;
+use App\Http\Controllers\GroupRegistrationController;
 
 
+Route::get('/rejoindre-groupe', [GroupRegistrationController::class, 'create'])
+    ->name('groups.join.create');
+Route::post('/rejoindre-groupe', [GroupRegistrationController::class, 'store'])
+    ->name('groups.join');
 
 
 Route::post('/publications/{publication}/download', [PublicationController::class, 'download'])

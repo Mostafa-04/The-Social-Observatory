@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ComposableMap, Geographies, Geography, useMapContext } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography, useMapContext,Marker } from 'react-simple-maps';
 import { merge } from 'topojson-client';
 
 const GEO_URL = '/data/countries-110m.json';
@@ -59,6 +59,12 @@ const AFRICA_NUMERIC_TO_ISO2 = {
   '710': 'ZA', '728': 'SS', '729': 'SD', '834': 'TZ', '768': 'TG',
   '788': 'TN', '800': 'UG', '894': 'ZM', '716': 'ZW', '732': 'MA',
 };
+
+const ISLAND_MARKERS = [
+  { iso2: 'KM', name: 'Comoros',    coordinates: [43.3333, -11.6455] },
+  { iso2: 'MU', name: 'Mauritius',  coordinates: [57.5522, -20.3484] },
+  { iso2: 'SC', name: 'Seychelles', coordinates: [55.4920, -4.6796] },
+];
 
 const AfricaProjectsSection = ({
   title = 'Notre présence en Afrique',
@@ -172,14 +178,14 @@ const AfricaProjectsSection = ({
               <div className="w-px h-12 bg-[#d6d9d8]"></div>
               <div>
                 <div className="text-3xl font-display font-semibold text-[#bf5429]">
-                  +{countProjets}
+                  +9
                 </div>
                 <div className="text-sm text-[#5f6967] mt-1">Projets en cours</div>
               </div>
               <div className="w-px h-12 bg-[#d6d9d8]"></div>
               <div>
                 <div className="text-3xl font-display font-semibold text-[#bf5429]">
-                  +{countParteners}
+                  +13
                 </div>
                 <div className="text-sm text-[#5f6967] mt-1">Partenaires</div>
               </div>
@@ -255,6 +261,26 @@ const AfricaProjectsSection = ({
                       onLeave={() => setHoveredCountry(null)}
                     />
                   )}
+                                    {ISLAND_MARKERS.map(({ iso2, name, coordinates }) => {
+                        const active = projectCountries.includes(iso2);
+                        return (
+                          <Marker
+                            key={iso2}
+                            coordinates={coordinates}
+                            onMouseEnter={() => setHoveredCountry(name)}
+                            onMouseLeave={() => setHoveredCountry(null)}
+                          >
+                            <circle
+                              r={5}
+                              fill={active ? ACTIVE_COLOR : DEFAULT_COLOR}
+                              stroke="#f5f5f4"
+                              strokeWidth={0.8}
+                              style={{ cursor: active ? 'pointer' : 'default' }}
+                            />
+                          </Marker>
+                        );
+                      })}
+
                 </ComposableMap>
 
                 {/* Légende */}

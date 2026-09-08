@@ -236,7 +236,7 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
               <div className="flex items-center gap-3 mb-7 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">
                 <span className="w-8 h-[1px] bg-[#bf5429]" />
                 <span className="text-sm tracking-widest uppercase text-[#bf5429] font-medium">
-                  Independent Research Institute · Est. 2025
+                  Think & Do Tank - Apolitical, Non-partisan, Independant, Not-for-profit
                 </span>
               </div>
 
@@ -262,8 +262,8 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                 )}
               </h1>
 
-              <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/70 font-light opacity-0 animate-[fadeInUp_0.6s_ease-out_0.6s_forwards]">
-                The Social Observatory turns emerging social signals into rigorous evidence —
+              <p className="text-justify mt-8 max-w-xl text-lg leading-relaxed text-white/70 font-light opacity-0 animate-[fadeInUp_0.6s_ease-out_0.6s_forwards]">
+                The Social Observatory turns emerging social signals into rigorous evidence 
                 helping governments, institutions, and communities anticipate change before it
                 arrives, and act on it with confidence.
               </p>
@@ -279,19 +279,20 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                   </svg>
                 </a>
                 <a
-                  href="#contact"
+                  href="/The Social Observatory .pdf"
+                  target="_blank"
                   className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-[15px] text-white border-2 border-white/30 hover:border-[#bf5429] hover:bg-[#bf5429]/10 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
                 >
-                  Partner With Us
+                  Download PDF
                 </a>
               </div>
 
               <div className="mt-16 flex flex-wrap items-center gap-10 text-white/60 opacity-0 animate-[fadeInUp_0.6s_ease-out_1s_forwards]">
                 <Stat end={countCountries} suffix="+" label="Countries studied" />
                 <div className="w-px h-9 bg-white/10" />
-                <Stat end={countPublications} suffix="+" label="Publications" />
+                <Stat end="11" suffix="+" label="Publications" />
                 <div className="w-px h-9 bg-white/10" />
-                <Stat end={countParteners} suffix="+" label="Strategic partners" />
+                <Stat end="13" suffix="+" label="Strategic partners" />
               </div>
             </div>
 
