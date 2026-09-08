@@ -61,5 +61,4 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
-
 ENTRYPOINT ["entrypoint.sh"]
