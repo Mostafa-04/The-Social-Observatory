@@ -192,27 +192,41 @@ class PublicationController extends Controller
             ->with('success', 'Publication deleted successfully.');
     }
 
-        public function download(Request $request, Publication $publication)
-    {
-        $validated = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-        ]);
+public function download(Request $request, Publication $publication)
+{
+    $validated = $request->validate([
+        'name'  => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'max:255'],
+    ]);
 
-        PublicationDownload::create([
-            'publication_id' => $publication->id,
-            'name'           => $validated['name'],
-            'email'          => $validated['email'],
-            'ip_address'     => $request->ip(),
-        ]);
+    // Enregistrer la demande de téléchargement
+    PublicationDownload::create([
+        'publication_id' => $publication->id,
+        'name'           => $validated['name'],
+        'email'          => $validated['email'],
+        'ip_address'     => $request->ip(),
+    ]);
 
+    // Vérifier que le PDF existe
+    if (
+        !$publication->pdf ||
+        !Storage::disk('public')->exists($publication->pdf)
+    ) {
         return response()->json([
-            'success'  => true,
-            'download' => $publication->pdf
-                ? asset('storage/' . $publication->pdf)
-                : null,
-        ]);
+            'success' => false,
+            'message' => 'PDF not available.',
+        ], 404);
     }
+
+    // Télécharger directement le PDF
+    return Storage::disk('public')->download(
+        $publication->pdf,
+        basename($publication->pdf),
+        [
+            'Content-Type' => 'application/pdf',
+        ]
+    );
+}
     public function downloadsExport(Publication $publication)
     {
         $filename = 'inscriptions-' . str($publication->title)->slug() . '.xlsx';

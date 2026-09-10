@@ -1,3 +1,4 @@
+
 // resources/js/Components/DownloadRequestModal.jsx
 import React, { useState } from 'react';
 import { X, Download, Loader2 } from 'lucide-react';
@@ -19,18 +20,62 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
     try {
       const response = await axios.post(
         route('publication.download.store', publicationId),
-        { name, email }
+        {
+          name,
+          email,
+        },
+        {
+          responseType: 'blob',
+        }
       );
 
-      if (response.data.success && response.data.download) {
-        window.open(response.data.download, '_blank', 'noopener,noreferrer');
-        onClose();
-        setName('');
-        setEmail('');
-      }
+      // Créer un fichier PDF à partir de la réponse
+      const blob = new Blob([response.data], {
+        type: 'application/pdf',
+      });
+
+      // Créer une URL temporaire pour le fichier
+      const url = window.URL.createObjectURL(blob);
+
+      // Créer un lien invisible pour lancer le téléchargement
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `publication-${publicationId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      // Nettoyer
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      // Fermer le modal
+      onClose();
+
+      // Réinitialiser le formulaire
+      setName('');
+      setEmail('');
     } catch (err) {
       if (err.response?.status === 422) {
-        setErrors(err.response.data.errors);
+        // Avec responseType blob, Laravel peut aussi retourner les erreurs
+        // de validation sous forme de Blob.
+        try {
+          const text = await err.response.data.text();
+          const data = JSON.parse(text);
+          setErrors(data.errors || {});
+        } catch {
+          setErrors({
+            general: 'An error occurred. Please check your information.',
+          });
+        }
+      } else if (err.response?.status === 404) {
+        setErrors({
+          general: 'The PDF is not available.',
+        });
+      } else {
+        setErrors({
+          general: 'An error occurred while downloading the PDF. Please try again.',
+        });
       }
     } finally {
       setLoading(false);
@@ -55,6 +100,7 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
         <h3 className="font-display text-2xl text-[#1f2d2d] font-medium mb-2">
           Access this publication
         </h3>
+
         <p className="text-sm text-[#5f6967] mb-6 leading-relaxed">
           Please enter your name and email to download this document. Your
           information will be used solely to keep you informed about our
@@ -66,6 +112,7 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
             <label className="block text-sm font-medium text-[#1f2d2d] mb-1.5">
               Full name
             </label>
+
             <input
               type="text"
               value={name}
@@ -74,8 +121,11 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
               className="w-full rounded-lg border border-[#d6d9d8] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#bf5429]/40"
               placeholder="John Doe"
             />
+
             {errors.name && (
-              <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.name[0]}
+              </p>
             )}
           </div>
 
@@ -83,6 +133,7 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
             <label className="block text-sm font-medium text-[#1f2d2d] mb-1.5">
               Email address
             </label>
+
             <input
               type="email"
               value={email}
@@ -91,10 +142,19 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
               className="w-full rounded-lg border border-[#d6d9d8] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#bf5429]/40"
               placeholder="john@example.com"
             />
+
             {errors.email && (
-              <p className="text-xs text-red-600 mt-1">{errors.email[0]}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.email[0]}
+              </p>
             )}
           </div>
+
+          {errors.general && (
+            <p className="text-sm text-red-600">
+              {errors.general}
+            </p>
+          )}
 
           <button
             type="submit"
@@ -106,6 +166,7 @@ const DownloadRequestModal = ({ isOpen, onClose, publicationId }) => {
             ) : (
               <Download className="w-4 h-4" />
             )}
+
             {loading ? 'Please wait...' : 'Continue to download'}
           </button>
         </form>

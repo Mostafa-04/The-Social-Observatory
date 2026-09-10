@@ -280,7 +280,7 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                 </a>
                 <a
                   href="/The Social Observatory .pdf"
-                  target="_blank"
+                  download
                   className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-[15px] text-white border-2 border-white/30 hover:border-[#bf5429] hover:bg-[#bf5429]/10 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
                 >
                   Download PDF
