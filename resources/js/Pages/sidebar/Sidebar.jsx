@@ -15,7 +15,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Form 
+  Form,
+  X,
 } from "lucide-react";
 import { Link, usePage } from "@inertiajs/react";
 
@@ -32,7 +33,7 @@ const NAV = [
     items: [
       { label: "Recherches", icon: BookOpen, route: "researches.index" },
       { label: "Publications", icon: FileText, route: "publications.index" },
-      { label: "Projets", icon: Briefcase, route: "projects.index"},
+      { label: "Projets", icon: Briefcase, route: "projects.index" },
       { label: "Événements", icon: Calendar, route: "events.index" },
       { label: "Insights", icon: PenLine, route: "insights.index" },
       { label: "Associations", icon: Handshake, route: "associations.index" },
@@ -47,10 +48,10 @@ const NAV = [
       { label: "Partenaires", icon: Handshake, route: "partners.index" },
     ],
   },
-    {
+  {
     group: "Formulaires",
     items: [
-      { label: "Soumissions IAPS", icon: Form , route: "iaps-submissions.index" },
+      { label: "Soumissions IAPS", icon: Form, route: "iaps-submissions.index" },
       { label: "Inscriptions de groupe", icon: Form, route: "group-registrations.index" },
     ],
   },
@@ -74,13 +75,10 @@ const NAV = [
 // ============================================================
 // Sidebar
 // ============================================================
-export default function Sidebar() {
-    const { auth } = usePage().props;
+export default function Sidebar({ isOpen, onClose }) {
+  const { auth } = usePage().props;
+  const currentUser = auth.user;
 
-        const currentUser = auth.user;
-        
-
-  // Check if route is active
   const isRouteActive = (routeName) => {
     return route().current(routeName);
   };
@@ -105,18 +103,41 @@ export default function Sidebar() {
         }
       `}</style>
 
-      <aside className="w-64 shrink-0 bg-gradient-to-b from-[#1f2d2d] to-[#192121] text-white flex flex-col h-screen border-r border-white/5">
+      {/* Overlay خلفي - يظهر فقط على الهاتف عندما يكون الـ Sidebar مفتوح */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        />
+      )}
+
+      <aside
+        className={[
+          "w-64 shrink-0 bg-gradient-to-b from-[#1f2d2d] to-[#192121] text-white flex flex-col h-screen border-r border-white/5",
+          "fixed top-0 left-0 z-50 transition-transform duration-300 ease-in-out",
+          "lg:sticky lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+        ].join(" ")}
+      >
         {/* Logo Section */}
         <div className="flex items-center gap-3 px-6 h-16 border-b border-white/8 shrink-0 bg-white/[0.02]">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="w-12 h-12 rounded-full object-cover"
-            />
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="w-12 h-12 rounded-full object-cover"
+          />
           <div className="leading-tight flex-1">
             <p className="font-serif text-[13px] font-medium text-white">Social Observatory</p>
             <p className="text-[9.5px] text-white/30 tracking-widest mt-0.5">ESPACE ADMIN</p>
           </div>
+
+          {/* زر الإغلاق - يظهر فقط على الهاتف */}
+          <button
+            onClick={onClose}
+            className="lg:hidden text-white/50 hover:text-white p-1.5 rounded transition-colors duration-200"
+          >
+            <X size={18} strokeWidth={1.8} />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -137,6 +158,7 @@ export default function Sidebar() {
                     <Link
                       key={item.route}
                       href={route(item.route)}
+                      onClick={onClose}
                       className={[
                         "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative group",
                         isActive
@@ -144,7 +166,6 @@ export default function Sidebar() {
                           : "text-white/65 hover:text-white/90 hover:bg-white/[0.04]",
                       ].join(" ")}
                     >
-                      {/* Dot indicator */}
                       <span
                         className={[
                           "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200",
@@ -152,7 +173,6 @@ export default function Sidebar() {
                         ].join(" ")}
                       />
 
-                      {/* Icon */}
                       <Icon
                         size={16}
                         strokeWidth={1.6}
@@ -162,10 +182,8 @@ export default function Sidebar() {
                         ].join(" ")}
                       />
 
-                      {/* Label */}
                       <span className="flex-1 truncate font-medium">{item.label}</span>
 
-                      {/* Count */}
                       {item.count != null && (
                         <span
                           className={[
@@ -177,7 +195,6 @@ export default function Sidebar() {
                         </span>
                       )}
 
-                      {/* Badge */}
                       {item.badge != null && (
                         <span
                           className={[
@@ -201,12 +218,10 @@ export default function Sidebar() {
         {/* User Footer */}
         <div className="px-4 py-4 border-t border-white/8 bg-white/[0.02]">
           <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors duration-200 group">
-            {/* Avatar */}
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#BF5429]/30 to-[#BF5429]/10 border border-[#BF5429]/40 flex items-center justify-center font-serif text-xs font-semibold text-[#BF5429] shrink-0 group-hover:border-[#BF5429]/60 transition-colors duration-200">
               {currentUser.initials}
             </div>
 
-            {/* User Info */}
             <div className="leading-tight flex-1 min-w-0">
               <p className="text-[12px] font-medium text-white truncate">
                 {currentUser.name}
@@ -214,7 +229,6 @@ export default function Sidebar() {
               <p className="text-[10px] text-white/40 mt-0.5">{currentUser.role}</p>
             </div>
 
-            {/* Logout Button */}
             <Link
               href={route("logout")}
               method="post"

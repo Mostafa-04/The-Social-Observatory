@@ -310,7 +310,7 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
 
                 <div
                   className="absolute inset-0 rounded-[2rem] overflow-hidden shadow-2xl shadow-[#bf5429]/20"
-                  style={{ clipPath: 'circle(46% at 50% 50%)' }}
+                  style={{ clipPath: 'circle(50% at 50% 50%)' }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-[#1f2d2d]/30 via-transparent to-[#bf5429]/20 z-10" />
                   <img

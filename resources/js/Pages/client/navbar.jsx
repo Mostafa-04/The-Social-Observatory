@@ -207,7 +207,7 @@ const Navbar = () => {
             {/* Logo */}
             <a href="#top" className="flex items-center gap-3 group">
               <img
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="Logo"
                 className="h-14 w-14 object-contain transition-transform duration-300 group-hover:scale-110"
               />

@@ -116,7 +116,7 @@ const Nav = () => {
             {/* Logo */}
             <NavItem hash="#top" className="flex items-center gap-3 group">
               <img
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="Logo"
                 className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
               />
