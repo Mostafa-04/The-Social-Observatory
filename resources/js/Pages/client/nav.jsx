@@ -75,9 +75,9 @@ const Nav = () => {
   const navLinks = [
     { href: "#about", label: "About" },
     { href: "#focus", label: "Projects" },
-    { href: "#research", label: "Research" },
+    // { href: "#research", label: "Research" },
     { href: "#publications", label: "Publications" },
-    { href: "#insights", label: "Insights" },
+    // { href: "#insights", label: "Insights" },
     { href: "#events", label: "Events" },
     { href: "#contact", label: "Contact" },
   ];

@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Jobs\SendIapsSubmissionConfirmationEmailJob;
 
 class IapsSubmissionController extends Controller
 {
@@ -284,7 +285,12 @@ class IapsSubmissionController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        IapsSubmission::create($validated);
+        $submission = IapsSubmission::create($validated);
+        SendIapsSubmissionConfirmationEmailJob::dispatch(
+            $submission->email,
+            $submission->full_name,
+            $publication->title,
+        );
 
         return redirect()
             ->route('publication.show.client', $publication)

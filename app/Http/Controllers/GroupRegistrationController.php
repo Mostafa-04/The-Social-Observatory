@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Jobs\SendGroupRegistrationConfirmationEmailJob;
 
 class GroupRegistrationController extends Controller
 {
@@ -45,7 +46,20 @@ class GroupRegistrationController extends Controller
         }
         unset($validated['cv']);
 
-        GroupRegistration::create($validated);
+        $registration = GroupRegistration::create($validated);
+
+        $groupLabels = [
+            'jeunesse' => 'Groupe de Travail 1 — Jeunesse, Éducation et Emploi',
+            'femmes' => 'Groupe de Travail 2 — Femmes, Travail Invisible et Sécurité Sociale',
+            'vieillissement' => 'Groupe de Travail 3 — Vieillissement, Santé de la Population et Transitions Démographiques',
+            'pacte' => 'Groupe de Travail 4 — Pacte National, Territoires et Engagement Citoyen',
+        ];
+
+        SendGroupRegistrationConfirmationEmailJob::dispatch(
+            $registration->email,
+            $registration->full_name,
+            $groupLabels[$registration->group_type] ?? $registration->group_type,
+        );
 
         return back()->with('success', 'Votre inscription a été envoyée avec succès.');
     }
