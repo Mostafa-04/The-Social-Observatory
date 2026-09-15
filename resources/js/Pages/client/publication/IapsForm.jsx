@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Head, useForm } from "@inertiajs/react";
+import Swal from "sweetalert2";
 
 const africanCountries = [
     "Afrique du Sud",
@@ -497,13 +498,33 @@ export default function IapsForm({ publication }) {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+const handleSubmit = (e) => {
+    e.preventDefault();
 
-        post(`/publications/${publication.id}/iaps-form`, {
-            preserveScroll: true,
-        });
-    };
+    post(`/publications/${publication.id}/iaps-form`, {
+        preserveScroll: true,
+
+        onSuccess: () => {
+            Swal.fire({
+                icon: "success",
+                title: "Contribution enregistrée !",
+                text: "Votre contribution a été enregistrée avec succès. Un e-mail de confirmation vous a été envoyé.",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#bf5429",
+            });
+        },
+
+        onError: (errors) => {
+            Swal.fire({
+                icon: "error",
+                title: "Erreur",
+                text: "Une erreur est survenue lors de l'enregistrement de votre contribution. Veuillez vérifier les informations saisies.",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#bf5429",
+            });
+        },
+    });
+};
 
     const setArray = (field, values) => {
         setData(field, values);
