@@ -1,6 +1,8 @@
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft, Send } from "lucide-react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 export default function Reply({ contact }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -101,13 +103,25 @@ export default function Reply({ contact }) {
                             <label className="mb-1.5 block text-[12px] font-medium text-[#5B6462]">
                                 Message
                             </label>
-                            <textarea
-                                rows={12}
-                                value={data.message}
-                                onChange={(e) => setData("message", e.target.value)}
-                                className="w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-2.5 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white resize-none"
-                                placeholder="Rédigez votre réponse..."
-                            />
+                                <ReactQuill
+                                    theme="snow"
+                                    value={data.message}
+                                    onChange={(value) => setData("message", value)}
+                                    placeholder="Rédigez votre réponse..."
+                                     className="bg-white [&_.ql-container]:min-h-[220px] [&_.ql-toolbar]:border-0 [&_.ql-container]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#D6D9D8]"
+                                    modules={{
+                                        toolbar: [
+                                            [{ header: [1, 2, 3, false] }],
+                                            ["bold", "italic", "underline", "strike"],
+                                            [{ color: [] }, { background: [] }],
+                                            [{ size: ["small", false, "large", "huge"] }],
+                                            [{ list: "ordered" }, { list: "bullet" }],
+                                            [{ align: [] }],
+                                            ["link"],
+                                            ["clean"],
+                                        ],
+                                    }}
+                                />
                             {errors.message && (
                                 <p className="mt-1 text-[12px] text-red-500">{errors.message}</p>
                             )}

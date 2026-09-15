@@ -43,27 +43,39 @@ class EventEmailCampaignController extends Controller
     }
 
 
-    /**
-     * Create campaign page.
-     */
-    public function create(Event $event)
-    {
-        $totalRecipients = $event->registrations()
-            ->count();
+/**
+ * Create campaign page.
+ */
+public function create(Event $event)
+{
+    $registrations = $event->registrations()
+        ->select([
+            'id',
+            'first_name',
+            'last_name',
+            'phone',
+            'email',
+            'created_at',
+        ])
+        ->latest()
+        ->get();
 
-        return Inertia::render(
-            'admin/Events/Emails/Create',
-            [
-                'event' => $event,
-                'totalRecipients' => $totalRecipients,
-            ]
-        );
-    }
+    $totalRecipients = $registrations->count();
+
+    return Inertia::render(
+        'admin/Events/Emails/Create',
+        [
+            'event' => $event,
+            'registrations' => $registrations,
+            'totalRecipients' => $totalRecipients,
+        ]
+    );
+}
 
 
-    /**
-     * Store and send campaign.
-     */
+/**
+ * Store and send campaign.
+ */
 public function store(Request $request, Event $event)
 {
     /*
@@ -73,20 +85,43 @@ public function store(Request $request, Event $event)
     */
 
     $validated = $request->validate([
+        'registration_ids' => 'required|array|min:1',
+        'registration_ids.*' => 'integer|distinct',
+
         'subject' => 'required|string|max:255',
+
         'content' => 'required|string',
+
         'attachments' => 'nullable|array',
+
         'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip',
     ]);
 
 
     /*
     |--------------------------------------------------------------------------
-    | Get registrations
+    | Get ONLY selected registrations
     |--------------------------------------------------------------------------
     */
 
-    $registrations = $event->registrations()->get();
+    $registrations = $event->registrations()
+        ->whereIn('id', $validated['registration_ids'])
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security check
+    |--------------------------------------------------------------------------
+    */
+
+    if ($registrations->count() !== count($validated['registration_ids'])) {
+        return back()
+            ->withErrors([
+                'registration_ids' => 'Certains participants sélectionnés ne sont pas valides pour cet événement.',
+            ])
+            ->withInput();
+    }
 
 
     /*
@@ -102,7 +137,10 @@ public function store(Request $request, Event $event)
 
         foreach ($request->file('attachments') as $file) {
 
-            $path = $file->store('email-campaigns/attachments', 'local');
+            $path = $file->store(
+                'email-campaigns/attachments',
+                'local'
+            );
 
             $storedRelativePaths[] = $path;
 
@@ -127,6 +165,7 @@ public function store(Request $request, Event $event)
         'status' => 'sending',
 
         'total_recipients' => $registrations->count(),
+
         'sent_count' => 0,
         'failed_count' => 0,
     ]);
@@ -144,6 +183,13 @@ public function store(Request $request, Event $event)
 
         $email = trim((string) $registration->email);
 
+
+        /*
+        |----------------------------------------------------------------------
+        | Clean markdown mailto format if necessary
+        |----------------------------------------------------------------------
+        */
+
         if (
             preg_match(
                 '/^\[([^\]]+)\]\(mailto:[^)]+\)$/',
@@ -153,6 +199,13 @@ public function store(Request $request, Event $event)
         ) {
             $email = trim($matches[1]);
         }
+
+
+        /*
+        |----------------------------------------------------------------------
+        | No email
+        |----------------------------------------------------------------------
+        */
 
         if (!$email) {
 
@@ -166,11 +219,25 @@ public function store(Request $request, Event $event)
             continue;
         }
 
+
+        /*
+        |----------------------------------------------------------------------
+        | Create log
+        |----------------------------------------------------------------------
+        */
+
         $log = $campaign->logs()->create([
             'event_registration_id' => $registration->id,
             'email' => $email,
             'status' => 'pending',
         ]);
+
+
+        /*
+        |----------------------------------------------------------------------
+        | Create email job
+        |----------------------------------------------------------------------
+        */
 
         $jobs[] = new SendEventCampaignEmailJob(
             logId: $log->id,
@@ -183,7 +250,7 @@ public function store(Request $request, Event $event)
 
     /*
     |--------------------------------------------------------------------------
-    | Dispatch batch
+    | No valid email
     |--------------------------------------------------------------------------
     */
 
@@ -195,29 +262,60 @@ public function store(Request $request, Event $event)
         ]);
 
         foreach ($storedRelativePaths as $relativePath) {
-            Storage::disk('local')->delete($relativePath);
+
+            Storage::disk('local')->delete(
+                $relativePath
+            );
         }
 
         return redirect()
             ->route('events.emails.index', $event)
-            ->with('success', "Aucun participant avec une adresse email valide.");
+            ->with(
+                'success',
+                "Aucun participant sélectionné ne possède une adresse email valide."
+            );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dispatch batch
+    |--------------------------------------------------------------------------
+    */
+
     $batch = Bus::batch($jobs)
+
         ->then(function () {
             //
         })
+
         ->catch(function () {
             //
         })
-        ->finally(function () use ($campaign, $storedRelativePaths) {
+
+        ->finally(function () use (
+            $campaign,
+            $storedRelativePaths
+        ) {
+
             FinalizeEventCampaignJob::dispatch(
                 $campaign->id,
                 $storedRelativePaths,
             );
         })
-        ->name("Campaign #{$campaign->id} - {$event->title}")
+
+        ->name(
+            "Campaign #{$campaign->id} - {$event->title}"
+        )
+
         ->dispatch();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save batch ID
+    |--------------------------------------------------------------------------
+    */
 
     $campaign->update([
         'batch_id' => $batch->id,
@@ -226,15 +324,18 @@ public function store(Request $request, Event $event)
 
     /*
     |--------------------------------------------------------------------------
-    | Redirect فورًا
+    | Redirect
     |--------------------------------------------------------------------------
     */
 
     return redirect()
-        ->route('events.emails.index', $event)
+        ->route(
+            'events.emails.index',
+            $event
+        )
         ->with(
             'success',
-            "L'envoi de {$campaign->total_recipients} email(s) a démarré en arrière-plan."
+            "L'envoi de {$registrations->count()} email(s) a démarré en arrière-plan."
         );
 }
 

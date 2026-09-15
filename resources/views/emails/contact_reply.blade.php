@@ -8,10 +8,12 @@
 <body>
 
     <h2>{{ $subjectText }}</h2>
+                            <div
+                                style="font-size:15px;line-height:1.7;color:#5B6462;">
 
-    <p>
-        {!! nl2br(e($messageText)) !!}
-    </p>
+                                {!! $messageText !!}
+
+                            </div>
 
     <br>
 
