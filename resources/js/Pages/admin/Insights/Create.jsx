@@ -30,6 +30,17 @@ export default function Create({ categories, authors }) {
         published_at: new Date().toISOString().split("T")[0], // Default to today's date
     });
 
+    const generateSlug = (text) => {
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9\s-]/g, "")
+            .trim()
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-");
+    };
+
     const submit = (e) => {
         e.preventDefault();
 
@@ -77,7 +88,15 @@ export default function Create({ categories, authors }) {
                                     <input
                                         type="text"
                                         value={data.title}
-                                        onChange={(e) => setData("title", e.target.value)}
+                                        onChange={(e) => {
+                                            const title = e.target.value;
+
+                                            setData((prev) => ({
+                                                ...prev,
+                                                title,
+                                                slug: generateSlug(title),
+                                            }));
+                                        }}
                                         className={fieldClass}
                                         placeholder="Titre de l'insight"
                                     />
@@ -96,8 +115,8 @@ export default function Create({ categories, authors }) {
                                     <input
                                         type="text"
                                         value={data.slug}
-                                        onChange={(e) => setData("slug", e.target.value)}
-                                        className={fieldClass}
+                                        readOnly
+                                        className={`${fieldClass} bg-[#F7F8F6] cursor-not-allowed`}
                                         placeholder="titre-de-l-insight"
                                     />
                                     {errors.slug && <p className="mt-1 text-[12px] text-red-500">{errors.slug}</p>}

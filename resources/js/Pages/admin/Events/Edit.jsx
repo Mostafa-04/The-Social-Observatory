@@ -67,6 +67,17 @@ export default function Edit({ event, countries }) {
     const [loadingCities, setLoadingCities] = useState(false);
     const isFirstRun = useRef(true);
 
+    const generateSlug = (text) => {
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9\s-]/g, "")
+            .trim()
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-");
+    };
+
     // Récupère la liste des villes à chaque changement de pays.
     // Au premier rendu (chargement de l'événement existant), on ne
     // réinitialise pas la ville déjà enregistrée.
@@ -147,7 +158,15 @@ export default function Edit({ event, countries }) {
                                     <input
                                         type="text"
                                         value={data.title}
-                                        onChange={(e) => setData("title", e.target.value)}
+                                        onChange={(e) => {
+                                            const title = e.target.value;
+
+                                            setData((prev) => ({
+                                                ...prev,
+                                                title,
+                                                slug: generateSlug(title),
+                                            }));
+                                        }}
                                         className={fieldClass}
                                         placeholder="Titre de l'événement"
                                     />
@@ -162,8 +181,8 @@ export default function Edit({ event, countries }) {
                                     <input
                                         type="text"
                                         value={data.slug}
-                                        onChange={(e) => setData("slug", e.target.value)}
-                                        className={fieldClass}
+                                        readOnly
+                                        className={`${fieldClass} bg-[#F7F8F6] cursor-not-allowed`}
                                         placeholder="slug-de-levenement"
                                     />
                                     {errors.slug && <p className="mt-1 text-[12px] text-red-500">{errors.slug}</p>}
