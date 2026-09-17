@@ -597,7 +597,7 @@ export default function ContactForm({ settings = {} }) {
                         </span>
                     </h2>
                     <p className="mt-5 text-[#5f6967] font-light text-lg leading-relaxed max-w-xl">
-                        Questions, partnership requests, or research collaboration — our team
+                        Questions, partnership requests, or research collaboration  our team
                         replies within one business day.
                     </p>
                 </div>
@@ -618,7 +618,7 @@ export default function ContactForm({ settings = {} }) {
                                         We're always happy to hear from you.
                                     </h3>
                                     <p className="mt-3 text-white/60 leading-relaxed text-sm">
-                                        Reach out directly, or use the form — whichever is easier for you.
+                                        Reach out directly, or use the form  whichever is easier for you.
                                     </p>
                                 </div>
 

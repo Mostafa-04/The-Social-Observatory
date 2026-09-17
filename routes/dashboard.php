@@ -22,6 +22,8 @@ use App\Http\Controllers\EventEmailCampaignController;
 use App\Http\Controllers\AssociationController;
 use App\Http\Controllers\IapsSubmissionController;
 use App\Http\Controllers\GroupRegistrationController;
+use App\Http\Controllers\ObservatoryContactController;
+
 /*
 |--------------------------------------------------------------------------
 | Frontend (Client)
@@ -172,5 +174,38 @@ Route::post(
 
     Route::get('group-registrations/{groupRegistration}', [GroupRegistrationController::class, 'show'])
         ->name('group-registrations.show');
+
+        Route::post(
+            '/group-registrations/import',
+            [GroupRegistrationController::class, 'import']
+        )->name('group-registrations.import');
+
+        Route::get(
+        '/observatory-contacts',
+        [ObservatoryContactController::class, 'index']
+    )->name('admin.observatory-contacts.index');
+
+    Route::post(
+        '/observatory-contacts',
+        [ObservatoryContactController::class, 'store']
+    )->name('admin.observatory-contacts.store');
+
+    Route::post(
+        '/observatory-contacts/import',
+        [ObservatoryContactController::class, 'import']
+    )->name('admin.observatory-contacts.import');
+
+    Route::post(
+    '/observatory-contacts/send-email',
+    [ObservatoryContactController::class, 'sendEmail']
+)->name('admin.observatory-contacts.send-email');
+
+    // Le nom du paramètre {observatoryContact} doit correspondre
+    // au nom de la variable dans destroy() pour le route model binding.
+    Route::delete('observatory-contacts/{observatoryContact}', [ObservatoryContactController::class, 'destroy'])
+        ->name('admin.observatory-contacts.destroy');
+
+    Route::delete('observatory-contacts', [ObservatoryContactController::class, 'destroyMany'])
+        ->name('admin.observatory-contacts.destroy-many');
 });
 

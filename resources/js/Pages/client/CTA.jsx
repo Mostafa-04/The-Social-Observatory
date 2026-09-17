@@ -147,7 +147,7 @@ const CTA = () => {
           </h2>
 
           <p className="mt-6 text-white/70 text-lg font-light max-w-xl mx-auto leading-relaxed">
-            Whether you're designing policy, funding research, or building programs on the ground —
+            Whether you're designing policy, funding research, or building programs on the ground 
             we'd welcome the conversation.
           </p>
         </div>
@@ -199,7 +199,7 @@ const CTA = () => {
                     {isSubmitted ? (
                       <>
                         <CheckCircle className="w-4 h-4" />
-                        Thank you — we'll be in touch
+                        Thank you we'll be in touch
                       </>
                     ) : (
                       <>

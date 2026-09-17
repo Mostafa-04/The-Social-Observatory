@@ -17,6 +17,7 @@ const Partners = lazy(() => import('./Partners'));
 const CTA = lazy(() => import('./CTA'));
 const Footer = lazy(() => import('./footer'));
 import LatestContent from './LatestContent';
+import AfricaChallenge from './AfricaChallenge';
 
 function Index({
     settings,
@@ -75,6 +76,7 @@ function Index({
             {/* Critical content */}
             <Navbar />
             <Hero     countParteners={countParteners} countPublications={countPublications} countCountries={countCountries} countProjets={countProjets} />
+            <AfricaChallenge/>
             <LatestContent content={latestContent} />
 
             {/* Sections */}

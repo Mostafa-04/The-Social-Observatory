@@ -171,7 +171,7 @@ const AreasOfFocus = () => {
           </div>
 
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-[#174f4b] font-medium leading-tight">
-            What we study —
+            What we study 
             <span className="text-[#bf5429]"> and how we read it</span>
           </h2>
 

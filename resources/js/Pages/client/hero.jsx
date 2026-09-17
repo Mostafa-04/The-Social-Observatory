@@ -268,32 +268,87 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                 arrives, and act on it with confidence.
               </p>
 
-              <div className="mt-11 flex flex-col sm:flex-row gap-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.8s_forwards]">
-                <a
-                  href="#research"
-                  className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-[15px] bg-[#bf5429] text-white hover:bg-[#a84823] transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#bf5429]/30 active:scale-95"
-                >
-                  Explore Research
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="transition-transform duration-300 group-hover:translate-x-1">
-                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-                <a
-                  href="/The Social Observatory .pdf"
-                  download
-                  className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-[15px] text-white border-2 border-white/30 hover:border-[#bf5429] hover:bg-[#bf5429]/10 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
-                >
-                  Download PDF
-                </a>
-              </div>
+                <div className="mt-11 flex flex-col sm:flex-row gap-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.8s_forwards]">
 
-              <div className="mt-16 flex flex-wrap items-center gap-10 text-white/60 opacity-0 animate-[fadeInUp_0.6s_ease-out_1s_forwards]">
-                <Stat end={countCountries} suffix="+" label="Countries studied" />
-                <div className="w-px h-9 bg-white/10" />
-                <Stat end="11" suffix="+" label="Publications" />
-                <div className="w-px h-9 bg-white/10" />
-                <Stat end="13" suffix="+" label="Strategic partners" />
-              </div>
+                  {/* Africa Game Button */}
+                  <a
+                    href="https://guess-the-country-eight.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`
+                      group relative inline-flex items-center justify-center gap-3
+                      px-7 py-3.5 rounded-full
+                      font-semibold text-[15px]
+                      bg-[#bf5429] text-white
+                      transition-all duration-300
+                      hover:bg-[#a84823]
+                      hover:scale-105
+                      hover:shadow-xl hover:shadow-[#bf5429]/40
+                      active:scale-95
+                      overflow-hidden
+                      ${prefersReducedMotion ? '' : 'animate-game-button'}
+                    `}
+                  >
+                    {/* Glow effect */}
+                    <span className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <span className="relative z-10">
+                      Explore Africa Game
+                    </span>
+
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="relative z-10 transition-transform duration-300 group-hover:translate-x-1"
+                    >
+                      <path
+                        d="M5 12h14M13 6l6 6-6 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </a>
+
+                  {/* Download PDF */}
+                  <a
+                    href="/The Social Observatory .pdf"
+                    download
+                    className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-[15px] text-white border-2 border-white/30 hover:border-[#bf5429] hover:bg-[#bf5429]/10 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-sm"
+                  >
+                    Download PDF
+                  </a>
+
+                </div>
+
+                  <div className="mt-16 grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-10 text-white/60 opacity-0 animate-[fadeInUp_0.6s_ease-out_1s_forwards]">
+
+                    <Stat
+                      end={countCountries}
+                      suffix="+"
+                      label="Countries studied"
+                    />
+
+                    <div className="hidden sm:block w-px h-9 bg-white/10" />
+
+                    <Stat
+                      end="11"
+                      suffix="+"
+                      label="Publications"
+                    />
+
+                    <div className="hidden sm:block w-px h-9 bg-white/10" />
+
+                    <Stat
+                      end="13"
+                      suffix="+"
+                      label="Strategic partners"
+                    />
+
+                  </div>
             </div>
 
             {/* Right Content — image with node-network overlay + parallax tilt */}
@@ -352,13 +407,33 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
         .animate-pulse-delay { animation: pulse 3s ease-in-out 1.5s infinite; }
 
         @media (prefers-reduced-motion: reduce) {
-          .animate-bounce, .animate-pulse-delay,
-          [class*="animate-[fadeInUp"], [class*="animate-[fadeIn"],
-          [class*="animate-[spin"], [class*="animate-[pulse"] {
+          .animate-bounce,
+          .animate-pulse-delay,
+          .animate-game-button,
+          [class*="animate-[fadeInUp"],
+          [class*="animate-[fadeIn"],
+          [class*="animate-[spin"],
+          [class*="animate-[pulse"] {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
           }
+        }
+
+        @keyframes gameButtonPulse {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 0 rgba(191, 84, 41, 0.35);
+          }
+
+          50% {
+            transform: translateY(-3px) scale(1.025);
+            box-shadow: 0 8px 25px rgba(191, 84, 41, 0.25);
+          }
+        }
+
+        .animate-game-button {
+          animation: gameButtonPulse 2.5s ease-in-out infinite;
         }
       `}</style>
     </section>

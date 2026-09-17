@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Jobs\SendGroupRegistrationConfirmationEmailJob;
 
+use App\Imports\GroupRegistrationsImport;
+use Maatwebsite\Excel\Facades\Excel;
 class GroupRegistrationController extends Controller
 {
 
@@ -103,4 +105,28 @@ class GroupRegistrationController extends Controller
             'registration' => $groupRegistration,
         ]);
     }
+
+public function import(Request $request)
+{
+    $request->validate([
+        'file' => [
+            'required',
+            'file',
+            'mimes:xlsx,xls',
+            'max:10240',
+        ],
+    ]);
+
+    $import = new GroupRegistrationsImport();
+
+    Excel::import(
+        $import,
+        $request->file('file')
+    );
+
+    return back()->with([
+        'success' => 'Les inscriptions ont été importées avec succès.',
+        'imported_count' => $import->importedCount,
+    ]);
+}
 }

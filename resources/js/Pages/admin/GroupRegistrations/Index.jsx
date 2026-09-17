@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { Search, Users, ExternalLink } from "lucide-react";
+import { Search, Users, ExternalLink,Loader2,Upload,X,FileSpreadsheet } from "lucide-react";
 import AdminLayout from "@/Pages/admin/AdminLayout";
-
+import Swal from "sweetalert2";
 /**
  * Page admin — liste des inscriptions aux groupes de travail.
  * Attendu depuis le contrôleur (Inertia::render):
@@ -48,6 +48,104 @@ export default function GroupRegistrationsIndex({
 }) {
     const [search, setSearch] = useState(filters?.search ?? "");
     const [groupType, setGroupType] = useState(filters?.group_type ?? "");
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [excelFile, setExcelFile] = useState(null);
+    const [isImporting, setIsImporting] = useState(false);
+
+const handleImportExcel = (e) => {
+    e.preventDefault();
+
+    if (!excelFile) {
+        Swal.fire({
+            icon: "warning",
+            title: "Fichier manquant",
+            text: "Veuillez sélectionner un fichier Excel.",
+            confirmButtonColor: "#bf5429",
+        });
+
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", excelFile);
+
+    setIsImporting(true);
+
+    router.post(
+        route("group-registrations.import"),
+        formData,
+        {
+            forceFormData: true,
+            preserveScroll: true,
+
+            onSuccess: (page) => {
+                setShowImportModal(false);
+                setExcelFile(null);
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Importation réussie",
+                    html: `
+                        <p>Les inscriptions ont été importées avec succès.</p>
+                        ${
+                            page.props.flash?.imported_count !== undefined
+                                ? `<p style="margin-top:8px;font-weight:600;">
+                                    Nombre total enregistré :
+                                    ${page.props.flash.imported_count}
+                                </p>`
+                                : ""
+                        }
+                    `,
+                    confirmButtonColor: "#bf5429",
+                });
+            },
+
+            onError: (errors) => {
+                const errorMessages = Object.values(errors ?? {})
+                    .flat()
+                    .join("<br>");
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur d'importation",
+                    html:
+                        errorMessages ||
+                        "Une erreur est survenue lors de l'importation du fichier.",
+                    confirmButtonColor: "#bf5429",
+                });
+            },
+
+            onFinish: () => {
+                setIsImporting(false);
+            },
+        }
+    );
+};
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+
+        if (!file) {
+            setExcelFile(null);
+            return;
+        }
+
+        const allowedExtensions = ["xlsx", "xls"];
+
+        const extension = file.name
+            .split(".")
+            .pop()
+            ?.toLowerCase();
+
+        if (!allowedExtensions.includes(extension)) {
+            alert("Veuillez sélectionner un fichier Excel (.xlsx ou .xls).");
+            e.target.value = "";
+            setExcelFile(null);
+            return;
+        }
+
+        setExcelFile(file);
+    };
 
     const applyFilters = (e) => {
         e?.preventDefault();
@@ -81,15 +179,26 @@ export default function GroupRegistrationsIndex({
             <Head title="Inscriptions — Groupes de travail" />
 
             <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-semibold text-[#1f2d2d] md:text-3xl">
-                        Inscriptions aux groupes de travail
-                    </h1>
+                <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-[#1f2d2d] md:text-3xl">
+                            Inscriptions aux groupes de travail
+                        </h1>
 
-                    <p className="mt-2 text-sm text-[#68706e]">
-                        Candidatures reçues pour rejoindre l'un des quatre
-                        groupes de travail.
-                    </p>
+                        <p className="mt-2 text-sm text-[#68706e]">
+                            Candidatures reçues pour rejoindre l'un des quatre
+                            groupes de travail.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowImportModal(true)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f2d2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#324949]"
+                    >
+                        <Upload className="h-4 w-4" />
+                        Importer Excel
+                    </button>
                 </div>
 
                 {/* FILTRES */}
@@ -248,6 +357,143 @@ export default function GroupRegistrationsIndex({
                     </div>
                 )}
             </div>
+            {showImportModal && (
+    <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+        onClick={() => {
+            if (!isImporting) {
+                setShowImportModal(false);
+                setExcelFile(null);
+            }
+        }}
+    >
+        <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#e5e7e6] px-6 py-5">
+                <div>
+                    <h2 className="text-lg font-semibold text-[#1f2d2d]">
+                        Importer des inscriptions
+                    </h2>
+
+                    <p className="mt-1 text-sm text-[#78807e]">
+                        Importez les inscriptions depuis un fichier Excel.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    disabled={isImporting}
+                    onClick={() => {
+                        setShowImportModal(false);
+                        setExcelFile(null);
+                    }}
+                    className="rounded-lg p-2 text-[#78807e] transition hover:bg-[#f3f4f3] hover:text-[#1f2d2d]"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleImportExcel}>
+                <div className="space-y-5 px-6 py-6">
+
+                    {/* Upload zone */}
+                    <label
+                        htmlFor="excel-file"
+                        className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#d6d9d8] bg-[#fafbfa] px-6 py-10 text-center transition hover:border-[#bf5429] hover:bg-[#bf5429]/5"
+                    >
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#bf5429]/10">
+                            <FileSpreadsheet className="h-7 w-7 text-[#bf5429]" />
+                        </div>
+
+                        {excelFile ? (
+                            <>
+                                <p className="text-sm font-semibold text-[#1f2d2d]">
+                                    {excelFile.name}
+                                </p>
+
+                                <p className="mt-1 text-xs text-[#78807e]">
+                                    {(excelFile.size / 1024).toFixed(1)} KB
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-sm font-semibold text-[#1f2d2d]">
+                                    Sélectionner un fichier Excel
+                                </p>
+
+                                <p className="mt-2 text-xs text-[#78807e]">
+                                    Cliquez ici pour choisir votre fichier
+                                </p>
+
+                                <p className="mt-2 text-xs text-[#9aa19f]">
+                                    Formats acceptés : .xlsx, .xls
+                                </p>
+                            </>
+                        )}
+
+                        <input
+                            id="excel-file"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </label>
+
+                    {/* Information */}
+                    <div className="rounded-xl bg-[#f6f7f5] p-4">
+                        <p className="text-xs font-semibold text-[#1f2d2d]">
+                            Colonnes attendues :
+                        </p>
+
+                        <p className="mt-2 text-xs leading-6 text-[#68706e]">
+                            Nom, Email, Groupe, LinkedIn, Présentation,
+                            Domaine, Expertise, Motivation, CV, Statut,
+                            Date d'inscription
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 border-t border-[#e5e7e6] px-6 py-4">
+                    <button
+                        type="button"
+                        disabled={isImporting}
+                        onClick={() => {
+                            setShowImportModal(false);
+                            setExcelFile(null);
+                        }}
+                        className="rounded-xl border border-[#d6d9d8] bg-white px-5 py-2.5 text-sm font-semibold text-[#263333] transition hover:bg-[#f6f7f5]"
+                    >
+                        Annuler
+                    </button>
+
+                    <button
+                        type="submit"
+                        disabled={!excelFile || isImporting}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#bf5429] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#a94320] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isImporting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Importation...
+                            </>
+                        ) : (
+                            <>
+                                <Upload className="h-4 w-4" />
+                                Importer
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+)}
         </AdminLayout>
     );
 }
