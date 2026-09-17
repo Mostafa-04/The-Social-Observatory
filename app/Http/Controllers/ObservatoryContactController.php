@@ -17,14 +17,36 @@ use App\Jobs\SendObservatoryContactEmail;
 
 class ObservatoryContactController extends Controller
 {
-    public function index()
-    {
-        $contacts = ObservatoryContact::latest()->paginate(20);
+public function index(Request $request)
+{
+    $search = trim((string) $request->query('search', ''));
+    $status = $request->query('status', 'all');
 
-        return Inertia::render('admin/ObservatoryContacts/Index', [
-            'contacts' => $contacts,
-        ]);
-    }
+    $contacts = ObservatoryContact::query()
+        ->when($search !== '', function ($query) use ($search) {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('organisation', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        })
+        ->when($status !== 'all', function ($query) use ($status) {
+            $query->where('status', $status);
+        })
+        ->latest()
+        ->paginate(20)
+        ->withQueryString(); // garde ?search=...&status=... dans les liens de pagination
+
+    return Inertia::render('admin/ObservatoryContacts/Index', [
+        'contacts' => $contacts,
+        'filters'  => [
+            'search' => $search,
+            'status' => $status,
+        ],
+    ]);
+}
 
     public function store(Request $request)
     {

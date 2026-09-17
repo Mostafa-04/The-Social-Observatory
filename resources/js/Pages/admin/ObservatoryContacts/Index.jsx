@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState,useCallback } from "react";
 import { Head, router } from "@inertiajs/react";
 import AdminLayout from "@/Pages/admin/AdminLayout";
 import Swal from "sweetalert2";
@@ -132,7 +132,7 @@ const formatSize = (bytes) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 };
 
-export default function Index({ contacts, flash }) {
+export default function Index({ contacts, flash, filters }) {
     /* =====================================================
        State
     ===================================================== */
@@ -145,8 +145,52 @@ export default function Index({ contacts, flash }) {
     const [importing, setImporting] = useState(false);
     const [sendingEmail, setSendingEmail] = useState(false);
 
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+        // Initialisé depuis les query params renvoyés par le serveur
+    const [search, setSearch] = useState(filters?.search ?? "");
+    const [statusFilter, setStatusFilter] = useState(filters?.status ?? "all");
+
+
+    /* =====================================================
+       Recherche serveur avec debounce (350ms)
+    ===================================================== */
+
+    const debounceRef = useRef(null);
+
+    const runSearch = useCallback((nextSearch, nextStatus) => {
+        router.get(
+            route("admin.observatory-contacts.index"),
+            {
+                search: nextSearch || undefined,
+                status: nextStatus === "all" ? undefined : nextStatus,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true, // évite d'empiler l'historique à chaque frappe
+            }
+        );
+    }, []);
+
+    useEffect(() => {
+        // Ne pas re-déclencher au tout premier rendu si rien n'a changé
+        if (
+            search === (filters?.search ?? "") &&
+            statusFilter === (filters?.status ?? "all")
+        ) {
+            return;
+        }
+
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        debounceRef.current = setTimeout(() => {
+            runSearch(search, statusFilter);
+        }, 350);
+
+        return () => clearTimeout(debounceRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, statusFilter]);
 
     const [form, setForm] = useState({
         name: "",
