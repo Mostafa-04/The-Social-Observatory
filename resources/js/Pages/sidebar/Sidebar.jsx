@@ -60,6 +60,7 @@ const NAV = [
     items: [
       { label: "Messages", icon: Mail, route: "contacts.index" },
       { label: "Newsletter", icon: Bell, route: "newsletter-subscribers.index" },
+      { label: "Contacts de l'observatoire", icon: User, route: "admin.observatory-contacts.index" },
     ],
   },
   {
