@@ -363,4 +363,24 @@ public function destroyMany(Request $request)
 
     return back()->with('success', $deleted . ' contact(s) supprimé(s).');
 }
+
+public function ids(Request $request)
+{
+    $query = ObservatoryContact::query();
+
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('organisation', 'like', "%{$search}%");
+        });
+    }
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    return response()->json(['ids' => $query->pluck('id')]);
+}
 }

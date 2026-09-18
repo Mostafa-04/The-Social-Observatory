@@ -15,6 +15,8 @@ import {
     Paperclip,
     FileText,
     Trash2,
+        CheckSquare,   
+    Square,        
 } from "lucide-react";
 
 import ReactQuill from "react-quill";
@@ -144,6 +146,77 @@ export default function Index({ contacts, flash, filters }) {
 
     const [importing, setImporting] = useState(false);
     const [sendingEmail, setSendingEmail] = useState(false);
+
+    
+const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
+const [fetchingAllIds, setFetchingAllIds] = useState(false);
+
+
+const totalContactsCount = contacts?.meta?.total ?? contacts?.total ?? contactData.length;
+
+const handleSelectAllAcrossPages = async () => {
+    setFetchingAllIds(true);
+
+    try {
+        const response = await fetch(
+            route("admin.observatory-contacts.ids", {
+                search: search || undefined,
+                status: statusFilter === "all" ? undefined : statusFilter,
+            }),
+            { headers: { Accept: "application/json" } }
+        );
+
+        if (!response.ok) {
+            throw new Error("Request failed");
+        }
+
+        const data = await response.json();
+
+        setSelectedIds(data.ids);
+        setSelectAllAcrossPages(true);
+    } catch (error) {
+        toast.fire({ icon: "error", title: "Impossible de récupérer tous les contacts" });
+    } finally {
+        setFetchingAllIds(false);
+    }
+};
+
+const clearSelectAllAcrossPages = () => {
+    setSelectedIds([]);
+    setSelectAllAcrossPages(false);
+};
+
+const handleToggleSelectAllContacts = () => {
+    if (selectAllAcrossPages) {
+        clearSelectAllAcrossPages();
+    } else {
+        handleSelectAllAcrossPages();
+    }
+};
+
+const toggleContact = (id) => {
+    setSelectedIds((previous) =>
+        previous.includes(id)
+            ? previous.filter((item) => item !== id)
+            : [...previous, id]
+    );
+
+    setSelectAllAcrossPages(false); // ← زيد هاد السطر
+};
+
+const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+        setSelectedIds((previous) =>
+            previous.filter((id) => !visibleIds.includes(id))
+        );
+    } else {
+        setSelectedIds((previous) => [
+            ...new Set([...previous, ...visibleIds]),
+        ]);
+    }
+
+    setSelectAllAcrossPages(false); // ← زيد هاد السطر
+};
 
         // Initialisé depuis les query params renvoyés par le serveur
     const [search, setSearch] = useState(filters?.search ?? "");
@@ -287,29 +360,8 @@ export default function Index({ contacts, flash, filters }) {
         visibleIds.length > 0 &&
         visibleIds.every((id) => selectedIds.includes(id));
 
-    /* =====================================================
-       Selection
-    ===================================================== */
 
-    const toggleContact = (id) => {
-        setSelectedIds((previous) =>
-            previous.includes(id)
-                ? previous.filter((item) => item !== id)
-                : [...previous, id]
-        );
-    };
 
-    const toggleSelectAll = () => {
-        if (allVisibleSelected) {
-            setSelectedIds((previous) =>
-                previous.filter((id) => !visibleIds.includes(id))
-            );
-        } else {
-            setSelectedIds((previous) => [
-                ...new Set([...previous, ...visibleIds]),
-            ]);
-        }
-    };
 
     /* =====================================================
        Add contact
@@ -571,11 +623,9 @@ export default function Index({ contacts, flash, filters }) {
 
                     onSuccess: () => {
                         setSelectedIds([]);
-
+                        setSelectAllAcrossPages(false);
                         setEmailForm({ subject: "", message: "" });
-
                         setAttachments([]);
-
                         setShowEmailModal(false);
                     },
 
@@ -646,56 +696,73 @@ export default function Index({ contacts, flash, filters }) {
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#1f2d2d] shadow-sm transition hover:bg-[#F7F8F7]">
-                            {importing ? (
-                                <Loader2
-                                    size={15}
-                                    strokeWidth={2}
-                                    className="animate-spin"
-                                />
-                            ) : (
-                                <Upload size={15} strokeWidth={2} />
-                            )}
+<div className="flex flex-wrap gap-2">
+    <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#1f2d2d] shadow-sm transition hover:bg-[#F7F8F7]">
+        {importing ? (
+            <Loader2 size={15} strokeWidth={2} className="animate-spin" />
+        ) : (
+            <Upload size={15} strokeWidth={2} />
+        )}
+        {importing ? "Importation..." : "Import Excel"}
+        <input
+            ref={importInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleImport}
+            disabled={importing}
+            className="hidden"
+        />
+    </label>
 
-                            {importing ? "Importation..." : "Import Excel"}
+    
+    <button
+        type="button"
+        onClick={handleToggleSelectAllContacts}
+        disabled={fetchingAllIds || totalContactsCount === 0}
+        className={`flex items-center gap-1.5 rounded-lg border px-4 py-2.5 text-[13.5px] font-medium shadow-sm transition ${
+            selectAllAcrossPages
+                ? "border-[#BF5429] bg-[#BF5429]/5 text-[#BF5429] hover:bg-[#BF5429]/10"
+                : "border-[#D6D9D8] bg-white text-[#1f2d2d] hover:bg-[#F7F8F7]"
+        }`}
+    >
+        {fetchingAllIds ? (
+            <Loader2 size={15} strokeWidth={2} className="animate-spin" />
+        ) : selectAllAcrossPages ? (
+            <CheckSquare size={15} strokeWidth={2} />
+        ) : (
+            <Square size={15} strokeWidth={2} />
+        )}
+        {fetchingAllIds
+            ? "Chargement..."
+            : selectAllAcrossPages
+            ? `Tout désélectionner (${totalContactsCount})`
+            : `Tout sélectionner (${totalContactsCount})`}
+    </button>
 
-                            <input
-                                ref={importInputRef}
-                                type="file"
-                                accept=".xlsx,.xls,.csv"
-                                onChange={handleImport}
-                                disabled={importing}
-                                className="hidden"
-                            />
-                        </label>
+    <button
+        type="button"
+        onClick={openEmailModal}
+        disabled={selectedIds.length === 0}
+        className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13.5px] font-medium transition ${
+            selectedIds.length > 0
+                ? "border border-[#2F6B4F] bg-[#2F6B4F]/5 text-[#2F6B4F] hover:bg-[#2F6B4F]/10"
+                : "cursor-not-allowed border border-[#D6D9D8] bg-white text-[#8A9290]"
+        }`}
+    >
+        <Mail size={15} strokeWidth={2} />
+        Envoyer un email
+        {selectedIds.length > 0 && <span>({selectedIds.length})</span>}
+    </button>
 
-                        <button
-                            type="button"
-                            onClick={openEmailModal}
-                            disabled={selectedIds.length === 0}
-                            className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13.5px] font-medium transition ${
-                                selectedIds.length > 0
-                                    ? "border border-[#2F6B4F] bg-[#2F6B4F]/5 text-[#2F6B4F] hover:bg-[#2F6B4F]/10"
-                                    : "cursor-not-allowed border border-[#D6D9D8] bg-white text-[#8A9290]"
-                            }`}
-                        >
-                            <Mail size={15} strokeWidth={2} />
-                            Envoyer un email
-                            {selectedIds.length > 0 && (
-                                <span>({selectedIds.length})</span>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
-                        >
-                            <Plus size={15} strokeWidth={2} />
-                            Ajouter un contact
-                        </button>
-                    </div>
+    <button
+        type="button"
+        onClick={() => setShowAddModal(true)}
+        className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
+    >
+        <Plus size={15} strokeWidth={2} />
+        Ajouter un contact
+    </button>
+</div>
                 </div>
 
                 {/* Search / Filters */}
@@ -754,13 +821,24 @@ export default function Index({ contacts, flash, filters }) {
                     {selectedIds.length > 0 && (
                         <div className="mt-3 flex items-center justify-between rounded-lg bg-[#BF5429]/5 px-4 py-3">
                             <p className="text-[13px] text-[#1f2d2d]">
-                                <strong>{selectedIds.length}</strong> contact(s)
-                                sélectionné(s)
+                                <strong>{selectedIds.length}</strong> contact(s) sélectionné(s)
+                                {allVisibleSelected && !selectAllAcrossPages && totalContactsCount > visibleIds.length && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSelectAllAcrossPages}
+                                        disabled={fetchingAllIds}
+                                        className="ml-2 font-medium text-[#BF5429] underline hover:no-underline"
+                                    >
+                                        {fetchingAllIds
+                                            ? "Chargement..."
+                                            : `Sélectionner les ${totalContactsCount} contacts correspondants`}
+                                    </button>
+                                )}
                             </p>
 
                             <button
                                 type="button"
-                                onClick={() => setSelectedIds([])}
+                                onClick={clearSelectAllAcrossPages}
                                 className="text-[13px] font-medium text-[#5B6462] transition hover:text-[#1f2d2d]"
                             >
                                 Tout désélectionner

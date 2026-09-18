@@ -185,6 +185,9 @@ Route::post(
         [ObservatoryContactController::class, 'index']
     )->name('admin.observatory-contacts.index');
 
+    Route::get('observatory-contacts/ids', [ObservatoryContactController::class, 'ids'])
+    ->name('admin.observatory-contacts.ids');
+
     Route::post(
         '/observatory-contacts',
         [ObservatoryContactController::class, 'store']
