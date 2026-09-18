@@ -699,9 +699,9 @@ const toggleSelectAll = () => {
 <div className="flex flex-wrap gap-2">
     <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#1f2d2d] shadow-sm transition hover:bg-[#F7F8F7]">
         {importing ? (
-            <Loader2 size={15} strokeWidth={2} className="animate-spin" />
+            <Loader2 size={12} strokeWidth={2} className="animate-spin" />
         ) : (
-            <Upload size={15} strokeWidth={2} />
+            <Upload size={12} strokeWidth={2} />
         )}
         {importing ? "Importation..." : "Import Excel"}
         <input
@@ -726,11 +726,11 @@ const toggleSelectAll = () => {
         }`}
     >
         {fetchingAllIds ? (
-            <Loader2 size={15} strokeWidth={2} className="animate-spin" />
+            <Loader2 size={12} strokeWidth={2} className="animate-spin" />
         ) : selectAllAcrossPages ? (
-            <CheckSquare size={15} strokeWidth={2} />
+            <CheckSquare size={12} strokeWidth={2} />
         ) : (
-            <Square size={15} strokeWidth={2} />
+            <Square size={12} strokeWidth={2} />
         )}
         {fetchingAllIds
             ? "Chargement..."
@@ -749,7 +749,7 @@ const toggleSelectAll = () => {
                 : "cursor-not-allowed border border-[#D6D9D8] bg-white text-[#8A9290]"
         }`}
     >
-        <Mail size={15} strokeWidth={2} />
+        <Mail size={12} strokeWidth={2} />
         Envoyer un email
         {selectedIds.length > 0 && <span>({selectedIds.length})</span>}
     </button>
@@ -759,8 +759,8 @@ const toggleSelectAll = () => {
         onClick={() => setShowAddModal(true)}
         className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
     >
-        <Plus size={15} strokeWidth={2} />
-        Ajouter un contact
+        <Plus size={12} strokeWidth={2} />
+        Ajouter  contact
     </button>
 </div>
                 </div>
