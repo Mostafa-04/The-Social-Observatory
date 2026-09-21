@@ -73,7 +73,7 @@ const Nav = () => {
   const closeMenu = () => setIsOpen(false);
 
   const navLinks = [
-    { href: "#africa-challenge", label: "Africa Challenge" },
+    // { href: "#africa-challenge", label: "Africa Challenge" },
     { href: "#about", label: "About" },
     { href: "#focus", label: "Projects" },
     // { href: "#research", label: "Research" },

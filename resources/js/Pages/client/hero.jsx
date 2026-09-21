@@ -270,10 +270,9 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
 
                 <div className="mt-11 flex flex-col sm:flex-row gap-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.8s_forwards]">
 
-                  {/* Africa Game Button */}
-                  <a
-                    href="https://guess-the-country-eight.vercel.app/"
-                    target="_blank"
+                  
+                   <a
+                    href="#publications"
                     rel="noopener noreferrer"
                     className={`
                       group relative inline-flex items-center justify-center gap-3
@@ -293,7 +292,7 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                     <span className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     <span className="relative z-10">
-                      Explore Africa Game
+                      Publications
                     </span>
 
                     <svg
@@ -311,7 +310,8 @@ const Hero = ({countParteners, countPublications, countCountries}) => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </a>
+                  </a> 
+                
 
                   {/* Download PDF */}
                   <a

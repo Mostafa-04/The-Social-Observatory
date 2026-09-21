@@ -76,7 +76,7 @@ function Index({
             {/* Critical content */}
             <Navbar />
             <Hero     countParteners={countParteners} countPublications={countPublications} countCountries={countCountries} countProjets={countProjets} />
-            <AfricaChallenge/>
+            {/* <AfricaChallenge/> */}
             <LatestContent content={latestContent} />
 
             {/* Sections */}
