@@ -688,11 +688,11 @@ const toggleSelectAll = () => {
                         </p>
 
                         <h1 className="font-display text-2xl text-[#1f2d2d]">
-                            Contacts
+                            Maroc Social 2030
                         </h1>
 
                         <p className="mt-1 text-[13px] text-[#5B6462]">
-                            Gérer les contacts du Social Observatory.
+                            Gérer les contacts du Maroc Social 2030.
                         </p>
                     </div>
 
