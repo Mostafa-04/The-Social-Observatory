@@ -17,6 +17,8 @@ import {
   LogOut,
   Form,
   X,
+  Building2,
+  UsersRound 
 } from "lucide-react";
 import { Link, usePage } from "@inertiajs/react";
 
@@ -55,12 +57,21 @@ const NAV = [
       { label: "Inscriptions de groupe", icon: Form, route: "group-registrations.index" },
     ],
   },
+
+    {
+    group: "Engagement",
+    items: [
+      { label: "Maroc Social 2030", icon: User, route: "admin.observatory-contacts.index" },
+      { label: "personnes-physiques", icon: UsersRound , route: "people.index" },
+       { label: "personnes-morales", icon: Building2, route: "admin.companies.index" },
+    ],
+  },
+
   {
     group: "Engagement",
     items: [
       { label: "Messages", icon: Mail, route: "contacts.index" },
       { label: "Newsletter", icon: Bell, route: "newsletter-subscribers.index" },
-      { label: "Maroc Social 2030", icon: User, route: "admin.observatory-contacts.index" },
     ],
   },
   {

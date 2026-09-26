@@ -53,6 +53,24 @@ public function store(Request $request, Event $event)
             'is_system' => true,
             'sort_order' => 1,
         ],
+            [
+        'label' => 'Genre',
+        'name' => 'gender',
+        'type' => 'select',
+        'options' => [
+            [
+                'value' => 'H',
+                'label' => 'Homme',
+            ],
+            [
+                'value' => 'F',
+                'label' => 'Femme',
+            ],
+        ],
+        'is_required' => true,
+        'is_system' => true,
+        'sort_order' => 3,
+    ],
         [
             'label' => 'Prénom',
             'name' => 'first_name',

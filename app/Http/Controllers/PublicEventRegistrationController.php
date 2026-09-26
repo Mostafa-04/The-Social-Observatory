@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use App\Mail\EventRegistrationConfirmation;
+use App\Services\PersonService;
 
 class PublicEventRegistrationController extends Controller
 {
@@ -74,6 +75,11 @@ class PublicEventRegistrationController extends Controller
                 'required',
                 'string',
                 'max:50',
+            ],
+
+            'gender' => [
+                'required',
+                'in:H,F,O',
             ],
 
             'email' => [
@@ -200,7 +206,7 @@ class PublicEventRegistrationController extends Controller
                 'last_name' => $validated['last_name'],
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
-
+                'gender' => $validated['gender'],
                 'status' => 'registered',
                 'registered_at' => now(),
             ]);
@@ -265,6 +271,14 @@ class PublicEventRegistrationController extends Controller
 
             return $registration;
         });
+
+        app(PersonService::class)->findOrCreate([
+            'first_name' => $registration->first_name,
+            'last_name' => $registration->last_name,
+            'email' => $registration->email,
+            'phone' => $registration->phone,
+            'gender' => $registration->gender,
+        ]);
 
         /*
         |--------------------------------------------------------------------------

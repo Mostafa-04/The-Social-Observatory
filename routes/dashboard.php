@@ -23,6 +23,10 @@ use App\Http\Controllers\AssociationController;
 use App\Http\Controllers\IapsSubmissionController;
 use App\Http\Controllers\GroupRegistrationController;
 use App\Http\Controllers\ObservatoryContactController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\CompanyController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +37,10 @@ use App\Http\Controllers\ObservatoryContactController;
 // Subscribe to newsletter
 Route::post('/newsletter/subscribe', [NewsletterSubscriberController::class, 'store'])
     ->name('newsletter.subscribe');
+
+Route::get('/people/create', [PersonController::class, 'create'])
+    ->name('people.create');
+
 
 
 /*
@@ -149,6 +157,9 @@ Route::get(
 Route::get('/admin/countries/{country}/cities', [CountryController::class, 'cities'])
     ->name('countries.cities');
 
+Route::get('/admin/people/countries/{country}/cities', [CountryController::class, 'peopleCities'])
+    ->name('people.countries.cities');
+
 
 Route::get(
     '/events/{event}/emails/{campaign}',
@@ -169,11 +180,17 @@ Route::post(
     Route::get('iaps-submissions/{iapsSubmission}', [IapsSubmissionController::class, 'show'])
         ->name('iaps-submissions.show');
 
+        Route::post('iaps-submissions/send-email', [IapsSubmissionController::class, 'sendEmail'])
+        ->name('iaps-submissions.send-email');
+
         Route::get('group-registrations', [GroupRegistrationController::class, 'index'])
         ->name('group-registrations.index');
 
     Route::get('group-registrations/{groupRegistration}', [GroupRegistrationController::class, 'show'])
         ->name('group-registrations.show');
+
+    Route::post('group-registrations/send-email', [GroupRegistrationController::class, 'sendEmail'])
+    ->name('group-registrations.send-email');
 
         Route::post(
             '/group-registrations/import',
@@ -210,5 +227,48 @@ Route::post(
 
     Route::delete('observatory-contacts', [ObservatoryContactController::class, 'destroyMany'])
         ->name('admin.observatory-contacts.destroy-many');
+        
+
+Route::get('/people', [PersonController::class, 'index'])
+    ->name('people.index');
+
+
+
+Route::post('/people', [PersonController::class, 'store'])
+    ->name('people.store');
+
+Route::get('/people/{person}/history', [PersonController::class, 'history'])
+    ->name('people.history');
+
+Route::post('/people/send-email', [PersonController::class, 'sendEmail'])
+    ->name('people.send-email');
+
+        Route::get('/companies', [CompanyController::class, 'index'])
+        ->name('admin.companies.index');
+
+    Route::get('/companies/create', [CompanyController::class, 'create'])
+        ->name('admin.companies.create');
+
+    Route::post('/companies', [CompanyController::class, 'store'])
+        ->name('admin.companies.store');
+
+    Route::get('/companies/{company}', [CompanyController::class, 'show'])
+        ->name('admin.companies.show');
+
+            Route::get('/companies', [CompanyController::class, 'index'])
+            ->name('admin.companies.index');
+
+        Route::get('/companies/create', [CompanyController::class, 'create'])
+            ->name('admin.companies.create');
+
+        Route::post('/companies', [CompanyController::class, 'store'])
+            ->name('admin.companies.store');
+
+        Route::get('/companies/{company}', [CompanyController::class, 'show'])
+            ->name('admin.companies.show');
+
+        Route::post('/companies/send-email', [CompanyController::class, 'sendEmail'])
+            ->name('admin.companies.send-email');
 });
+
 

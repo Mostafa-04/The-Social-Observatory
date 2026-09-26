@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -14,6 +14,12 @@ use App\Http\Controllers\ClientController;
 //         'phpVersion' => PHP_VERSION,
 //     ]);
 // });
+
+Route::get('/api/countries', [CompanyController::class, 'countries'])
+    ->name('api.countries');
+
+Route::get('/api/countries/{country}/cities', [CompanyController::class, 'cities'])
+    ->name('api.countries.cities');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

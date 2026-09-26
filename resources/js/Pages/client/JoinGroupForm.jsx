@@ -208,6 +208,7 @@ export default function JoinGroupForm() {
         presentation: "",
         expertise_domain: "",
         motivation: "",
+        gender: "", // Ajout du champ "gender"
     });
 
     const selectedGroup = GROUPS.find((g) => g.value === data.group_type);
@@ -390,6 +391,18 @@ export default function JoinGroupForm() {
             {errors.cv}
         </p>
     )}
+    <div className="mt-4">
+       <label className="mb-2 block text-sm font-semibold text-[#1f2d2d]">Genre</label>
+         <select
+            value={data.gender}
+            onChange={(e) => setData("gender", e.target.value)}
+            className={`${inputClasses} mt-1`}>
+            <option value="">Sélectionnez votre genre</option>
+            <option value="H">Homme</option>
+            <option value="F">Femme</option>
+            <option value="O">Autre</option>
+        </select>
+    </div>
 </div>
 
                 {/* Présentation */}

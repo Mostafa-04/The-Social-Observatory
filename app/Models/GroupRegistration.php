@@ -13,6 +13,7 @@ class GroupRegistration extends Model
         'group_type',
         'full_name',
         'email',
+        'gender',
         'linkedin_url',
         'cv_path',
         'presentation',

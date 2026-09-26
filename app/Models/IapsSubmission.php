@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Concerns\IapsSubmissionScopes;
 
 class IapsSubmission extends Model
 {
+    use IapsSubmissionScopes;
     protected $fillable = [
         'publication_id',
 
         // SECTION 1
         'full_name',
+        'gender',
         'email',
         'phone',
         'languages',

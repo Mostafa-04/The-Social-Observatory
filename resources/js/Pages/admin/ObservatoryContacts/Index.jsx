@@ -269,6 +269,7 @@ const toggleSelectAll = () => {
         name: "",
         organisation: "",
         role: "",
+        gender: "",
         email: "",
         phone: "",
         status: "pending",
@@ -343,6 +344,7 @@ const toggleSelectAll = () => {
                     contact.name,
                     contact.organisation,
                     contact.role,
+                    contact.gender,
                     contact.email,
                     contact.phone,
                 ].some((field) => normalize(field).includes(searchValue));
@@ -384,6 +386,7 @@ const toggleSelectAll = () => {
                     name: "",
                     organisation: "",
                     role: "",
+                    gender:"",
                     email: "",
                     phone: "",
                     status: "pending",
@@ -865,6 +868,7 @@ const toggleSelectAll = () => {
                                     <th className={thClass}>Nom</th>
                                     <th className={thClass}>Organisation</th>
                                     <th className={thClass}>Rôle</th>
+                                    <th className={thClass}>Genre</th>
                                     <th className={thClass}>Email</th>
                                     <th className={thClass}>Téléphone</th>
                                     <th className={thClass}>Statut</th>
@@ -915,6 +919,10 @@ const toggleSelectAll = () => {
 
                                             <td className={tdClass}>
                                                 {contact.role || "—"}
+                                            </td>
+
+                                            <td className={tdClass}>
+                                                {contact.gender=== "H" ? "Homme" : contact.gender=== "F" ? "Femme" : "—"}
                                             </td>
 
                                             <td className={tdClass}>
@@ -1127,6 +1135,22 @@ const toggleSelectAll = () => {
                                     className={inputClass}
                                     placeholder="Rôle"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-[13px] font-medium text-[#1f2d2d]">
+                                    Genre
+                                </label>
+                                <select
+                                    name="gender"
+                                    value={form.gender}
+                                    onChange={handleFormChange}
+                                    className={inputClass}
+                                >
+                                    <option value="">Sélectionnez un genre</option>
+                                    <option value="H">Homme</option>
+                                    <option value="F">Femme</option>
+                                </select>
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">

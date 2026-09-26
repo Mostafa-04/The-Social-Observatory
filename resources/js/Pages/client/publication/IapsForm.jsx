@@ -271,7 +271,9 @@ function SelectInput({
         <div>
             <label className="mb-2 block text-sm font-medium text-[#263333]">
                 {label}
-                {required && <span className="ml-1 text-[#bf5429]">*</span>}
+                {required && (
+                    <span className="ml-1 text-[#bf5429]">*</span>
+                )}
             </label>
 
             <select
@@ -285,11 +287,26 @@ function SelectInput({
             >
                 <option value="">{placeholder}</option>
 
-                {options.map((option) => (
-                    <option key={option} value={option}>
-                        {option}
-                    </option>
-                ))}
+                {options.map((option, index) => {
+                    const optionValue =
+                        typeof option === "object"
+                            ? option.value
+                            : option;
+
+                    const optionLabel =
+                        typeof option === "object"
+                            ? option.label
+                            : option;
+
+                    return (
+                        <option
+                            key={`${optionValue}-${index}`}
+                            value={optionValue}
+                        >
+                            {optionLabel}
+                        </option>
+                    );
+                })}
             </select>
 
             <FieldError error={error} />
@@ -434,6 +451,7 @@ export default function IapsForm({ publication }) {
     const { data, setData, post, processing, errors } = useForm({
         // SECTION 1
         full_name: "",
+        gender: "",
         email: "",
         phone: "",
         languages: [],
@@ -591,6 +609,21 @@ const handleSubmit = (e) => {
                                                 setData("full_name", value)
                                             }
                                             error={errors.full_name}
+                                        />
+
+                                        <SelectInput
+                                            label="Genre"
+                                            required
+                                            options={[
+                                                { value: "H", label: "Homme" },
+                                                { value: "F", label: "Femme" },
+                                                
+                                            ]}
+                                            value={data.gender}
+                                            onChange={(value) =>
+                                                setData("gender", value)
+                                            }
+                                            error={errors.gender}
                                         />
 
                                         <TextInput

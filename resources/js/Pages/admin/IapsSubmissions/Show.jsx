@@ -109,6 +109,10 @@ export default function IapsSubmissionsShow({ submission }) {
                                     submission.full_name}
                             </h1>
 
+                            <p className="text-sm text-white/70">
+                                {submission.gender === "H" ? "Homme" : submission.gender === "F" ? "Femme" : "Non spécifié"}
+                            </p>
+
                             {submission.publication?.title && (
                                 <p className="mt-2 flex items-center gap-2 text-sm text-white/70">
                                     <FileText className="h-4 w-4 text-[#bf5429]" />

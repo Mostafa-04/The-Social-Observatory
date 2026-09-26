@@ -74,6 +74,14 @@ export default function GroupRegistrationsShow({ registration }) {
                             <p className="mt-2 text-sm text-white/70">
                                 {registration.email}
                             </p>
+                            <p className="mt-1 text-sm text-white/70">
+                                Genre:{" "}
+                                {registration.gender === "H"
+                                    ? "Homme"
+                                    : registration.gender === "F"
+                                    ? "Femme"
+                                    : "Non spécifié"}
+                            </p>
                         </div>
 
                         <div className="text-right text-sm text-white/60">

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Country;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
+
 
 class CountryController extends Controller
 {
@@ -22,7 +24,6 @@ class CountryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-
 
 public function create()
 {
@@ -118,18 +119,86 @@ public function edit($id)
     ]);
 }
 
-public function cities(Country $country)
+public function cities(Country $country): JsonResponse
 {
-    $response = Http::post('https://countriesnow.space/api/v0.1/countries/cities', [
-        'country' => $country->name,
-    ]);
+    try {
+        $response = Http::timeout(10)->post(
+            'https://countriesnow.space/api/v0.1/countries/cities',
+            [
+                'country' => $country->name,
+            ]
+        );
 
-    $cities = collect($response->json('data', []));
+        if (!$response->successful()) {
+            return response()->json([
+                'cities' => [],
+                'message' => 'Impossible de récupérer les villes.',
+            ], 200);
+        }
 
-    // Cas particulier: Maroc — on ajoute les villes des provinces
-    // du Sahara marocain, souvent absentes ou classées à part
-    // par les API externes.
-    if (strtoupper($country->iso_code) === 'MA') {
+        $cities = collect($response->json('data', []));
+
+        // Maroc
+        if (
+            isset($country->iso_code) &&
+            strtoupper($country->iso_code) === 'MA'
+        ) {
+            $saharaCities = [
+                'Laâyoune',
+                'Dakhla',
+                'Boujdour',
+                'Es-Semara',
+                'Tarfaya',
+                'Guelmim',
+                'Tan-Tan',
+                'Assa-Zag',
+                'Aousserd',
+            ];
+
+            $cities = $cities->merge($saharaCities);
+        }
+
+        return response()->json([
+            'cities' => $cities
+                ->filter(fn ($city) => is_string($city))
+                ->unique()
+                ->sort()
+                ->values()
+                ->all(),
+        ]);
+    } catch (\Throwable $e) {
+        \Log::error('Erreur récupération villes', [
+            'country_id' => $country->id,
+            'country_name' => $country->name,
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'cities' => [],
+            'message' => 'Erreur lors du chargement des villes.',
+        ], 200);
+    }
+}
+public function peopleCities(string $country)
+{
+    $response = Http::post(
+        'https://countriesnow.space/api/v0.1/countries/cities',
+        [
+            'country' => $country,
+        ]
+    );
+
+    if (!$response->successful()) {
+        return response()->json([
+            'cities' => [],
+        ], 500);
+    }
+
+    $cities = collect(
+        $response->json('data', [])
+    );
+
+    if (strtolower($country) === 'morocco') {
         $saharaCities = [
             'Laâyoune',
             'Dakhla',
@@ -146,10 +215,13 @@ public function cities(Country $country)
     }
 
     return response()->json([
-        'cities' => $cities->unique()->sort()->values(),
+        'cities' => $cities
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values(),
     ]);
 }
-
     /**
      * Update the specified resource.
      */

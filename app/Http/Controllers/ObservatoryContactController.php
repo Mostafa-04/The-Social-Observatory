@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Validators\ValidationException;
 use App\Mail\ObservatoryContactMail;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendObservatoryContactEmail;
+use App\Services\PersonService;
 
 class ObservatoryContactController extends Controller
 {
@@ -54,14 +55,26 @@ public function index(Request $request)
             'name' => ['required', 'string', 'max:255'],
             'organisation' => ['nullable', 'string', 'max:255'],
             'role' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'in:H,F'],
             'email' => ['nullable', 'email'],
             'phone' => ['nullable', 'string', 'max:50'],
             'status' => ['required', 'in:pending,approved,rejected'],
         ]);
 
-        ObservatoryContact::create([
+        $contact = ObservatoryContact::create([
             ...$validated,
             'registered_at' => now(),
+        ]);
+        $names = preg_split('/\s+/', trim($contact->name), 2);
+
+        app(PersonService::class)->findOrCreate([
+            'first_name' => $names[0] ?? '',
+            'last_name' => $names[1] ?? '',
+            'email' => $contact->email,
+            'phone' => $contact->phone,
+            'organisation' => $contact->organisation,
+            'role' => $contact->role,
+            'gender' => $contact->gender,
         ]);
 
         return back()->with('success', 'Contact ajouté avec succès.');

@@ -10,6 +10,7 @@ class ObservatoryContact extends Model
         'name',
         'organisation',
         'role',
+        'gender',
         'email',
         'phone',
         'status',

@@ -13,6 +13,7 @@ class EventRegistration extends Model
         'registration_form_id',
         'first_name',
         'last_name',
+         'gender',
         'phone',
         'email',
         'status',

@@ -10,6 +10,25 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\GroupRegistrationController;
 use App\Http\Controllers\IapsSubmissionController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\CompanyRegistrationController;
+
+
+
+
+
+
+Route::get('/personnes-physiques/register', [PersonController::class, 'Formlaire'])
+    ->name('person.form');
+
+Route::post('/formulaire', [PersonController::class, 'storeForm'])
+    ->name('person.form.store');
+
+Route::get('/personnes-morales/register', [CompanyRegistrationController::class, 'create'])
+    ->name('company.register');
+
+Route::post('/entreprises/register', [CompanyRegistrationController::class, 'store'])
+    ->name('company.register.store');
 
 
 Route::get(

@@ -9,6 +9,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Jobs\SendIapsSubmissionConfirmationEmailJob;
+use App\Services\PersonService;
+use App\Jobs\DispatchIapsBulkEmailJob;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
 
 class IapsSubmissionController extends Controller
 {
@@ -41,6 +49,8 @@ class IapsSubmissionController extends Controller
                 'string',
                 'max:255',
             ],
+
+            'gender' => ['nullable', 'in:H,F'],
 
             'email' => [
                 'required',
@@ -286,6 +296,16 @@ class IapsSubmissionController extends Controller
         */
 
         $submission = IapsSubmission::create($validated);
+        $names = preg_split('/\s+/', trim($submission->full_name), 2);
+
+        app(PersonService::class)->findOrCreate([
+            'first_name' => $names[0] ?? '',
+            'last_name' => $names[1] ?? '',
+            'email' => $submission->email,
+            'phone' => $submission->phone,
+            'organisation' => $submission->organization_affiliation,
+            'gender' => $submission->gender,
+        ]);
         SendIapsSubmissionConfirmationEmailJob::dispatch(
             $submission->email,
             $submission->full_name,
@@ -339,5 +359,112 @@ class IapsSubmissionController extends Controller
         return Inertia::render('admin/IapsSubmissions/Show', [
             'submission' => $iapsSubmission,
         ]);
+    }
+
+       /**
+     * Prépare l'envoi en masse : validation, stockage des pièces jointes,
+     * puis délégation à la file d'attente (php artisan queue:work).
+     * La requête HTTP répond immédiatement, même pour des milliers de destinataires.
+     */
+    public function sendEmail(Request $request): JsonResponse
+    {
+        $selectAll = $request->boolean('select_all');
+ 
+        $data = $request->validate([
+            'subject'                => ['required', 'string', 'max:255'],
+            'message'                => ['required', 'string'],
+            'select_all'             => ['required', 'boolean'],
+            'submissions'            => [Rule::requiredIf(! $selectAll), 'array'],
+            'submissions.*'          => ['integer'],
+            'excluded_submissions'   => ['nullable', 'array'],
+            'excluded_submissions.*' => ['integer'],
+            'search'                 => ['nullable', 'string', 'max:255'],
+            'participant_type'       => ['nullable', Rule::in(['individual', 'organization'])],
+            'files'                  => ['nullable', 'array', 'max:10'],
+            'files.*'                => [
+                'file',
+                'max:10240', // 10 Mo par fichier
+                'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip',
+            ],
+        ], [
+            'submissions.required' => 'Veuillez sélectionner au moins une soumission.',
+            'subject.required'     => "Veuillez saisir l'objet du message.",
+            'message.required'     => 'Veuillez saisir le message.',
+            'files.*.max'          => 'Chaque fichier doit faire 10 Mo au maximum.',
+            'files.*.mimes'        => "Ce type de fichier n'est pas autorisé.",
+        ]);
+ 
+        $ids         = $data['submissions'] ?? [];
+        $excludedIds = $data['excluded_submissions'] ?? [];
+        $search      = $data['search'] ?? null;
+        $type        = $data['participant_type'] ?? null;
+ 
+        $message = $this->sanitizeHtml($data['message']);
+ 
+        if (trim(strip_tags($message)) === '') {
+            throw ValidationException::withMessages([
+                'message' => 'Veuillez saisir le message.',
+            ]);
+        }
+ 
+        // Nombre de destinataires réels (avec adresse email)
+        $count = IapsSubmission::query()
+            ->filterBy($search, $type)
+            ->withEmail()
+            ->selection($selectAll, $ids, $excludedIds)
+            ->count();
+ 
+        if ($count === 0) {
+            return response()->json([
+                'message' => 'Aucune adresse email valide dans cette sélection.',
+            ], 422);
+        }
+ 
+        // Pièces jointes : stockées UNE fois, partagées par tous les jobs
+        $dir         = 'bulk-mail/' . Str::uuid();
+        $attachments = [];
+ 
+        foreach ($request->file('files', []) as $file) {
+            $attachments[] = [
+                'path' => $file->store($dir, 'local'),
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+            ];
+        }
+ 
+        // Contenu de la campagne, lu par chaque job (évite de le dupliquer dans la table jobs)
+        Storage::disk('local')->put("{$dir}/campaign.json", json_encode([
+            'subject'     => $data['subject'],
+            'message'     => $message,
+            'attachments' => $attachments,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+ 
+        DispatchIapsBulkEmailJob::dispatch(
+            $dir,
+            $selectAll,
+            array_map('intval', $ids),
+            array_map('intval', $excludedIds),
+            $search,
+            $type
+        );
+ 
+        return response()->json([
+            'message' => "L'envoi a été lancé pour {$count} destinataire(s). Les emails partent en arrière-plan.",
+        ]);
+    }
+ 
+    /** Nettoie le HTML produit par Quill avant de l'envoyer par email. */
+    private function sanitizeHtml(string $html): string
+    {
+        $html = strip_tags(
+            $html,
+            '<p><br><strong><em><u><s><ol><ul><li><a><h1><h2><h3><blockquote>'
+        );
+ 
+        // Supprime les attributs d'événements (onclick=...) et les liens javascript:
+        $html = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html);
+        $html = preg_replace('/(href\s*=\s*["\'])\s*javascript:[^"\']*/i', '$1#', $html);
+ 
+        return $html;
     }
 }

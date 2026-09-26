@@ -51,6 +51,7 @@ export default function PublicRegistration({ event, registrationForm }) {
         last_name: "",
         phone: "",
         email: "",
+        gender: "",
         fields: initialFields,
     });
 
@@ -303,6 +304,26 @@ export default function PublicRegistration({ event, registrationForm }) {
                                     </p>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Gender */}
+                        <div className="mt-5">
+                            <label className={labelClass}>Genre <span className="text-red-500">*</span></label>
+                            <select
+                                value={data.gender}
+                                onChange={(e) => setData("gender", e.target.value)}
+                                className={fieldClass}
+                            >
+                                <option value="">Sélectionnez votre genre</option>
+                                <option value="H">Homme</option>
+                                <option value="F">Femme</option>
+                               
+                            </select>
+                            {errors.gender && (
+                                <p className="mt-1 text-[12px] text-red-500">
+                                    {errors.gender}
+                                </p>
+                            )}
                         </div>
 
                         {/* Dynamic fields */}
