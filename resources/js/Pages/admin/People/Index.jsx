@@ -423,7 +423,7 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
 
     // Mappage du genre
     const genderLabels = {
-        M: "Masculin",
+        H: "Masculin",
         F: "Féminin",
         O: "Autre",
     };
@@ -552,7 +552,7 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                             className={`${selectClass} md:w-44`}
                         >
                             <option value="">Tous les genres</option>
-                            <option value="M">Hommes</option>
+                            <option value="H">Hommes</option>
                             <option value="F">Femmes</option>
                         </select>
 

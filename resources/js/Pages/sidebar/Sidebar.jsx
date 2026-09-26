@@ -62,8 +62,8 @@ const NAV = [
     group: "Engagement",
     items: [
       { label: "Maroc Social 2030", icon: User, route: "admin.observatory-contacts.index" },
-      { label: "personnes-physiques", icon: UsersRound , route: "people.index" },
-       { label: "personnes-morales", icon: Building2, route: "admin.companies.index" },
+      { label: "Personnes Physiques", icon: UsersRound , route: "people.index" },
+       { label: "Personnes Morales", icon: Building2, route: "admin.companies.index" },
     ],
   },
 
