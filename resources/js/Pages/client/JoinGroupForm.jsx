@@ -8,59 +8,76 @@ import Footer from "./footer";
 // ============================================================
 // Données des groupes
 // ============================================================
+
 const GROUPS = [
     {
-        value: "jeunesse",
-        label: "Groupe de Travail 1 — Jeunesse, Éducation et Emploi",
+        value: "human_capital",
+        label: "Human Capital & Work",
         description:
-            "Redonner à la jeunesse marocaine les moyens d'apprendre, de s'orienter, de travailler et d'exister pleinement dans un pays qui reconnaît ses capacités et ses aspirations.",
+            "Explorer les enjeux liés aux compétences, à l'emploi, à l'entrepreneuriat et aux transformations du monde du travail, en particulier pour les jeunes et les personnes éloignées de l'emploi.",
         objectives: [
-            "Lutte contre le décrochage scolaire, innovation éducative et orientation",
-            "Génération des néo-NEETs et évolution des Écoles de la 2ème Chance",
-            "Apprentissage, insertion économique et Validation des Acquis d'Expérience",
-            "Entrepreneuriat de nécessité, entrepreneuriat social et création de valeur dans l'ESS",
+            "Youth & Skills",
+            "NEETs & Neo-NEETs",
+            "Employability",
+            "Entrepreneurship",
+            "Informal Economy",
         ],
     },
+
     {
-        value: "femmes",
-        label: "Groupe de Travail 2 — Femmes, Travail Invisible et Sécurité Sociale",
+        value: "gender_inclusion",
+        label: "Gender, Inclusion & Diverse Abilities",
         description:
-            "Reconnaître, protéger et valoriser la contribution des femmes à l'économie et à la cohésion sociale, tout en combattant les violences et les discriminations qui limitent leur pouvoir d'agir.",
+            "Promouvoir l'inclusion sociale et économique, l'égalité des chances et la reconnaissance des contributions des femmes, des travailleurs vulnérables et des personnes en situation de handicap.",
         objectives: [
-            "Reconnaissance et valorisation du travail de soin non rémunéré",
-            "Création du statut et formalisation du métier d'Assistante Maternelle à Domicile - AMD",
-            "Lutte contre toutes les formes de violence basée sur le genre - VBG",
-            "Égalité, droits sociaux et participation effective des femmes dans les sphères politiques et économiques",
+            "Women’s Empowerment",
+            "Disability Inclusion",
+            "Vulnerable Workers",
+            "Invisible Workers",
+            "Intergenerational Justice",
         ],
     },
+
     {
-        value: "vieillissement",
-        label: "Groupe de Travail 3 — Vieillissement, Santé de la Population et Transitions Démographiques",
+        value: "health_social_protection",
+        label: "Health, Social Protection & Demographic Transitions",
         description:
-            "Préparer le Maroc au choc démographique en construisant une société intergénérationnelle qui protège les aînés, accompagne les familles et développe les métiers du care de demain.",
+            "Analyser les transformations démographiques, les enjeux de santé, les systèmes de protection sociale et les conditions nécessaires au bien-être des populations.",
         objectives: [
-            "Vieillissement de la population, infertilité des jeunes, santé et transitions démographiques",
-            "Se préparer aux mutations sociétales et accompagner les nouvelles formes de solidarité intergénérationnelle",
-            "Adaptation du système de protection sociale au vieillissement, anticipation de l'impact économique sur le modèle de retraite",
-            "Développement des services d'aide à la personne, création et professionnalisation du statut \"Proche Aidant\"",
-            "Santé reproductive, fertilité et nouveaux enjeux familiaux",
-            "Dignité, autonomie et inclusion des séniors et personnes âgées",
+            "Public Health",
+            "Social Protection Systems",
+            "Population Dynamics",
+            "Aging & Fertility",
+            "Well-being",
         ],
     },
+
     {
-        value: "pacte",
-        label: "Groupe de Travail 4 — Pacte National, Territoires et Engagement Citoyen",
+        value: "mobility_migration",
+        label: "Mobility, Migration & Diaspora",
         description:
-            "Refonder le contrat social marocain autour de la participation, du volontariat, de l'intelligence collective et d'une nouvelle gouvernance territoriale.",
+            "Étudier les dynamiques de mobilité, de migration et d'urbanisation, ainsi que le rôle des diasporas et les effets des changements climatiques sur les déplacements des populations.",
         objectives: [
-            "Renforcement de l'engagement civique et des dispositifs de volontariat national",
-            "Émergence de territoires connectés, inclusifs et moteurs de cohésion",
-            "Mise en marche du Conseil National de la Jeunesse et nouvelles instances de participation",
-            "Réinvention du pacte social, de la confiance et du lien État-citoyens",
+            "Intra-African Migration",
+            "Diaspora & Talent",
+            "Urbanization",
+            "Climate-Driven Mobility",
+        ],
+    },
+
+    {
+        value: "governance_democracy",
+        label: "Governance, Democracy & the Social Contract",
+        description:
+            "Analyser la confiance institutionnelle, la participation citoyenne, la responsabilité publique et les nouvelles formes de dialogue entre l'État et les citoyens.",
+        objectives: [
+            "Institutional Trust & Quality",
+            "Democratic Participation & Accountability",
+            "State–Citizen Social Dialogue",
+            "Civic Engagement & Youth Volunteering",
         ],
     },
 ];
-
 const PRESENTATION_MAX = 250;
 
 // ============================================================
@@ -400,7 +417,6 @@ export default function JoinGroupForm() {
             <option value="">Sélectionnez votre genre</option>
             <option value="H">Homme</option>
             <option value="F">Femme</option>
-            <option value="O">Autre</option>
         </select>
     </div>
 </div>

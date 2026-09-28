@@ -425,7 +425,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
     const genderLabels = {
         H: "Masculin",
         F: "Féminin",
-        O: "Autre",
     };
 
     const getGenderColor = (gender) => {

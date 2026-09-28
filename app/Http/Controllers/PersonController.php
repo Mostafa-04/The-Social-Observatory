@@ -19,10 +19,11 @@ class PersonController extends Controller
 {
 
         private const GROUPS = [
-        'jeunesse'       => 'Groupe de Travail 1 — Jeunesse, Éducation et Emploi',
-        'femmes'         => 'Groupe de Travail 2 — Femmes, Travail Invisible et Sécurité Sociale',
-        'vieillissement' => 'Groupe de Travail 3 — Vieillissement, Santé de la Population et Transitions Démographiques',
-        'pacte'          => 'Groupe de Travail 4 — Pacte National, Territoires et Engagement Citoyen',
+        'human_capital' => 'Groupe de Travail 1 && Capital Humain, Éducation et Emploi',
+            'gender_inclusion' => 'Groupe de Travail 2 && Inclusion Genre, Travail Invisible et Sécurité Sociale',
+            'health_social_protection' => 'Groupe de Travail 3 && Santé de la Population et Protection Sociale',
+            'mobility_migration' => 'Groupe de Travail 4 && Mobilité, Migration et Intégration',
+            'governance_democracy' => 'Groupe de Travail 5 && Gouvernance, Démocratie et Engagement Citoyen',
     ];
     /**
      * Une seule source de vérité pour la recherche :

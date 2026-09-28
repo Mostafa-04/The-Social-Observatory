@@ -21,12 +21,13 @@ class GroupRegistration extends Model
         'motivation',
     ];
 
-    public const GROUPS = [
-        'jeunesse'       => 'Groupe de Travail 1 — Jeunesse, Éducation et Emploi',
-        'femmes'         => 'Groupe de Travail 2 — Femmes, Travail Invisible et Sécurité Sociale',
-        'vieillissement' => 'Groupe de Travail 3 — Vieillissement, Santé de la Population et Transitions Démographiques',
-        'pacte'          => 'Groupe de Travail 4 — Pacte National, Territoires et Engagement Citoyen',
-    ];
+public const GROUPS = [
+    'human_capital' => 'Human Capital & Work',
+    'gender_inclusion' => 'Gender, Inclusion & Diverse Abilities',
+    'health_social_protection' => 'Health, Social Protection & Demographic Transitions',
+    'mobility_migration' => 'Mobility, Migration & Diaspora',
+    'governance_democracy' => 'Governance, Democracy & the Social Contract',
+];
 
     public function getGroupLabelAttribute(): string
     {

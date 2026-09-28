@@ -24,7 +24,7 @@ class GroupRegistrationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'group_type'       => ['required', 'in:jeunesse,femmes,vieillissement,pacte'],
+            'group_type'       => ['required', 'in:human_capital,gender_inclusion,health_social_protection,mobility_migration,governance_democracy'],
             'full_name'        => ['required', 'string', 'min:3', 'max:255'],
             'email'            => ['required', 'email', 'max:255'],
             'gender'         => ['nullable', 'in:H,F'],
@@ -64,10 +64,11 @@ class GroupRegistrationController extends Controller
         ]);
 
         $groupLabels = [
-            'jeunesse' => 'Groupe de Travail 1 — Jeunesse, Éducation et Emploi',
-            'femmes' => 'Groupe de Travail 2 — Femmes, Travail Invisible et Sécurité Sociale',
-            'vieillissement' => 'Groupe de Travail 3 — Vieillissement, Santé de la Population et Transitions Démographiques',
-            'pacte' => 'Groupe de Travail 4 — Pacte National, Territoires et Engagement Citoyen',
+            'human_capital' => 'Groupe de Travail 1 — Capital Humain, Éducation et Emploi',
+            'gender_inclusion' => 'Groupe de Travail 2 — Inclusion Genre, Travail Invisible et Sécurité Sociale',
+            'health_social_protection' => 'Groupe de Travail 3 — Santé de la Population et Protection Sociale',
+            'mobility_migration' => 'Groupe de Travail 4 — Mobilité, Migration et Intégration',
+            'governance_democracy' => 'Groupe de Travail 5 — Gouvernance, Démocratie et Engagement Citoyen',
         ];
 
         SendGroupRegistrationConfirmationEmailJob::dispatch(
