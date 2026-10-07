@@ -19,6 +19,7 @@ class IapsSubmission extends Model
         'phone',
         'languages',
         'participant_type',
+        'linkedin',
 
         // SECTION 2 — Personne physique
         'individual_profile',

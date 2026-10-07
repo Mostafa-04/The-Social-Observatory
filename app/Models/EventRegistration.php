@@ -16,6 +16,10 @@ class EventRegistration extends Model
          'gender',
         'phone',
         'email',
+        'organisation',
+        'role',
+        'linkedin',
+        'country',
         'status',
         'registered_at',
     ];

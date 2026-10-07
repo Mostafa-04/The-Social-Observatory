@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use App\Jobs\SendPersonEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Services\PersonService;
 
 class PersonController extends Controller
 {
@@ -310,48 +311,42 @@ public function index(Request $request)
         return Inertia::render('admin/People/Create');
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'gender' => ['required', 'string', 'in:M,F,O'],
-            'email' => ['required', 'email', 'max:255', 'unique:people,email'],
-            'phone' => ['required', 'string', 'max:50', 'unique:people,phone'],
-            'role' => ['required', 'string', 'max:255'],
-            'organisation' => ['nullable', 'string', 'max:255'],
-            'country' => ['required', 'string', 'max:255'],
-            'linkedin' => ['nullable', 'string', 'max:255', 'url'],
-        ]);
-
-        Person::create($data);
-
-        return redirect()
-            ->route('people.index')
-            ->with('success', 'Personne ajoutée avec succès.');
-    }
 
 
-        public function storeForm(Request $request)
-    {
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'gender' => ['required', 'string', 'in:M,F,O'],
-            'email' => ['required', 'email', 'max:255', 'unique:people,email'],
-            'phone' => ['required', 'string', 'max:50', 'unique:people,phone'],
-            'role' => ['required', 'string', 'max:255'],
-            'organisation' => ['nullable', 'string', 'max:255'],
-            'country' => ['required', 'string', 'max:255'],
-            'linkedin' => ['nullable', 'string', 'max:255', 'url'],
-        ]);
+public function store(Request $request, PersonService $personService)
+{
+    $person = $personService->findOrCreate($this->validatedData($request));
 
-        Person::create($data);
+    return redirect()
+        ->route('people.index')
+        ->with('success', $person->wasRecentlyCreated
+            ? 'Personne ajoutée avec succès.'
+            : 'Cette personne existait déjà : ses informations ont été mises à jour.');
+}
 
-        return redirect()
-            ->route('client.home')
-            ->with('success', 'Personne ajoutée avec succès.');
-    }
+public function storeForm(Request $request, PersonService $personService)
+{
+    $personService->findOrCreate($this->validatedData($request));
+
+    return redirect()
+        ->route('client.home')
+        ->with('success', 'Personne ajoutée avec succès.');
+}
+
+private function validatedData(Request $request): array
+{
+    return $request->validate([
+        'first_name'   => ['required', 'string', 'max:255'],
+        'last_name'    => ['required', 'string', 'max:255'],
+        'gender'       => ['required', 'string', 'in:M,F,O'],
+        'email'        => ['required', 'email', 'max:255'],   // unique supprimé
+        'phone'        => ['required', 'string', 'max:50'],   // unique supprimé
+        'role'         => ['required', 'string', 'max:255'],
+        'organisation' => ['nullable', 'string', 'max:255'],
+        'country'      => ['required', 'string', 'max:255'],
+        'linkedin'     => ['nullable', 'string', 'max:255', 'url'],
+    ]);
+}
 
 
     public function Formlaire()

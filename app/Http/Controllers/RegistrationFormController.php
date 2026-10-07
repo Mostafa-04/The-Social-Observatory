@@ -98,6 +98,42 @@ public function store(Request $request, Event $event)
             'is_system' => true,
             'sort_order' => 4,
         ],
+        [
+            'label' => 'Organisation',
+            'name' => 'organisation',
+            'type' => 'text',
+            'options' => null,
+            'is_required' => true,
+            'is_system' => true,
+            'sort_order' => 5,
+        ],
+        [
+            'label' => 'Rôle',
+            'name' => 'role',
+            'type' => 'text',
+            'options' => null,
+            'is_required' => true,
+            'is_system' => true,
+            'sort_order' => 6,
+        ],
+        [
+            'label' => 'LinkedIn',
+            'name' => 'linkedin',
+            'type' => 'text',
+            'options' => null,
+            'is_required' => false,
+            'is_system' => true,
+            'sort_order' => 7,
+        ],
+        [
+            'label' => 'Pays',
+            'name' => 'country',
+            'type' => 'text',
+            'options' => null,
+            'is_required' => true,
+            'is_system' => true,
+            'sort_order' => 8,
+        ],
     ];
 
     foreach ($systemFields as $field) {

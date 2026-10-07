@@ -33,6 +33,10 @@ class GroupRegistrationController extends Controller
             'presentation'     => ['required', 'string', 'max:250'],
             'expertise_domain' => ['nullable', 'string', 'max:255'],
             'motivation'       => ['nullable', 'string', 'max:2000'],
+            'country'          => ['nullable', 'string', 'max:255'],
+            'organisation'     => ['nullable', 'string', 'max:255'],
+            'role'             => ['nullable', 'string', 'max:255'],
+            'phone'            => ['nullable', 'string', 'max:20'],
         ], [
             'group_type.required'   => 'Veuillez sélectionner un groupe.',
             'full_name.required'    => 'Le nom complet est requis.',
@@ -45,6 +49,10 @@ class GroupRegistrationController extends Controller
             'cv.max'                 => 'Le CV ne doit pas dépasser 10 Mo.',
             'presentation.required' => 'Veuillez vous présenter.',
             'presentation.max'      => 'La présentation ne doit pas dépasser 250 caractères.',
+            'role.max'              => 'Le rôle ne doit pas dépasser 255 caractères.',
+            'organisation.max'      => "L'organisation ne doit pas dépasser 255 caractères.",
+            'country.max'           => 'Le pays ne doit pas dépasser 255 caractères.',
+            'phone.max'             => 'Le numéro de téléphone ne doit pas dépasser 20 caractères.',
         ]);
 
         if ($request->hasFile('cv')) {
@@ -61,6 +69,11 @@ class GroupRegistrationController extends Controller
             'last_name' => $names[1] ?? '',
             'email' => $registration->email,
             'gender' => $registration->gender,
+            'linkedin' => $registration->linkedin_url,
+            'country' => $registration->country,
+            'organisation' => $registration->organisation,
+            'role' => $registration->role,
+            'phone' => $registration->phone,
         ]);
 
         $groupLabels = [

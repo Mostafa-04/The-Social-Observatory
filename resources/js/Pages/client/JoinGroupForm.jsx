@@ -81,6 +81,105 @@ const GROUPS = [
 const PRESENTATION_MAX = 250;
 
 // ============================================================
+// Composant : liste déroulante des pays avec recherche
+// ============================================================
+function CountrySelect({ value, onChange, options, loading, error }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const containerRef = useRef(null);
+    const searchRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
+                setIsOpen(false);
+                setSearch("");
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Focus automatique sur le champ de recherche à l'ouverture
+    useEffect(() => {
+        if (isOpen) searchRef.current?.focus();
+    }, [isOpen]);
+
+    const filtered = options.filter((c) =>
+        c.label.toLowerCase().includes(search.trim().toLowerCase())
+    );
+
+    return (
+        <div ref={containerRef} className="relative">
+            <button
+                type="button"
+                onClick={() => setIsOpen((o) => !o)}
+                disabled={loading}
+                className={`flex w-full items-center gap-3 rounded-lg border bg-white p-4 text-left transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    error
+                        ? "border-red-500 ring-2 ring-red-200"
+                        : "border-[#d6d9d8] hover:border-[#bf5429]/50 focus:border-[#bf5429]"
+                }`}
+            >
+                <span className={`flex-grow truncate ${value ? "text-[#1f2d2d]" : "text-[#5f6967]/60"}`}>
+                    {loading ? "Chargement des pays..." : value || "Sélectionnez votre pays"}
+                </span>
+                <svg
+                    className={`h-4 w-4 flex-shrink-0 text-[#5f6967] transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-[#d6d9d8] bg-white shadow-2xl">
+                    <div className="border-b border-[#d6d9d8] p-2">
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Rechercher un pays..."
+                            className="w-full rounded-lg border border-[#d6d9d8] px-3 py-2 text-sm text-[#1f2d2d] placeholder:text-[#5f6967]/50 focus:border-[#bf5429] focus:outline-none focus:ring-2 focus:ring-[#bf5429]/20"
+                        />
+                    </div>
+
+                    <ul className="max-h-64 overflow-y-auto py-1">
+                        {filtered.length === 0 ? (
+                            <li className="px-4 py-3 text-sm text-[#5f6967]">Aucun pays trouvé</li>
+                        ) : (
+                            filtered.map((c) => (
+                                <li key={c.value}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(c.value);
+                                            setIsOpen(false);
+                                            setSearch("");
+                                        }}
+                                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-[#bf5429]/5 ${
+                                            c.value === value
+                                                ? "bg-[#bf5429]/10 font-semibold text-[#bf5429]"
+                                                : "text-[#1f2d2d]"
+                                        }`}
+                                    >
+                                        {c.label}
+                                    </button>
+                                </li>
+                            ))
+                        )}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
+// ============================================================
 // Composant : liste déroulante des groupes
 // ============================================================
 function GroupSelect({ value, onChange, options, error }) {
@@ -226,7 +325,58 @@ export default function JoinGroupForm() {
         expertise_domain: "",
         motivation: "",
         gender: "", // Ajout du champ "gender"
+        country: "", // Ajout du champ "country"
+        organisation: "", // Ajout du champ "organisation"
+        role: "", // Ajout du champ "role"
+        phone: "", // Ajout du champ "phone"
     });
+
+    const [countries, setCountries] = useState([]);
+    const [loadingCountries, setLoadingCountries] = useState(false);
+
+    /* ---------- Charger les pays ---------- */
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const loadCountries = async () => {
+            setLoadingCountries(true);
+
+            try {
+                const response = await fetch(route("api.countries"), {
+                    signal: controller.signal,
+                    headers: { Accept: "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Erreur lors du chargement des pays.");
+                }
+
+                const result = await response.json();
+
+                const list = (result.countries || [])
+                    .map((c) => {
+                        const name = typeof c === "string" ? c : c.name ?? c.label ?? c.nom;
+                        return name ? { value: name, label: name } : null;
+                    })
+                    .filter(Boolean);
+
+                setCountries(list);
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error(error);
+                    setCountries([]);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoadingCountries(false);
+                }
+            }
+        };
+
+        loadCountries();
+
+        return () => controller.abort();
+    }, []);
 
     const selectedGroup = GROUPS.find((g) => g.value === data.group_type);
 
@@ -365,6 +515,80 @@ export default function JoinGroupForm() {
             className={inputClasses}
             placeholder="Ex : Éducation, Santé, Droit..."
         />
+    </div>
+</div>
+
+{/* Organisation + Rôle */}
+<div className="grid gap-6 md:grid-cols-2">
+    <div>
+        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d]">Organisation</label>
+        <input
+            type="text"
+            value={data.organisation}
+            onChange={(e) => setData("organisation", e.target.value)}
+            className={inputClasses}
+            placeholder="Nom de votre organisation"
+        />
+        {errors.organisation && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.organisation}
+            </p>
+        )}
+    </div>
+
+    <div>
+        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d]">Rôle / Fonction</label>
+        <input
+            type="text"
+            value={data.role}
+            onChange={(e) => setData("role", e.target.value)}
+            className={inputClasses}
+            placeholder="Ex : Directeur, Chercheur, Consultant..."
+        />
+        {errors.role && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.role}
+            </p>
+        )}
+    </div>
+</div>
+
+{/* Téléphone + Pays */}
+<div className="grid gap-6 md:grid-cols-2">
+    <div>
+        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d]">Téléphone</label>
+        <input
+            type="tel"
+            value={data.phone}
+            onChange={(e) => setData("phone", e.target.value)}
+            className={inputClasses}
+            placeholder="+212 6 00 00 00 00"
+        />
+        {errors.phone && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.phone}
+            </p>
+        )}
+    </div>
+
+    <div>
+        <label className="mb-2 block text-sm font-semibold text-[#1f2d2d]">Pays</label>
+        <CountrySelect
+            value={data.country}
+            onChange={(val) => setData("country", val)}
+            options={countries}
+            loading={loadingCountries}
+            error={errors.country}
+        />
+        {errors.country && (
+            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.country}
+            </p>
+        )}
     </div>
 </div>
 

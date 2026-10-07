@@ -59,6 +59,8 @@ public function index(Request $request)
             'email' => ['nullable', 'email'],
             'phone' => ['nullable', 'string', 'max:50'],
             'status' => ['required', 'in:pending,approved,rejected'],
+            'linkedin' => ['nullable', 'url', 'max:255'],
+            'country' => ['nullable', 'string', 'max:255'],
         ]);
 
         $contact = ObservatoryContact::create([
@@ -75,6 +77,8 @@ public function index(Request $request)
             'organisation' => $contact->organisation,
             'role' => $contact->role,
             'gender' => $contact->gender,
+            'linkedin' => $contact->linkedin,
+            'country' => $contact->country,
         ]);
 
         return back()->with('success', 'Contact ajouté avec succès.');

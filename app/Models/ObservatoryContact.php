@@ -13,6 +13,8 @@ class ObservatoryContact extends Model
         'gender',
         'email',
         'phone',
+        'linkedin',
+        'country',
         'status',
         'registered_at',
         'approved_at',

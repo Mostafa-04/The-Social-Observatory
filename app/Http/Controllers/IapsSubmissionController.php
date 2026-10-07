@@ -80,6 +80,12 @@ class IapsSubmissionController extends Controller
                 'in:individual,organization',
             ],
 
+            'linkedin' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             /*
             |--------------------------------------------------------------------------
             | SECTION 2 — Personne physique
@@ -296,16 +302,39 @@ class IapsSubmissionController extends Controller
         */
 
         $submission = IapsSubmission::create($validated);
-        $names = preg_split('/\s+/', trim($submission->full_name), 2);
 
-        app(PersonService::class)->findOrCreate([
-            'first_name' => $names[0] ?? '',
-            'last_name' => $names[1] ?? '',
-            'email' => $submission->email,
-            'phone' => $submission->phone,
-            'organisation' => $submission->organization_affiliation,
-            'gender' => $submission->gender,
-        ]);
+        /*
+        |--------------------------------------------------------------------------
+        | PersonService
+        |--------------------------------------------------------------------------
+        | Si le participant est une personne physique (individual),
+        | on crée/recherche une personne dans le module Person.
+        |
+        | Si c'est une personne morale (organization),
+        | on ne crée PAS de Person via PersonService.
+        |
+        */
+
+        if ($submission->participant_type === 'individual') {
+
+            $names = preg_split(
+                '/\s+/',
+                trim($submission->full_name),
+                2
+            );
+
+            app(PersonService::class)->findOrCreate([
+                'first_name' => $names[0] ?? '',
+                'last_name' => $names[1] ?? '',
+                'email' => $submission->email,
+                'phone' => $submission->phone,
+                'organisation' => $submission->organization_affiliation,
+                'gender' => $submission->gender,
+                'country' => $submission->observation_country,
+                'linkedin' => $submission->linkedin,
+                'role' => $submission->representative_role,
+            ]);
+        }
         SendIapsSubmissionConfirmationEmailJob::dispatch(
             $submission->email,
             $submission->full_name,

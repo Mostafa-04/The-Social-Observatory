@@ -87,6 +87,26 @@ class PublicEventRegistrationController extends Controller
                 'email',
                 'max:255',
             ],
+            'organisation' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'role' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'linkedin' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'country' => [
+                'required',
+                'string',
+                'max:255',
+            ],
         ]);
 
         /*
@@ -207,6 +227,10 @@ class PublicEventRegistrationController extends Controller
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'gender' => $validated['gender'],
+                'organisation' => $validated['organisation'],
+                'role' => $validated['role'],
+                'linkedin' => $validated['linkedin'] ?? null,
+                'country' => $validated['country'],
                 'status' => 'registered',
                 'registered_at' => now(),
             ]);
@@ -278,6 +302,10 @@ class PublicEventRegistrationController extends Controller
             'email' => $registration->email,
             'phone' => $registration->phone,
             'gender' => $registration->gender,
+            'organisation' => $registration->organisation,
+            'role' => $registration->role,
+            'linkedin' => $registration->linkedin,
+            'country' => $registration->country,
         ]);
 
         /*

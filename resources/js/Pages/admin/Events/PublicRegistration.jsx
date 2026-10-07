@@ -11,6 +11,7 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import DynamicField from "@/Components/DynamicField";
+import CountrySelect from "@/Components/CountrySelect";
 
 const fieldClass =
     "w-full rounded-lg border border-[#D6D9D8] bg-[#F7F8F6]/50 px-4 py-3 text-[14px] text-[#1f2d2d] outline-none transition focus:border-[#324949]/40 focus:bg-white";
@@ -52,6 +53,10 @@ export default function PublicRegistration({ event, registrationForm }) {
         phone: "",
         email: "",
         gender: "",
+        organisation: "",
+        role: "",
+        linkedin: "",
+        country: "",
         fields: initialFields,
     });
 
@@ -323,6 +328,61 @@ export default function PublicRegistration({ event, registrationForm }) {
                                 <p className="mt-1 text-[12px] text-red-500">
                                     {errors.gender}
                                 </p>
+                            )}
+                        </div>
+
+                        <div className="mt-5">
+                            <label className={labelClass}>Organisation <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                value={data.organisation}
+                                onChange={(e) => setData("organisation", e.target.value)}
+                                className={fieldClass}
+                            />
+                            {errors.organisation && (
+                                <p className="mt-1 text-[12px] text-red-500">
+                                    {errors.organisation}
+                                </p>
+                            )}
+                        </div>
+                        <div className="mt-5">
+                            <label className={labelClass}>Rôle <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                value={data.role}
+                                onChange={(e) => setData("role", e.target.value)}
+                                className={fieldClass}
+                            />
+                            {errors.role && (
+                                <p className="mt-1 text-[12px] text-red-500">
+                                    {errors.role}
+                                </p>    
+                        )}
+                        </div>
+                        <div className="mt-5">
+                            <label className={labelClass}>LinkedIn</label>
+                            <input
+                                type="text"
+                                value={data.linkedin}
+                                onChange={(e) => setData("linkedin", e.target.value)}
+                                className={fieldClass}
+                            />
+                            {errors.linkedin && (
+                                <p className="mt-1 text-[12px] text-red-500">
+                                    {errors.linkedin}
+                                </p>
+                            )}
+                        </div>
+                        <div className="mt-5">
+                            <label className={labelClass}>Pays <span className="text-red-500">*</span></label>
+                            <CountrySelect
+                                value={data.country}
+                                onChange={(value) => setData("country", value)}
+                                error={errors.country}
+                                required
+                            />
+                            {errors.country && (
+                                <p className="mt-1 text-[12px] text-red-500">{errors.country}</p>
                             )}
                         </div>
 

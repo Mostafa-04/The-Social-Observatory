@@ -1,71 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Head, useForm } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
-const africanCountries = [
-    "Afrique du Sud",
-    "Algérie",
-    "Angola",
-    "Bénin",
-    "Botswana",
-    "Burkina Faso",
-    "Burundi",
-    "Cameroun",
-    "Cap-Vert",
-    "République centrafricaine",
-    "Comores",
-    "République du Congo (Brazzaville)",
-    "République démocratique du Congo (Kinshasa)",
-    "Côte d'Ivoire",
-    "Djibouti",
-    "Égypte",
-    "Érythrée",
-    "Eswatini",
-    "Éthiopie",
-    "Gabon",
-    "Gambie",
-    "Ghana",
-    "Guinée",
-    "Guinée-Bissau",
-    "Guinée équatoriale",
-    "Kenya",
-    "Lesotho",
-    "Liberia",
-    "Libye",
-    "Madagascar",
-    "Malawi",
-    "Mali",
-    "Maroc",
-    "Maurice",
-    "Mauritanie",
-    "Mozambique",
-    "Namibie",
-    "Niger",
-    "Nigeria",
-    "Ouganda",
-    "Rwanda",
-    "Sao Tomé-et-Principe",
-    "Sénégal",
-    "Seychelles",
-    "Sierra Leone",
-    "Somalie",
-    "Soudan",
-    "Soudan du Sud",
-    "Tanzanie",
-    "Tchad",
-    "Togo",
-    "Tunisie",
-    "Zambie",
-    "Zimbabwe",
-];
+/* -------------------------------------------------------------------------- */
+/*  Constantes                                                                */
+/* -------------------------------------------------------------------------- */
 
-const languages = [
-    "Français",
-    "Anglais",
-    "Arabe",
-    "Swahili",
-    "Portugais",
-];
+const DIASPORA_LABEL = "Diaspora / Résidence hors continent africain";
+const INTERNATIONAL_LABEL = "Siège international / Hors continent africain";
+
+const languages = ["Français", "Anglais", "Arabe", "Swahili", "Portugais"];
 
 const individualProfiles = [
     "Chercheur·e / Enseignant·e-chercheur·e",
@@ -160,6 +104,37 @@ const blindSpots = [
     "Capabilités & Dignité",
 ];
 
+const STEP1_FIELDS = [
+    "full_name",
+    "gender",
+    "email",
+    "phone",
+    "languages",
+    "other_language",
+    "participant_type",
+    "linkedin",
+];
+const STEP3_FIELDS = ["blind_spots", "other_blind_spot", "field_testimony"];
+const STEP4_FIELDS = ["ethical_consent"];
+
+/** Retourne l'étape qui contient un champ donné (pour afficher les erreurs serveur). */
+const stepOfField = (field) => {
+    if (STEP1_FIELDS.includes(field)) return 1;
+    if (STEP3_FIELDS.includes(field)) return 3;
+    if (STEP4_FIELDS.includes(field)) return 4;
+    return 2;
+};
+
+const normalizeText = (value) =>
+    String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+/* -------------------------------------------------------------------------- */
+/*  Composants UI                                                             */
+/* -------------------------------------------------------------------------- */
+
 function SectionHeader({ number, title, description }) {
     return (
         <div className="mb-8 border-b border-[#d9ddda] pb-6">
@@ -185,16 +160,11 @@ function SectionHeader({ number, title, description }) {
 function FieldError({ error }) {
     if (!error) return null;
 
-    return (
-        <p className="mt-2 text-sm text-red-600">
-            {error}
-        </p>
-    );
+    return <p className="mt-2 text-sm text-red-600">{error}</p>;
 }
 
 function TextInput({
     label,
-    name,
     value,
     onChange,
     error,
@@ -215,9 +185,7 @@ function TextInput({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 className={`w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 ${
-                    error
-                        ? "border-red-400"
-                        : "border-[#d6d9d8]"
+                    error ? "border-red-400" : "border-[#d6d9d8]"
                 }`}
             />
 
@@ -247,9 +215,7 @@ function TextArea({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 className={`w-full resize-y rounded-xl border bg-white px-4 py-3.5 text-sm leading-7 text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 ${
-                    error
-                        ? "border-red-400"
-                        : "border-[#d6d9d8]"
+                    error ? "border-red-400" : "border-[#d6d9d8]"
                 }`}
             />
 
@@ -258,6 +224,7 @@ function TextArea({
     );
 }
 
+/** Select natif (sans recherche) — pour les petites listes. */
 function SelectInput({
     label,
     value,
@@ -271,32 +238,23 @@ function SelectInput({
         <div>
             <label className="mb-2 block text-sm font-medium text-[#263333]">
                 {label}
-                {required && (
-                    <span className="ml-1 text-[#bf5429]">*</span>
-                )}
+                {required && <span className="ml-1 text-[#bf5429]">*</span>}
             </label>
 
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className={`w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 ${
-                    error
-                        ? "border-red-400"
-                        : "border-[#d6d9d8]"
+                    error ? "border-red-400" : "border-[#d6d9d8]"
                 }`}
             >
                 <option value="">{placeholder}</option>
 
                 {options.map((option, index) => {
                     const optionValue =
-                        typeof option === "object"
-                            ? option.value
-                            : option;
-
+                        typeof option === "object" ? option.value : option;
                     const optionLabel =
-                        typeof option === "object"
-                            ? option.label
-                            : option;
+                        typeof option === "object" ? option.label : option;
 
                     return (
                         <option
@@ -314,14 +272,222 @@ function SelectInput({
     );
 }
 
-function CheckboxGroup({
+/** Select avec champ « Rechercher » — pour les pays et les villes. */
+function SearchableSelect({
     label,
-    options,
-    values,
+    value,
     onChange,
-    max,
+    options,
     error,
+    required = false,
+    placeholder = "Sélectionnez une option",
+    searchPlaceholder = "Rechercher...",
+    emptyText = "Aucun résultat",
+    loading = false,
+    disabled = false,
 }) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState("");
+    const containerRef = useRef(null);
+
+    const normalizedOptions = useMemo(
+        () =>
+            options.map((option) =>
+                typeof option === "object"
+                    ? option
+                    : { value: option, label: option }
+            ),
+        [options]
+    );
+
+    const filteredOptions = useMemo(() => {
+        const q = normalizeText(query.trim());
+
+        if (!q) return normalizedOptions;
+
+        return normalizedOptions.filter((option) =>
+            normalizeText(option.label).includes(q)
+        );
+    }, [normalizedOptions, query]);
+
+    const selected = normalizedOptions.find((option) => option.value === value);
+
+    // Fermer au clic à l'extérieur
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target)
+            ) {
+                setOpen(false);
+                setQuery("");
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const choose = (optionValue) => {
+        onChange(optionValue);
+        setOpen(false);
+        setQuery("");
+    };
+
+    const closeMenu = () => {
+        setOpen(false);
+        setQuery("");
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <label className="mb-2 block text-sm font-medium text-[#263333]">
+                {label}
+                {required && <span className="ml-1 text-[#bf5429]">*</span>}
+            </label>
+
+            <button
+                type="button"
+                disabled={disabled || loading}
+                onClick={() => setOpen((current) => !current)}
+                onKeyDown={(e) => e.key === "Escape" && closeMenu()}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                className={`flex w-full items-center justify-between rounded-xl border bg-white px-4 py-3.5 text-left text-sm outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-60 ${
+                    error ? "border-red-400" : "border-[#d6d9d8]"
+                }`}
+            >
+                <span
+                    className={selected ? "text-[#263333]" : "text-[#9aa19f]"}
+                >
+                    {loading
+                        ? "Chargement..."
+                        : selected?.label || value || placeholder}
+                </span>
+
+                <span className="ml-2 text-xs text-[#78807e]">▾</span>
+            </button>
+
+            {open && !disabled && !loading && (
+                <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[#d6d9d8] bg-white shadow-lg">
+                    <div className="border-b border-[#eceeed] p-2">
+                        <input
+                            autoFocus
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Escape") closeMenu();
+
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+
+                                    if (filteredOptions[0]) {
+                                        choose(filteredOptions[0].value);
+                                    }
+                                }
+                            }}
+                            placeholder={searchPlaceholder}
+                            className="w-full rounded-lg border border-[#d6d9d8] px-3 py-2 text-sm outline-none focus:border-[#bf5429]"
+                        />
+                    </div>
+
+                    <ul role="listbox" className="max-h-60 overflow-y-auto py-1">
+                        {filteredOptions.length === 0 ? (
+                            <li className="px-4 py-3 text-sm text-[#78807e]">
+                                {emptyText}
+                            </li>
+                        ) : (
+                            filteredOptions.map((option, index) => (
+                                <li key={`${option.value}-${index}`}>
+                                    <button
+                                        type="button"
+                                        role="option"
+                                        aria-selected={option.value === value}
+                                        onClick={() => choose(option.value)}
+                                        className={`w-full px-4 py-2.5 text-left text-sm transition hover:bg-[#bf5429]/5 ${
+                                            option.value === value
+                                                ? "bg-[#bf5429]/10 font-medium text-[#bf5429]"
+                                                : "text-[#263333]"
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                </li>
+                            ))
+                        )}
+                    </ul>
+                </div>
+            )}
+
+            <FieldError error={error} />
+        </div>
+    );
+}
+
+/**
+ * Champ ville :
+ *  - pas de pays choisi        → select désactivé
+ *  - villes disponibles (API)  → select avec recherche
+ *  - aucune ville / diaspora   → saisie libre
+ */
+function CityField({
+    label,
+    required = false,
+    value,
+    onChange,
+    error,
+    cities,
+    loading,
+    country,
+    placeholder = "",
+}) {
+    if (!country) {
+        return (
+            <SearchableSelect
+                label={label}
+                required={required}
+                value=""
+                onChange={() => {}}
+                options={[]}
+                disabled
+                placeholder="Choisissez d'abord un pays"
+                error={error}
+            />
+        );
+    }
+
+    if (!loading && cities.length === 0) {
+        return (
+            <TextInput
+                label={label}
+                required={required}
+                value={value}
+                onChange={onChange}
+                error={error}
+                placeholder={placeholder}
+            />
+        );
+    }
+
+    return (
+        <SearchableSelect
+            label={label}
+            required={required}
+            value={value}
+            onChange={onChange}
+            options={cities}
+            loading={loading}
+            error={error}
+            placeholder="Sélectionnez une ville"
+            searchPlaceholder="Rechercher une ville..."
+        />
+    );
+}
+
+function CheckboxGroup({ label, options, values, onChange, max, error }) {
     const toggle = (option) => {
         if (values.includes(option)) {
             onChange(values.filter((item) => item !== option));
@@ -344,8 +510,7 @@ function CheckboxGroup({
 
                 {max && (
                     <span className="text-xs text-[#78807e]">
-                        {values.length}/{max} sélection
-                        {max > 1 ? "s" : ""}
+                        {values.length}/{max} sélection{max > 1 ? "s" : ""}
                     </span>
                 )}
             </div>
@@ -354,9 +519,7 @@ function CheckboxGroup({
                 {options.map((option) => {
                     const checked = values.includes(option);
                     const disabled =
-                        Boolean(max) &&
-                        !checked &&
-                        values.length >= max;
+                        Boolean(max) && !checked && values.length >= max;
 
                     return (
                         <label
@@ -365,11 +528,7 @@ function CheckboxGroup({
                                 checked
                                     ? "border-[#bf5429] bg-[#bf5429]/5"
                                     : "border-[#d6d9d8] bg-white hover:border-[#aeb5b2]"
-                            } ${
-                                disabled
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                            }`}
+                            } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
                         >
                             <input
                                 type="checkbox"
@@ -393,8 +552,8 @@ function CheckboxGroup({
 }
 
 /**
- * Barre de progression des étapes (numérotée, car le contenu est bien une
- * séquence : on avance du contact vers l'engagement final).
+ * Barre de progression des étapes (numérotée : le contenu est bien une
+ * séquence, du contact vers l'engagement final).
  */
 function StepProgress({ currentStep, totalSteps, labels }) {
     return (
@@ -434,9 +593,7 @@ function StepProgress({ currentStep, totalSteps, labels }) {
                         {stepNumber !== totalSteps && (
                             <div
                                 className={`mx-2 h-[2px] flex-1 rounded transition ${
-                                    isDone
-                                        ? "bg-[#bf5429]"
-                                        : "bg-[#e4e7e5]"
+                                    isDone ? "bg-[#bf5429]" : "bg-[#e4e7e5]"
                                 }`}
                             />
                         )}
@@ -447,17 +604,32 @@ function StepProgress({ currentStep, totalSteps, labels }) {
     );
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Page                                                                      */
+/* -------------------------------------------------------------------------- */
+
 export default function IapsForm({ publication }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        setError,
+        clearErrors,
+        reset,
+    } = useForm({
         // SECTION 1
         full_name: "",
         gender: "",
         email: "",
         phone: "",
         languages: [],
+        other_language: "",
         participant_type: "",
+        linkedin: "",
 
-        // SECTION 2
+        // SECTION 2 (individuel)
         individual_profile: "",
         organization_affiliation: "",
         disciplines: [],
@@ -469,7 +641,7 @@ export default function IapsForm({ publication }) {
         contribution_methods: [],
         other_contribution_method: "",
 
-        // SECTION 3
+        // SECTION 2 (organisation)
         entity_name: "",
         representative_role: "",
         entity_type: "",
@@ -482,31 +654,203 @@ export default function IapsForm({ publication }) {
         partnership_opportunities: [],
         other_partnership: "",
 
-        // SECTION 4
+        // SECTION 3
         blind_spots: [],
         other_blind_spot: "",
         field_testimony: "",
 
-        // SECTION 5
+        // SECTION 4
         ethical_consent: false,
     });
 
-    const [languageOther, setLanguageOther] = useState("");
+    const [countries, setCountries] = useState([]);
+    const [loadingCountries, setLoadingCountries] = useState(false);
+    const [cities, setCities] = useState([]);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [citiesFor, setCitiesFor] = useState(null); // pays pour lequel `cities` est chargé
     const [step, setStep] = useState(1);
 
     const totalSteps = 4;
+    const isIndividual = data.participant_type === "individual";
+    const isOrganization = data.participant_type === "organization";
+
     const stepLabels = [
         "Coordonnées",
-        data.participant_type === "organization"
-            ? "Organisation"
-            : "Contributeur",
+        isOrganization ? "Organisation" : "Contributeur",
         "Cœur thématique",
         "Engagement",
     ];
 
-    const canLeaveStep1 = Boolean(data.participant_type);
+    // Pays actif selon le type de participant
+    const activeCountry = isIndividual
+        ? data.observation_country
+        : isOrganization
+        ? data.headquarters_country
+        : "";
+
+    const hasRealCountry =
+        Boolean(activeCountry) &&
+        activeCountry !== DIASPORA_LABEL &&
+        activeCountry !== INTERNATIONAL_LABEL;
+
+    /* ---------- Charger les pays ---------- */
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const loadCountries = async () => {
+            setLoadingCountries(true);
+
+            try {
+                const response = await fetch(route("api.countries"), {
+                    signal: controller.signal,
+                    headers: { Accept: "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Erreur lors du chargement des pays.");
+                }
+
+                const result = await response.json();
+
+                setCountries(result.countries || []);
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error(error);
+                    setCountries([]);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoadingCountries(false);
+                }
+            }
+        };
+
+        loadCountries();
+
+        return () => controller.abort();
+    }, []);
+
+    /* ---------- Charger les villes du pays choisi ---------- */
+    useEffect(() => {
+        if (!hasRealCountry) {
+            setCities([]);
+            setCitiesFor(null);
+            setLoadingCities(false);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const loadCities = async () => {
+            setLoadingCities(true);
+            setCities([]);
+
+            try {
+                const response = await fetch(
+                    route("api.countries.cities", { country: activeCountry }),
+                    {
+                        signal: controller.signal,
+                        headers: { Accept: "application/json" },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Erreur lors du chargement des villes.");
+                }
+
+                const result = await response.json();
+
+                // Accepte ["Casablanca"] ou [{ name: "Casablanca" }]
+                const list = (result.cities || [])
+                    .map((city) =>
+                        typeof city === "string" ? city : city?.name
+                    )
+                    .filter(Boolean);
+
+                setCities(
+                    [...new Set(list)].sort((a, b) => a.localeCompare(b))
+                );
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error(error);
+                    setCities([]);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoadingCities(false);
+                    setCitiesFor(activeCountry);
+                }
+            }
+        };
+
+        loadCities();
+
+        return () => controller.abort();
+    }, [activeCountry, hasRealCountry]);
+
+    const countryOptions = useMemo(
+        () =>
+            countries.map((country) => ({
+                value: country.name,
+                label: country.name,
+            })),
+        [countries]
+    );
+
+    // Évite un flash de saisie libre avant le début du chargement des villes
+    const citiesPending =
+        loadingCities || (hasRealCountry && citiesFor !== activeCountry);
+
+    /* ---------- Navigation & validation ---------- */
+    const requiredFieldsForStep = () => {
+        if (step === 1) {
+            return [
+                "full_name",
+                "gender",
+                "email",
+                "phone",
+                "participant_type",
+            ];
+        }
+
+        if (step === 2) {
+            return isIndividual
+                ? ["observation_location"]
+                : [
+                      "entity_name",
+                      "representative_role",
+                      "entity_type",
+                      "headquarters_city",
+                  ];
+        }
+
+        return [];
+    };
 
     const goNext = () => {
+        clearErrors();
+
+        const newErrors = {};
+
+        requiredFieldsForStep().forEach((field) => {
+            if (!String(data[field] ?? "").trim()) {
+                newErrors[field] = "Ce champ est obligatoire.";
+            }
+        });
+
+        if (
+            step === 1 &&
+            data.email &&
+            !/^\S+@\S+\.\S+$/.test(data.email.trim())
+        ) {
+            newErrors.email = "Adresse e-mail invalide.";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setError(newErrors);
+            return;
+        }
+
         setStep((current) => Math.min(current + 1, totalSteps));
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -516,36 +860,50 @@ export default function IapsForm({ publication }) {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-const handleSubmit = (e) => {
-    e.preventDefault();
-
-    post(`/publications/${publication.id}/iaps-form`, {
-        preserveScroll: true,
-
-        onSuccess: () => {
-            Swal.fire({
-                icon: "success",
-                title: "Contribution enregistrée !",
-                text: "Votre contribution a été enregistrée avec succès. Un e-mail de confirmation vous a été envoyé.",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#bf5429",
-            });
-        },
-
-        onError: (errors) => {
-            Swal.fire({
-                icon: "error",
-                title: "Erreur",
-                text: "Une erreur est survenue lors de l'enregistrement de votre contribution. Veuillez vérifier les informations saisies.",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#bf5429",
-            });
-        },
-    });
-};
-
     const setArray = (field, values) => {
         setData(field, values);
+    };
+
+    /* ---------- Soumission ---------- */
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        post(`/publications/${publication.id}/iaps-form`, {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                reset();
+                clearErrors();
+                setStep(1);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Contribution enregistrée !",
+                    text: "Votre contribution a été enregistrée avec succès. Un e-mail de confirmation vous a été envoyé.",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#bf5429",
+                });
+            },
+
+            onError: (serverErrors) => {
+                // Revenir à l'étape qui contient la première erreur
+                const firstField = Object.keys(serverErrors)[0];
+
+                if (firstField) {
+                    setStep(stepOfField(firstField));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur",
+                    text: "Une erreur est survenue lors de l'enregistrement de votre contribution. Veuillez vérifier les informations saisies.",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#bf5429",
+                });
+            },
+        });
     };
 
     return (
@@ -586,11 +944,8 @@ const handleSubmit = (e) => {
                         labels={stepLabels}
                     />
 
-                    <form
-                        onSubmit={handleSubmit}
-                        className="space-y-8"
-                    >
-                        {/* SECTION 1 */}
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* ÉTAPE 1 */}
                         {step === 1 && (
                             <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
                                 <SectionHeader
@@ -617,7 +972,6 @@ const handleSubmit = (e) => {
                                             options={[
                                                 { value: "H", label: "Homme" },
                                                 { value: "F", label: "Femme" },
-                                                
                                             ]}
                                             value={data.gender}
                                             onChange={(value) =>
@@ -661,11 +1015,28 @@ const handleSubmit = (e) => {
 
                                     <TextInput
                                         label="Autre langue africaine ou internationale"
-                                        value={languageOther}
-                                        onChange={setLanguageOther}
+                                        value={data.other_language}
+                                        onChange={(value) =>
+                                            setData("other_language", value)
+                                        }
+                                        error={errors.other_language}
                                     />
 
                                     <div>
+
+                                        <div className="grid gap-4 md:grid-cols-2">
+
+                                            <TextInput
+                                                label="LinkedIn"
+                                                type="url"
+                                                placeholder="https://www.linkedin.com/in/..."
+                                                value={data.linkedin}
+                                                onChange={(value) =>
+                                                    setData("linkedin", value)
+                                                }
+                                                error={errors.linkedin}
+                                            />
+                                            <br/>
                                         <label className="mb-3 block text-sm font-medium text-[#263333]">
                                             Vous participez à ce chantier
                                             continental au titre de :
@@ -673,12 +1044,10 @@ const handleSubmit = (e) => {
                                                 *
                                             </span>
                                         </label>
-
-                                        <div className="grid gap-4 md:grid-cols-2">
+                                        <br/>
                                             <label
                                                 className={`cursor-pointer rounded-2xl border p-5 transition ${
-                                                    data.participant_type ===
-                                                    "individual"
+                                                    isIndividual
                                                         ? "border-[#bf5429] bg-[#bf5429]/5"
                                                         : "border-[#d6d9d8] hover:border-[#aeb5b2]"
                                                 }`}
@@ -687,10 +1056,7 @@ const handleSubmit = (e) => {
                                                     type="radio"
                                                     name="participant_type"
                                                     value="individual"
-                                                    checked={
-                                                        data.participant_type ===
-                                                        "individual"
-                                                    }
+                                                    checked={isIndividual}
                                                     onChange={(e) =>
                                                         setData(
                                                             "participant_type",
@@ -712,8 +1078,7 @@ const handleSubmit = (e) => {
 
                                             <label
                                                 className={`cursor-pointer rounded-2xl border p-5 transition ${
-                                                    data.participant_type ===
-                                                    "organization"
+                                                    isOrganization
                                                         ? "border-[#bf5429] bg-[#bf5429]/5"
                                                         : "border-[#d6d9d8] hover:border-[#aeb5b2]"
                                                 }`}
@@ -722,10 +1087,7 @@ const handleSubmit = (e) => {
                                                     type="radio"
                                                     name="participant_type"
                                                     value="organization"
-                                                    checked={
-                                                        data.participant_type ===
-                                                        "organization"
-                                                    }
+                                                    checked={isOrganization}
                                                     onChange={(e) =>
                                                         setData(
                                                             "participant_type",
@@ -754,386 +1116,304 @@ const handleSubmit = (e) => {
                             </section>
                         )}
 
-                        {/* SECTION 2 */}
-                        {step === 2 &&
-                            data.participant_type === "individual" && (
-                                <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
-                                    <SectionHeader
-                                        number="2"
-                                        title="Parcours Contributeurs Individuels"
-                                        description="Profil, expertise, territoire d'observation et modalités de contribution."
+                        {/* ÉTAPE 2 — INDIVIDU */}
+                        {step === 2 && isIndividual && (
+                            <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
+                                <SectionHeader
+                                    number="2"
+                                    title="Parcours Contributeurs Individuels"
+                                    description="Profil, expertise, territoire d'observation et modalités de contribution."
+                                />
+
+                                <div className="space-y-8">
+                                    <SelectInput
+                                        label="Profil principal"
+                                        value={data.individual_profile}
+                                        onChange={(value) =>
+                                            setData("individual_profile", value)
+                                        }
+                                        options={individualProfiles}
+                                        error={errors.individual_profile}
                                     />
 
-                                    <div className="space-y-8">
-                                        <SelectInput
-                                            label="Profil principal"
-                                            value={data.individual_profile}
-                                            onChange={(value) =>
-                                                setData(
-                                                    "individual_profile",
-                                                    value
-                                                )
-                                            }
-                                            options={individualProfiles}
-                                            error={
-                                                errors.individual_profile
-                                            }
-                                        />
-
-                                        <TextInput
-                                            label="Organisation de rattachement & Rôle"
-                                            value={
-                                                data.organization_affiliation
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "organization_affiliation",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.organization_affiliation
-                                            }
-                                            placeholder="Ex. : Maître de conférences à l'Université X..."
-                                        />
-
-                                        <CheckboxGroup
-                                            label="Disciplines d’ancrage & Champs d'expertise"
-                                            options={disciplines}
-                                            values={data.disciplines}
-                                            onChange={(values) =>
-                                                setArray(
-                                                    "disciplines",
-                                                    values
-                                                )
-                                            }
-                                            max={3}
-                                            error={errors.disciplines}
-                                        />
-
-                                        <TextInput
-                                            label="Autre discipline"
-                                            value={data.other_discipline}
-                                            onChange={(value) =>
-                                                setData(
-                                                    "other_discipline",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.other_discipline
-                                            }
-                                        />
-
-                                        <CheckboxGroup
-                                            label="Ancrage territorial d'observation"
-                                            options={regions}
-                                            values={
-                                                data.observation_regions
-                                            }
-                                            onChange={(values) =>
-                                                setArray(
-                                                    "observation_regions",
-                                                    values
-                                                )
-                                            }
-                                            error={
-                                                errors.observation_regions
-                                            }
-                                        />
-
-                                        <SelectInput
-                                            label="Pays d'observation principale"
-                                            value={
-                                                data.observation_country
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "observation_country",
-                                                    value
-                                                )
-                                            }
-                                            options={[
-                                                ...africanCountries,
-                                                "Diaspora / Résidence hors continent africain",
-                                            ]}
-                                            error={
-                                                errors.observation_country
-                                            }
-                                        />
-
-                                        {data.observation_country ===
-                                            "Diaspora / Résidence hors continent africain" && (
-                                            <TextInput
-                                                label="Si Diaspora / Hors Afrique, précisez le pays de résidence"
-                                                value={
-                                                    data.diaspora_country
-                                                }
-                                                onChange={(value) =>
-                                                    setData(
-                                                        "diaspora_country",
-                                                        value
-                                                    )
-                                                }
-                                                error={
-                                                    errors.diaspora_country
-                                                }
-                                            />
-                                        )}
-
-                                        <TextInput
-                                            label="Ville, quartier ou localité spécifique d'observation"
-                                            required
-                                            value={
-                                                data.observation_location
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "observation_location",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.observation_location
-                                            }
-                                            placeholder="Ex. : Casablanca, Dakar, Goma, Nairobi..."
-                                        />
-
-                                        <CheckboxGroup
-                                            label="Modalités souhaitées de contribution"
-                                            options={contributionMethods}
-                                            values={
-                                                data.contribution_methods
-                                            }
-                                            onChange={(values) =>
-                                                setArray(
-                                                    "contribution_methods",
-                                                    values
-                                                )
-                                            }
-                                            error={
-                                                errors.contribution_methods
-                                            }
-                                        />
-
-                                        <TextArea
-                                            label="Proposez une autre modalité"
-                                            value={
-                                                data.other_contribution_method
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "other_contribution_method",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.other_contribution_method
-                                            }
-                                        />
-                                    </div>
-                                </section>
-                            )}
-
-                        {/* SECTION 3 */}
-                        {step === 2 &&
-                            data.participant_type === "organization" && (
-                                <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
-                                    <SectionHeader
-                                        number="2"
-                                        title="Parcours Organisations & Institutions"
-                                        description="Identification de la structure, échelle d'intervention, motivations et synergies envisagées."
+                                    <TextInput
+                                        label="Organisation de rattachement & Rôle"
+                                        value={data.organization_affiliation}
+                                        onChange={(value) =>
+                                            setData(
+                                                "organization_affiliation",
+                                                value
+                                            )
+                                        }
+                                        error={errors.organization_affiliation}
+                                        placeholder="Ex. : Maître de conférences à l'Université X..."
                                     />
 
-                                    <div className="space-y-8">
-                                        <div className="grid gap-6 md:grid-cols-2">
-                                            <TextInput
-                                                label="Nom officiel de l'entité"
-                                                required
-                                                value={
-                                                    data.entity_name
-                                                }
-                                                onChange={(value) =>
-                                                    setData(
-                                                        "entity_name",
-                                                        value
-                                                    )
-                                                }
-                                                error={
-                                                    errors.entity_name
-                                                }
-                                            />
+                                    <CheckboxGroup
+                                        label="Disciplines d’ancrage & Champs d'expertise"
+                                        options={disciplines}
+                                        values={data.disciplines}
+                                        onChange={(values) =>
+                                            setArray("disciplines", values)
+                                        }
+                                        max={3}
+                                        error={errors.disciplines}
+                                    />
 
-                                            <TextInput
-                                                label="Rôle / Titre du représentant légal ou répondant"
-                                                required
-                                                value={
-                                                    data.representative_role
-                                                }
-                                                onChange={(value) =>
-                                                    setData(
-                                                        "representative_role",
-                                                        value
-                                                    )
-                                                }
-                                                error={
-                                                    errors.representative_role
-                                                }
-                                            />
-                                        </div>
+                                    <TextInput
+                                        label="Autre discipline"
+                                        value={data.other_discipline}
+                                        onChange={(value) =>
+                                            setData("other_discipline", value)
+                                        }
+                                        error={errors.other_discipline}
+                                    />
 
-                                        <SelectInput
-                                            label="Typologie de la personne morale"
+                                    <CheckboxGroup
+                                        label="Ancrage territorial d'observation"
+                                        options={regions}
+                                        values={data.observation_regions}
+                                        onChange={(values) =>
+                                            setArray(
+                                                "observation_regions",
+                                                values
+                                            )
+                                        }
+                                        error={errors.observation_regions}
+                                    />
+
+                                    <SearchableSelect
+                                        label="Pays d'observation principale"
+                                        value={data.observation_country}
+                                        onChange={(value) =>
+                                            // Forme fonctionnelle : conserve les autres champs
+                                            setData((previous) => ({
+                                                ...previous,
+                                                observation_country: value,
+                                                observation_location: "",
+                                                diaspora_country: "",
+                                            }))
+                                        }
+                                        options={[
+                                            ...countryOptions,
+                                            DIASPORA_LABEL,
+                                        ]}
+                                        loading={loadingCountries}
+                                        searchPlaceholder="Rechercher un pays..."
+                                        error={errors.observation_country}
+                                    />
+
+                                    {data.observation_country ===
+                                        DIASPORA_LABEL && (
+                                        <TextInput
+                                            label="Si Diaspora / Hors Afrique, précisez le pays de résidence"
+                                            value={data.diaspora_country}
+                                            onChange={(value) =>
+                                                setData(
+                                                    "diaspora_country",
+                                                    value
+                                                )
+                                            }
+                                            error={errors.diaspora_country}
+                                        />
+                                    )}
+
+                                    <CityField
+                                        label="Ville, quartier ou localité spécifique d'observation"
+                                        required
+                                        country={data.observation_country}
+                                        cities={cities}
+                                        loading={citiesPending}
+                                        value={data.observation_location}
+                                        onChange={(value) =>
+                                            setData(
+                                                "observation_location",
+                                                value
+                                            )
+                                        }
+                                        error={errors.observation_location}
+                                        placeholder="Ex. : Casablanca, Dakar, Goma, Nairobi..."
+                                    />
+
+                                    <CheckboxGroup
+                                        label="Modalités souhaitées de contribution"
+                                        options={contributionMethods}
+                                        values={data.contribution_methods}
+                                        onChange={(values) =>
+                                            setArray(
+                                                "contribution_methods",
+                                                values
+                                            )
+                                        }
+                                        error={errors.contribution_methods}
+                                    />
+
+                                    <TextArea
+                                        label="Proposez une autre modalité"
+                                        value={data.other_contribution_method}
+                                        onChange={(value) =>
+                                            setData(
+                                                "other_contribution_method",
+                                                value
+                                            )
+                                        }
+                                        error={errors.other_contribution_method}
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ÉTAPE 2 — ORGANISATION */}
+                        {step === 2 && isOrganization && (
+                            <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
+                                <SectionHeader
+                                    number="2"
+                                    title="Parcours Organisations & Institutions"
+                                    description="Identification de la structure, échelle d'intervention, motivations et synergies envisagées."
+                                />
+
+                                <div className="space-y-8">
+                                    <div className="grid gap-6 md:grid-cols-2">
+                                        <TextInput
+                                            label="Nom officiel de l'entité"
                                             required
-                                            value={data.entity_type}
+                                            value={data.entity_name}
                                             onChange={(value) =>
-                                                setData(
-                                                    "entity_type",
-                                                    value
-                                                )
+                                                setData("entity_name", value)
                                             }
-                                            options={entityTypes}
-                                            error={errors.entity_type}
+                                            error={errors.entity_name}
                                         />
-
-                                        <SelectInput
-                                            label="Échelle d'intervention"
-                                            value={
-                                                data.intervention_scale
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "intervention_scale",
-                                                    value
-                                                )
-                                            }
-                                            options={interventionScales}
-                                            error={
-                                                errors.intervention_scale
-                                            }
-                                        />
-
-                                        <SelectInput
-                                            label="Pays du siège / d'implantation principale"
-                                            value={
-                                                data.headquarters_country
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "headquarters_country",
-                                                    value
-                                                )
-                                            }
-                                            options={[
-                                                ...africanCountries,
-                                                "Siège international / Hors continent africain",
-                                            ]}
-                                            error={
-                                                errors.headquarters_country
-                                            }
-                                        />
-
-                                        {data.headquarters_country ===
-                                            "Siège international / Hors continent africain" && (
-                                            <TextInput
-                                                label="Si siège hors continent africain, précisez le pays"
-                                                value={
-                                                    data.international_country
-                                                }
-                                                onChange={(value) =>
-                                                    setData(
-                                                        "international_country",
-                                                        value
-                                                    )
-                                                }
-                                                error={
-                                                    errors.international_country
-                                                }
-                                            />
-                                        )}
 
                                         <TextInput
-                                            label="Ville du siège"
+                                            label="Rôle / Titre du représentant légal ou répondant"
                                             required
-                                            value={
-                                                data.headquarters_city
-                                            }
+                                            value={data.representative_role}
                                             onChange={(value) =>
                                                 setData(
-                                                    "headquarters_city",
+                                                    "representative_role",
                                                     value
                                                 )
                                             }
-                                            error={
-                                                errors.headquarters_city
-                                            }
-                                        />
-
-                                        <CheckboxGroup
-                                            label="Finalités motivant votre rapprochement avec l'IAPS"
-                                            options={motivations}
-                                            values={data.motivations}
-                                            onChange={(values) =>
-                                                setArray(
-                                                    "motivations",
-                                                    values
-                                                )
-                                            }
-                                            max={2}
-                                            error={errors.motivations}
-                                        />
-
-                                        <TextArea
-                                            label="Partagez une autre motivation"
-                                            value={data.other_motivation}
-                                            onChange={(value) =>
-                                                setData(
-                                                    "other_motivation",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.other_motivation
-                                            }
-                                        />
-
-                                        <CheckboxGroup
-                                            label="Pistes de synergies concrètes envisagées avec l'Observatoire Social"
-                                            options={partnerships}
-                                            values={
-                                                data.partnership_opportunities
-                                            }
-                                            onChange={(values) =>
-                                                setArray(
-                                                    "partnership_opportunities",
-                                                    values
-                                                )
-                                            }
-                                            error={
-                                                errors.partnership_opportunities
-                                            }
-                                        />
-
-                                        <TextArea
-                                            label="Autre forme de partenariat"
-                                            value={
-                                                data.other_partnership
-                                            }
-                                            onChange={(value) =>
-                                                setData(
-                                                    "other_partnership",
-                                                    value
-                                                )
-                                            }
-                                            error={
-                                                errors.other_partnership
-                                            }
+                                            error={errors.representative_role}
                                         />
                                     </div>
-                                </section>
-                            )}
 
-                        {/* SECTION 4 */}
+                                    <SelectInput
+                                        label="Typologie de la personne morale"
+                                        required
+                                        value={data.entity_type}
+                                        onChange={(value) =>
+                                            setData("entity_type", value)
+                                        }
+                                        options={entityTypes}
+                                        error={errors.entity_type}
+                                    />
+
+                                    <SelectInput
+                                        label="Échelle d'intervention"
+                                        value={data.intervention_scale}
+                                        onChange={(value) =>
+                                            setData("intervention_scale", value)
+                                        }
+                                        options={interventionScales}
+                                        error={errors.intervention_scale}
+                                    />
+
+                                    <SearchableSelect
+                                        label="Pays du siège / d'implantation principale"
+                                        value={data.headquarters_country}
+                                        onChange={(value) =>
+                                            setData((previous) => ({
+                                                ...previous,
+                                                headquarters_country: value,
+                                                headquarters_city: "",
+                                                international_country: "",
+                                            }))
+                                        }
+                                        options={[
+                                            ...countryOptions,
+                                            INTERNATIONAL_LABEL,
+                                        ]}
+                                        loading={loadingCountries}
+                                        searchPlaceholder="Rechercher un pays..."
+                                        error={errors.headquarters_country}
+                                    />
+
+                                    {data.headquarters_country ===
+                                        INTERNATIONAL_LABEL && (
+                                        <TextInput
+                                            label="Si siège hors continent africain, précisez le pays"
+                                            value={data.international_country}
+                                            onChange={(value) =>
+                                                setData(
+                                                    "international_country",
+                                                    value
+                                                )
+                                            }
+                                            error={errors.international_country}
+                                        />
+                                    )}
+
+                                    <CityField
+                                        label="Ville du siège"
+                                        required
+                                        country={data.headquarters_country}
+                                        cities={cities}
+                                        loading={citiesPending}
+                                        value={data.headquarters_city}
+                                        onChange={(value) =>
+                                            setData("headquarters_city", value)
+                                        }
+                                        error={errors.headquarters_city}
+                                        placeholder="Ex. : Rabat, Abidjan, Kigali..."
+                                    />
+
+                                    <CheckboxGroup
+                                        label="Finalités motivant votre rapprochement avec l'IAPS"
+                                        options={motivations}
+                                        values={data.motivations}
+                                        onChange={(values) =>
+                                            setArray("motivations", values)
+                                        }
+                                        max={2}
+                                        error={errors.motivations}
+                                    />
+
+                                    <TextArea
+                                        label="Partagez une autre motivation"
+                                        value={data.other_motivation}
+                                        onChange={(value) =>
+                                            setData("other_motivation", value)
+                                        }
+                                        error={errors.other_motivation}
+                                    />
+
+                                    <CheckboxGroup
+                                        label="Pistes de synergies concrètes envisagées avec l'Observatoire Social"
+                                        options={partnerships}
+                                        values={data.partnership_opportunities}
+                                        onChange={(values) =>
+                                            setArray(
+                                                "partnership_opportunities",
+                                                values
+                                            )
+                                        }
+                                        error={errors.partnership_opportunities}
+                                    />
+
+                                    <TextArea
+                                        label="Autre forme de partenariat"
+                                        value={data.other_partnership}
+                                        onChange={(value) =>
+                                            setData("other_partnership", value)
+                                        }
+                                        error={errors.other_partnership}
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ÉTAPE 3 */}
                         {step === 3 && (
                             <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
                                 <SectionHeader
@@ -1148,54 +1428,35 @@ const handleSubmit = (e) => {
                                         options={blindSpots}
                                         values={data.blind_spots}
                                         onChange={(values) =>
-                                            setArray(
-                                                "blind_spots",
-                                                values
-                                            )
+                                            setArray("blind_spots", values)
                                         }
                                         max={3}
-                                        error={
-                                            errors.blind_spots
-                                        }
+                                        error={errors.blind_spots}
                                     />
 
                                     <TextArea
                                         label="Autre angle mort"
-                                        value={
-                                            data.other_blind_spot
-                                        }
+                                        value={data.other_blind_spot}
                                         onChange={(value) =>
-                                            setData(
-                                                "other_blind_spot",
-                                                value
-                                            )
+                                            setData("other_blind_spot", value)
                                         }
-                                        error={
-                                            errors.other_blind_spot
-                                        }
+                                        error={errors.other_blind_spot}
                                     />
 
                                     <TextArea
                                         label="Expression libre / Témoignage de terrain"
-                                        value={
-                                            data.field_testimony
-                                        }
+                                        value={data.field_testimony}
                                         onChange={(value) =>
-                                            setData(
-                                                "field_testimony",
-                                                value
-                                            )
+                                            setData("field_testimony", value)
                                         }
-                                        error={
-                                            errors.field_testimony
-                                        }
+                                        error={errors.field_testimony}
                                         placeholder="Développez librement votre pensée."
                                     />
                                 </div>
                             </section>
                         )}
 
-                        {/* SECTION 5 */}
+                        {/* ÉTAPE 4 */}
                         {step === 4 && (
                             <section className="rounded-2xl border border-[#dfe3e0] bg-white p-5 shadow-sm md:p-8">
                                 <SectionHeader
@@ -1213,9 +1474,7 @@ const handleSubmit = (e) => {
                                 >
                                     <input
                                         type="checkbox"
-                                        checked={
-                                            data.ethical_consent
-                                        }
+                                        checked={data.ethical_consent}
                                         onChange={(e) =>
                                             setData(
                                                 "ethical_consent",
@@ -1227,38 +1486,30 @@ const handleSubmit = (e) => {
 
                                     <div>
                                         <p className="text-sm font-medium leading-6 text-[#263333]">
-                                            J'accepte que mes
-                                            contributions soient
-                                            traitées exclusivement
-                                            dans le cadre de la
-                                            co-construction de
-                                            l’Indice Africain du
-                                            Progrès Social (IAPS)
-                                            par l’Observatoire
-                                            Social.
+                                            J'accepte que mes contributions
+                                            soient traitées exclusivement dans
+                                            le cadre de la co-construction de
+                                            l’Indice Africain du Progrès Social
+                                            (IAPS) par l’Observatoire Social.
                                         </p>
 
                                         <p className="mt-3 text-sm leading-7 text-[#68706e]">
-                                            Garantie de souveraineté :
-                                            Vos données demeurent
-                                            strictement
-                                            confidentielles, protégées
-                                            contre toute cession ou
-                                            exploitation commerciale,
-                                            et sont sanctuarisées au
-                                            profit de ce bien commun
+                                            Garantie de souveraineté : Vos
+                                            données demeurent strictement
+                                            confidentielles, protégées contre
+                                            toute cession ou exploitation
+                                            commerciale, et sont sanctuarisées
+                                            au profit de ce bien commun
                                             panafricain.
                                         </p>
                                     </div>
                                 </label>
 
-                                <FieldError
-                                    error={errors.ethical_consent}
-                                />
+                                <FieldError error={errors.ethical_consent} />
                             </section>
                         )}
 
-                        {/* NAVIGATION / SUBMIT */}
+                        {/* NAVIGATION / ENVOI */}
                         {step < totalSteps ? (
                             <div className="flex items-center justify-between gap-4">
                                 {step > 1 ? (
@@ -1276,10 +1527,7 @@ const handleSubmit = (e) => {
                                 <button
                                     type="button"
                                     onClick={goNext}
-                                    disabled={
-                                        step === 1 && !canLeaveStep1
-                                    }
-                                    className="rounded-xl bg-[#bf5429] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#a94320] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-xl bg-[#bf5429] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#a94320]"
                                 >
                                     Suivant
                                 </button>
@@ -1293,9 +1541,9 @@ const handleSubmit = (e) => {
                                         </h3>
 
                                         <p className="mt-2 max-w-xl text-sm leading-6 text-white/65">
-                                            Merci de prendre le temps
-                                            de partager vos réalités et
-                                            vos perspectives.
+                                            Merci de prendre le temps de
+                                            partager vos réalités et vos
+                                            perspectives.
                                         </p>
                                     </div>
 

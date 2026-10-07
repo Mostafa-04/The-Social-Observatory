@@ -19,6 +19,10 @@ class GroupRegistration extends Model
         'presentation',
         'expertise_domain',
         'motivation',
+        'country',
+        'organisation',
+        'role',
+        'phone',
     ];
 
 public const GROUPS = [
