@@ -52,8 +52,9 @@ public function store(Request $request)
         'location' => 'required|string|max:255',
 
         'date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-        'end_time' => 'required|date_format:H:i|after:start_time',
+        'date_fin' => 'nullable|required_with:date_fin|date|after_or_equal:date',
+        'start_time' => 'nullable|date_format:H:i',
+        'end_time' => 'nullable|date_format:H:i|after:start_time',
 
         'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
@@ -127,8 +128,9 @@ public function update(Request $request, $id)
         'location' => 'required|string|max:255',
 
         'date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-        'end_time' => 'required|date_format:H:i|after:start_time',
+        'date_fin' => 'nullable|required_with:date_fin|date|after_or_equal:date',
+        'start_time' => 'nullable|date_format:H:i',
+        'end_time' => 'nullable|date_format:H:i|after:start_time',
 
         'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 

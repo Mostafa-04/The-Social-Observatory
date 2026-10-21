@@ -19,6 +19,7 @@ class Event extends Model
         'city',
         'location',
         'date',
+        'date_fin',
         'start_time',
         'end_time',
         'registration_link',
@@ -33,6 +34,7 @@ class Event extends Model
             'date' => 'date',
             'start_time' => 'datetime: H:i',
             'end_time' => 'datetime: H:i',
+            'date_fin' => 'date',
         ];
     }
 

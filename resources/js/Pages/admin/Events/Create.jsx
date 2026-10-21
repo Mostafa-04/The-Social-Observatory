@@ -51,6 +51,7 @@ export default function Create({ countries }) {
         location: "",
 
         date: "",
+        date_fin: "",
 
         start_time: "",
         end_time: "",
@@ -265,6 +266,18 @@ export default function Create({ countries }) {
                                         />
                                         {errors.date && (
                                             <p className="mt-1 text-[12px] text-red-500">{errors.date}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Date de fin  <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="date"
+                                            value={data.date_fin}
+                                            onChange={(e) => setData("date_fin", e.target.value)}
+                                            className={fieldClass}
+                                        />
+                                        {errors.date_fin && (
+                                            <p className="mt-1 text-[12px] text-red-500">{errors.date_fin}</p>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">

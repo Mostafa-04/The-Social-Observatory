@@ -53,6 +53,7 @@ export default function Edit({ event, countries }) {
         location: event.location || "",
 
         date: event.date || "",
+        date_fin: event.date_fin || "",
         start_time: event.start_time || "",
         end_time: event.end_time || "",
 
@@ -295,6 +296,18 @@ export default function Edit({ event, countries }) {
                                         />
                                         {errors.date && (
                                             <p className="mt-1 text-[12px] text-red-500">{errors.date}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Date de fin</label>
+                                        <input
+                                            type="date"
+                                            value={data.date_fin}
+                                            onChange={(e) => setData("date_fin", e.target.value)}
+                                            className={fieldClass}
+                                        />
+                                        {errors.date_fin && (
+                                            <p className="mt-1 text-[12px] text-red-500">{errors.date_fin}</p>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">

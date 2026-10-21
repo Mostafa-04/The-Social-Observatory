@@ -214,9 +214,13 @@ const Events = ({ events = [] }) => {
                     <div className="flex flex-wrap items-center gap-4 mb-3">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-[#bf5429]" />
-                        <span className="font-mono text-xs font-semibold text-[#324949]">
-                          {formatEventDate(event.date)}
-                        </span>
+                          <span className="font-mono text-xs font-semibold text-[#324949]">
+                            {formatEventDate(event.date)}
+
+                            {event.date_fin && (
+                              <> - {formatEventDate(event.date_fin)}</>
+                            )}
+                          </span>
                       </div>
                       <div className="w-px h-4 bg-[#d6d9d8]"></div>
                       <div className="flex items-center gap-2">

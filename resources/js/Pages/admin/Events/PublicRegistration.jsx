@@ -174,6 +174,13 @@ export default function PublicRegistration({ event, registrationForm }) {
                                     label="Date"
                                     value={new Date(event.date).toLocaleDateString()}
                                 />
+                                    {event.date_fin && (
+                                        <InfoItem
+                                            icon={Calendar}
+                                            label="Date de fin"
+                                            value={new Date(event.date_fin).toLocaleDateString()}
+                                        />
+                                    )}
                                 <InfoItem
                                     icon={Clock}
                                     label="Horaire"

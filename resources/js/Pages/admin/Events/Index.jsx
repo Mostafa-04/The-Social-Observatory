@@ -90,6 +90,15 @@ export default function Index({ events }) {
                 </span>
             ),
         },
+        {
+            key: "date_fin",
+            label: "Date Fin",
+            render: (event) => (
+                <span className="text-[13px] text-[#5B6462]">
+                    {new Date(event.date_fin).toLocaleDateString()}
+                </span>
+            ),
+        },
 
         {
             key: "status",
