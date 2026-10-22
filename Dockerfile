@@ -13,7 +13,7 @@ COPY public ./public
 RUN npm run build:ssr
 
 # ---- PHP application ----
-FROM php:8.2-fpm-alpine AS app
+FROM php:8.2.35-fpm-alpine AS app
 
 RUN apk add --no-cache \
         nginx \
