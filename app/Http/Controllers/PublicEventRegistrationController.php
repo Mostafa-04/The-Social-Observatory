@@ -16,27 +16,26 @@ class PublicEventRegistrationController extends Controller
     /**
      * Display public registration form.
      */
-    public function create(Event $event)
-    {
-        $registrationForm = $event->registrationForms()
-            ->where('is_active', true)
-            ->with([
-                'fields' => function ($query) {
-                    $query->orderBy('sort_order');
-                },
-            ])
-            ->first();
-
-        abort_unless($registrationForm, 404);
-
-        return Inertia::render(
-            'admin/Events/PublicRegistration',
-            [
-                'event' => $event,
-                'registrationForm' => $registrationForm,
-            ]
-        );
+public function create(Event $event)
+{
+    if ($event->organizer_type === 'external' && $event->registration_link) {
+        return Inertia::location($event->registration_link);
     }
+
+    $registrationForm = $event->registrationForms()
+        ->where('is_active', true)
+        ->with([
+            'fields' => fn ($query) => $query->orderBy('sort_order'),
+        ])
+        ->first();
+
+    abort_unless($registrationForm, 404);
+
+    return Inertia::render('admin/Events/PublicRegistration', [
+        'event' => $event,
+        'registrationForm' => $registrationForm,
+    ]);
+}
 
     /**
      * Store visitor registration.

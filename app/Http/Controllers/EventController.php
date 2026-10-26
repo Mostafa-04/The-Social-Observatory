@@ -46,13 +46,15 @@ public function store(Request $request)
 
         'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
 
-        'country_id' => 'required|exists:countries,id',
+        'organizer_type' => 'required|in:internal,external',
+        'registration_link' => 'nullable|required_if:organizer_type,external|url|max:2048',
 
+        'country_id' => 'required|exists:countries,id',
         'city' => 'required|string|max:255',
         'location' => 'required|string|max:255',
 
         'date' => 'required|date',
-        'date_fin' => 'nullable|required_with:date_fin|date|after_or_equal:date',
+        'date_fin' => 'nullable|date|after_or_equal:date',
         'start_time' => 'nullable|date_format:H:i',
         'end_time' => 'nullable|date_format:H:i|after:start_time',
 
@@ -62,24 +64,30 @@ public function store(Request $request)
     ]);
 
     if ($request->hasFile('image')) {
-        $validated['image'] = $request
-            ->file('image')
-            ->store('events/images', 'public');
+        $validated['image'] = $request->file('image')->store('events/images', 'public');
+    }
+
+    // Événement interne : pas de lien externe
+    if ($validated['organizer_type'] === 'internal') {
+        $validated['registration_link'] = null;
     }
 
     $event = Event::create($validated);
 
-    $event->update([
-        'registration_link' => route(
-            'events.register',
-            $event->slug
-        ),
-    ]);
-
+    if ($event->organizer_type === 'internal') {
+        // Le lien d'inscription pointe vers notre propre page
+        $event->update([
+            'registration_link' => route('events.register', $event->slug),
+        ]);
 
         return redirect()
             ->route('registration-forms.create', ['event' => $event->id])
-            ->with('success', 'Event created successfully. You can now create the registration form.');
+            ->with('success', 'Événement créé. Créez maintenant le formulaire d\'inscription.');
+    }
+
+    return redirect()
+        ->route('events.index')
+        ->with('success', 'Événement créé. Les inscriptions se feront via le lien externe.');
 }
 
     /**
@@ -111,57 +119,63 @@ public function store(Request $request)
     /**
      * Update event.
      */
-public function update(Request $request, $id)
-{
-    $event = Event::findOrFail($id);
+    public function update(Request $request, $id)
+    {
+        $event = Event::findOrFail($id);
 
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'slug' => 'required|string|max:255|unique:events,slug,' . $event->id,
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'slug' => 'required|string|max:255|unique:events,slug,' . $event->id,
 
-        'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
+            'event_type' => 'required|in:conference,workshop,seminar,webinar,forum,roundtable,training,meeting',
 
-        'country_id' => 'required|exists:countries,id',
+            'organizer_type' => 'required|in:internal,external',
+            'registration_link' => 'nullable|required_if:organizer_type,external|url|max:2048',
 
-        'city' => 'required|string|max:255',
-        'location' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'city' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
 
-        'date' => 'required|date',
-        'date_fin' => 'nullable|required_with:date_fin|date|after_or_equal:date',
-        'start_time' => 'nullable|date_format:H:i',
-        'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'date' => 'required|date',
+            'date_fin' => 'nullable|date|after_or_equal:date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
 
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
-        'status' => 'required|in:upcoming,ongoing,completed,cancelled',
-    ]);
+            'status' => 'required|in:upcoming,ongoing,completed,cancelled',
+        ]);
 
-    if ($request->hasFile('image')) {
-        if (
-            $event->image &&
-            Storage::disk('public')->exists($event->image)
-        ) {
-            Storage::disk('public')->delete($event->image);
+        if ($request->hasFile('image')) {
+            if ($event->image && Storage::disk('public')->exists($event->image)) {
+                Storage::disk('public')->delete($event->image);
+            }
+
+            $validated['image'] = $request->file('image')->store('events/images', 'public');
+        } else {
+            $validated['image'] = $event->image;
         }
 
-        $validated['image'] = $request
-            ->file('image')
-            ->store('events/images', 'public');
-    } else {
-        $validated['image'] = $event->image;
+        // Interne : le lien pointe vers notre page, recalculé avec le NOUVEAU slug.
+        // Externe : on garde le lien saisi par l'admin (déjà validé).
+        if ($validated['organizer_type'] === 'internal') {
+            $validated['registration_link'] = route('events.register', $validated['slug']);
+        }
+
+        $event->update($validated);
+
+        // Événement interne sans formulaire (ex. passé d'externe à interne)
+        if ($event->organizer_type === 'internal' && ! $event->registrationForms()->exists()) {
+            return redirect()
+                ->route('registration-forms.create', ['event' => $event->id])
+                ->with('success', 'Événement mis à jour. Créez maintenant le formulaire d\'inscription.');
+        }
+
+        return redirect()
+            ->route('events.index')
+            ->with('success', 'Événement mis à jour avec succès.');
     }
-
-    // Le lien d'inscription est recalculé à partir du NOUVEAU slug,
-    // avant la sauvegarde, pour rester cohérent avec lui.
-    $validated['registration_link'] = route('events.register', $validated['slug']);
-
-    $event->update($validated);
-
-    return redirect()
-        ->route('events.index')
-        ->with('success', 'Event updated successfully.');
-}
 
     /**
      * Soft delete event.

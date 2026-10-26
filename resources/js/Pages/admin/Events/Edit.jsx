@@ -13,6 +13,7 @@ import {
     Link2,
     Flag,
     Tag,
+    ExternalLink,
 } from "lucide-react";
 
 const EVENT_TYPE_OPTIONS = [
@@ -31,6 +32,21 @@ const STATUS_OPTIONS = [
     { value: "ongoing", label: "En cours" },
     { value: "completed", label: "Terminé" },
     { value: "cancelled", label: "Annulé" },
+];
+
+const ORGANIZER_OPTIONS = [
+    {
+        value: "internal",
+        icon: Building2,
+        title: "Organisé par nous",
+        desc: "Les inscriptions se font sur notre site avec un formulaire dédié.",
+    },
+    {
+        value: "external",
+        icon: ExternalLink,
+        title: "Organisé par un tiers",
+        desc: "Les inscriptions se font sur le site de l'organisateur.",
+    },
 ];
 
 const fieldClass =
@@ -68,6 +84,12 @@ export default function Edit({ event, countries }) {
         image: null,
 
         status: event.status || "upcoming",
+        organizer_type: event.organizer_type || "internal",
+
+        // Pour un événement interne, event.registration_link est notre propre URL :
+        // on ne la met dans le champ que si l'événement est externe.
+        registration_link:
+            event.organizer_type === "external" ? event.registration_link || "" : "",
     });
 
     const [cities, setCities] = useState([]);
@@ -210,6 +232,81 @@ export default function Edit({ event, countries }) {
                                         <p className="mt-1 text-[12px] text-red-500">{errors.description}</p>
                                     )}
                                 </div>
+                            </div>
+
+                                                        {/* Organisation */}
+                            <div className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm">
+                                <label className={labelClass}>
+                                    Qui organise cet événement ? <span className="text-red-500">*</span>
+                                </label>
+                            
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {ORGANIZER_OPTIONS.map(({ value, icon: Icon, title, desc }) => {
+                                        const active = data.organizer_type === value;
+                            
+                                        return (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                aria-pressed={active}
+                                                onClick={() =>
+                                                    setData((prev) => ({
+                                                        ...prev,
+                                                        organizer_type: value,
+                                                        registration_link:
+                                                            value === "internal" ? "" : prev.registration_link,
+                                                    }))
+                                                }
+                                                className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
+                                                    active
+                                                        ? "border-[#BF5429] bg-[#BF5429]/5 ring-4 ring-[#BF5429]/10"
+                                                        : "border-[#D6D9D8] hover:border-[#324949]/40"
+                                                }`}
+                                            >
+                                                <div
+                                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                                        active ? "bg-[#BF5429] text-white" : "bg-[#F7F8F6] text-[#5B6462]"
+                                                    }`}
+                                                >
+                                                    <Icon size={16} strokeWidth={1.8} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[13.5px] font-medium text-[#1f2d2d]">{title}</p>
+                                                    <p className="mt-0.5 text-[12px] leading-snug text-[#8A9290]">{desc}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            
+                                {data.organizer_type === "external" ? (
+                                    <div className="mt-5">
+                                        <label className={labelClass}>
+                                            Lien d'inscription <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <Link2
+                                                size={15}
+                                                strokeWidth={1.8}
+                                                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A9290]"
+                                            />
+                                            <input
+                                                type="url"
+                                                value={data.registration_link}
+                                                onChange={(e) => setData("registration_link", e.target.value)}
+                                                className={`${fieldClass} pl-10`}
+                                                placeholder="https://site-organisateur.com/inscription"
+                                            />
+                                        </div>
+                                        {errors.registration_link && (
+                                            <p className="mt-1 text-[12px] text-red-500">{errors.registration_link}</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="mt-4 text-[12px] text-[#8A9290]">
+                                        Après la création, vous serez redirigé vers la création du formulaire d'inscription.
+                                    </p>
+                                )}
                             </div>
 
                             {/* Image */}

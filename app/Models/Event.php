@@ -15,6 +15,7 @@ class Event extends Model
         'title',
         'description',
         'event_type',
+        'organizer_type',
         'country_id',
         'city',
         'location',
