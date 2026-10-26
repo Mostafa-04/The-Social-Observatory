@@ -323,7 +323,7 @@ export default function PeopleCreate() {
                     />
 
                     <h1 className="mt-8 font-serif text-3xl leading-tight sm:text-4xl">
-                        Rejoignez le réseau de l'Observatoire
+                        Rejoignez le réseau de l'Observatoire Social
                     </h1>
 
                     <p className="mt-4 max-w-md text-sm leading-relaxed text-[#cbd3d1] sm:text-base">

@@ -79,24 +79,35 @@ private function getLatestContent(): ?array
         ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Latest Event
-    |--------------------------------------------------------------------------
-    */
-    $event = Event::query()
-        ->latest('created_at')
-        ->first();
+/*
+|--------------------------------------------------------------------------
+| Latest Event (uniquement s'il n'est pas encore terminé)
+|--------------------------------------------------------------------------
+*/
+$today = now()->toDateString();
 
-    if ($event) {
-        $contents->push([
-            'type' => 'event',
-            'title' => $event->title,
-            'message' => 'Un nouvel événement vient d’être annoncé.',
-            'url' => route('events.register', $event->slug),
-            'created_at' => $event->created_at,
-        ]);
-    }
+$event = Event::query()
+    ->whereNotIn('status', ['cancelled', 'completed'])
+    ->where(function ($query) use ($today) {
+        // Si date_fin existe, on l'utilise ; sinon on utilise date
+        $query->whereDate('date_fin', '>=', $today)
+              ->orWhere(function ($q) use ($today) {
+                  $q->whereNull('date_fin')
+                    ->whereDate('date', '>=', $today);
+              });
+    })
+    ->latest('created_at')
+    ->first();
+
+if ($event) {
+    $contents->push([
+        'type' => 'event',
+        'title' => $event->title,
+        'message' => 'Un nouvel événement vient d’être annoncé.',
+        'url' => route('events.register', $event->slug),
+        'created_at' => $event->created_at,
+    ]);
+}
 
     /*
     |--------------------------------------------------------------------------

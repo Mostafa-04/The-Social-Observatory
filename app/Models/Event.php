@@ -31,10 +31,10 @@ class Event extends Model
     protected function casts(): array
     {
         return [
-            'date' => 'date',
-            'start_time' => 'datetime: H:i',
-            'end_time' => 'datetime: H:i',
-            'date_fin' => 'date',
+            'date' => 'date:Y-m-d',
+            // 'start_time' => 'datetime: H:i',
+            // 'end_time' => 'datetime: H:i',
+            'date_fin' => 'date:Y-m-d',
         ];
     }
 

@@ -456,7 +456,7 @@ const handleSubmit = (e) => {
                         </div>
 
                         <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/70">
-                            L'Observatoire recense les organisations engagées
+                            L'Observatoire Social recense les organisations engagées
                             dans le progrès social en Afrique et les met en
                             réseau avec des chercheurs, institutions et
                             décideurs.

@@ -197,6 +197,22 @@ const Events = ({ events = [] }) => {
 
                   {/* Event Content */}
                   <div className="relative">
+                        {event.image && (
+                          <div className="relative mb-5 overflow-hidden rounded-xl border border-[#d6d9d8]/30 bg-[#eaece9] max-w-xl aspect-[16/9]">
+                            <img
+                              src={`/storage/${event.image}`}
+                              alt={event.title}
+                              loading="lazy"
+                              decoding="async"
+                              className={`h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
+                                event.status === 'cancelled' || event.status === 'completed'
+                                  ? 'grayscale opacity-80'
+                                  : ''
+                              }`}
+                            />
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1f2d2d]/20 to-transparent" />
+                          </div>
+                        )}
                     {/* Status badge (remplace le badge "Featured" statique) */}
                     {(event.status === 'ongoing' || event.status === 'cancelled') && (
                       <div className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full mb-3 ${style.badge}`}>

@@ -38,6 +38,12 @@ const fieldClass =
 const labelClass = "mb-1.5 block text-[12px] font-medium text-[#5B6462]";
 
 export default function Edit({ event, countries }) {
+    const toDateInput = (v) => (v ? String(v).slice(0, 10) : "");
+
+    const toTimeInput = (v) => {
+        const m = String(v ?? "").match(/(\d{2}):(\d{2})/);
+        return m ? `${m[1]}:${m[2]}` : "";
+    };
     const { data, setData, post, processing, errors } = useForm({
         _method: "put",
 
@@ -52,10 +58,10 @@ export default function Edit({ event, countries }) {
         city: event.city || "",
         location: event.location || "",
 
-        date: event.date || "",
-        date_fin: event.date_fin || "",
-        start_time: event.start_time || "",
-        end_time: event.end_time || "",
+        date: toDateInput(event.date),
+        date_fin: toDateInput(event.date_fin),
+        start_time: toTimeInput(event.start_time),
+        end_time: toTimeInput(event.end_time),
 
         registration_link: event.registration_link || "",
 
