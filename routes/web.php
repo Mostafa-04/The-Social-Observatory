@@ -15,6 +15,10 @@ use App\Http\Controllers\CompanyController;
 //     ]);
 // });
 
+Route::get('/politique-de-confidentialite', function () {
+    return Inertia::render('client/PrivacyPolicy');
+})->name('privacy-policy');
+
 Route::get('/api/countries', [CompanyController::class, 'countries'])
     ->name('api.countries');
 

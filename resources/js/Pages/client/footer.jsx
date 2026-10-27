@@ -245,8 +245,11 @@ const Footer = ({ settings = {} }) => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40">
           <p>© {currentYear} The Social Observatory. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-white/70 transition-colors duration-300 hover:scale-105 inline-block">
-              Privacy Policy
+            <a
+                href="/politique-de-confidentialite"
+                className="hover:text-white/70 transition-colors duration-300 hover:scale-105 inline-block"
+            >
+                Politique de confidentialité
             </a>
             <a href="#" className="hover:text-white/70 transition-colors duration-300 hover:scale-105 inline-block">
               Terms
