@@ -21,6 +21,7 @@ import {
   UsersRound 
 } from "lucide-react";
 import { Link, usePage } from "@inertiajs/react";
+import { route } from 'ziggy-js';
 
 // ============================================================
 // Navigation model — uses route names
@@ -88,12 +89,14 @@ const NAV = [
 // Sidebar
 // ============================================================
 export default function Sidebar({ isOpen, onClose }) {
-  const { auth } = usePage().props;
+  const { auth, ziggy } = usePage().props;
   const currentUser = auth.user;
 
-  const isRouteActive = (routeName) => {
-    return route().current(routeName);
-  };
+  const routeUrl = (routeName) =>
+    route(routeName, undefined, undefined, ziggy);
+
+  const isRouteActive = (routeName) =>
+    route(undefined, undefined, undefined, ziggy).current(routeName);
 
   return (
     <>
@@ -169,7 +172,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   return (
                     <Link
                       key={item.route}
-                      href={route(item.route)}
+                      href={routeUrl(item.route)}
                       onClick={onClose}
                       className={[
                         "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left relative group",
@@ -242,7 +245,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
 
             <Link
-              href={route("logout")}
+              href={routeUrl("logout")}
               method="post"
               as="button"
               type="button"
