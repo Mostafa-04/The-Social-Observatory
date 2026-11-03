@@ -24,13 +24,29 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
 ->withExceptions(function (Exceptions $exceptions) {
-    $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+    $exceptions->respond(function (
+        Response $response,
+        Throwable $exception,
+        Request $request
+    ) {
         $status = $response->getStatusCode();
 
-        // Si on est en local ou en testing, on laisse la page de debug de Laravel
-        if (! app()->environment(['local', 'testing'])
-            && in_array($status, [403, 404, 419, 429, 500, 503])) {
-            return Inertia::render('Error', ['status' => $status])
+        // Handle CSRF token mismatch
+        if ($status === 419) {
+            return back()->with(
+                'error',
+                'The page expired. Please try again.'
+            );
+        }
+
+        // Custom Inertia error pages
+        if (
+            ! app()->environment(['local', 'testing'])
+            && in_array($status, [403, 404, 429, 500, 503])
+        ) {
+            return Inertia::render('Error', [
+                'status' => $status,
+            ])
                 ->toResponse($request)
                 ->setStatusCode($status);
         }
