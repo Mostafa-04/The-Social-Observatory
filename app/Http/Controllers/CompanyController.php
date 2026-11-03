@@ -16,6 +16,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
  
 
 
@@ -44,10 +46,18 @@ public function index(Request $request): Response
         ->latest()
         ->paginate(10)
         ->withQueryString();
+        $senders = collect(config('mail.campaign_senders', []))
+        ->map(fn ($sender, $key) => [
+            'key' => $key,
+            'address' => $sender['address'],
+            'name' => $sender['name'],
+        ])
+        ->values();
  
     return Inertia::render('admin/Companies/Index', [
         'companies' => $companies,
         'filters'   => $filters,
+          'senders' => $senders,
  
         // Le pays/ville viennent maintenant de /api/countries côté frontend ;
         // seul le secteur reste basé sur les données réellement présentes.
@@ -139,6 +149,11 @@ public function index(Request $request): Response
                 'required',
                 'string',
             ],
+            'sender' => [
+                'required',
+                'string',
+                Rule::in(array_keys(config('mail.campaign_senders', []))),
+            ],
 
             'attachments' => [
                 'nullable',
@@ -153,6 +168,18 @@ public function index(Request $request): Response
             ],
         ]);
 
+
+        $sender = config("mail.campaign_senders.{$validated['sender']}");
+
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw ValidationException::withMessages([
+                'sender' => "La configuration de l'expéditeur est invalide.",
+            ]);
+        }
         /*
         |--------------------------------------------------------------------------
         | Vérifier la sélection
@@ -201,21 +228,26 @@ public function index(Request $request): Response
         | désormais sur "contact_email" pour savoir à qui envoyer.
         */
 
+        $senderKey = $validated['sender'];
+
         if ($validated['send_to_all']) {
 
             Company::query()
                 ->whereNotNull('contact_email')
                 ->where('contact_email', '!=', '')
                 ->select('id')
-                ->chunkById(100, function ($companies) use ($validated, $attachments) {
-
+                ->chunkById(100, function ($companies) use (
+                    $validated,
+                    $attachments,
+                    $senderKey
+                ) {
                     foreach ($companies as $company) {
-
                         SendCompanyEmailJob::dispatch(
                             companyId: $company->id,
                             subject: $validated['subject'],
                             message: $validated['message'],
-                            attachments: $attachments
+                            attachments: $attachments,
+                            senderKey: $senderKey
                         );
                     }
                 });
@@ -234,14 +266,15 @@ public function index(Request $request): Response
                 ->where('contact_email', '!=', '')
                 ->select('id')
                 ->get()
-                ->each(function ($company) use ($validated, $attachments) {
+                ->each(function ($company) use ($validated, $attachments, $senderKey) {
 
-                    SendCompanyEmailJob::dispatch(
-                        companyId: $company->id,
-                        subject: $validated['subject'],
-                        message: $validated['message'],
-                        attachments: $attachments
-                    );
+            SendCompanyEmailJob::dispatch(
+                companyId: $company->id,
+                subject: $validated['subject'],
+                message: $validated['message'],
+                attachments: $attachments,
+                senderKey: $senderKey
+            );
                 });
         }
 

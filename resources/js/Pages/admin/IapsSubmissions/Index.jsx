@@ -112,12 +112,17 @@ function ParticipantBadge({ type }) {
     );
 }
 
-export default function IapsSubmissionsIndex({ submissions, filters }) {
+export default function IapsSubmissionsIndex({
+    submissions,
+    filters,
+    senders = [],
+}) {
     /* Filtres saisis (pas encore appliqués) */
     const [search, setSearch] = useState(filters?.search ?? "");
     const [participantType, setParticipantType] = useState(
         filters?.participant_type ?? ""
     );
+    const [emailSender, setEmailSender] = useState("contact");
 
     /* Filtres réellement appliqués (ceux de la liste affichée) */
     const appliedSearch = filters?.search ?? "";
@@ -300,6 +305,7 @@ export default function IapsSubmissionsIndex({ submissions, filters }) {
         formData.append("subject", emailSubject);
         formData.append("message", emailMessage);
         formData.append("select_all", selectAll ? "1" : "0");
+        formData.append("sender", emailSender);
 
         if (selectAll) {
             // Filtres APPLIQUÉS (ceux de la liste), pas ceux en cours de saisie
@@ -329,6 +335,7 @@ export default function IapsSubmissionsIndex({ submissions, filters }) {
             setEmailMessage("");
             setEmailFiles([]);
             clearSelection();
+            setEmailSender("contact");
 
             alertSuccess(
                 data?.message ||
@@ -666,8 +673,38 @@ export default function IapsSubmissionsIndex({ submissions, filters }) {
                             </button>
                         </div>
 
+                        
+
                         {/* BODY */}
                         <div className="overflow-y-auto px-6 py-5">
+
+                            {/* Email Sender */}
+<div className="mb-5">
+    <label className="mb-2 block text-sm font-medium text-[#263333]">
+        Adresse email de l'expéditeur
+    </label>
+
+    <div className="relative">
+        <select
+            value={emailSender}
+            onChange={(e) => setEmailSender(e.target.value)}
+            disabled={sendingEmail}
+            className="w-full appearance-none rounded-xl border border-[#d6d9d8] bg-white px-4 py-3 pr-10 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 disabled:opacity-60"
+        >
+            {senders.map((sender) => (
+                <option key={sender.key} value={sender.key}>
+                    {sender.name} ({sender.address})
+                </option>
+            ))}
+        </select>
+
+        <Mail className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78807e]" />
+    </div>
+
+    <p className="mt-2 text-xs text-[#78807e]">
+        Les emails seront envoyés depuis l'adresse sélectionnée.
+    </p>
+</div>
                             <div className="mb-5">
                                 <label className="mb-2 block text-sm font-medium text-[#263333]">
                                     Objet

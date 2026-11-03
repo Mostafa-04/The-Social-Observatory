@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 
 class SendGroupRegistrationEmail implements ShouldQueue
 {
@@ -19,25 +20,49 @@ class SendGroupRegistrationEmail implements ShouldQueue
     public $backoff = 30;
 
     /**
-     * @param  array<int, string>  $attachmentPaths  Chemins (disk "local") des pièces jointes partagées par l'envoi groupé.
+     * @param array<int, string> $attachmentPaths
      */
     public function __construct(
         public string $recipientEmail,
         public string $recipientName,
         public string $subjectLine,
         public string $htmlMessage,
-        public array $attachmentPaths = []
+        public array $attachmentPaths = [],
+        public string $senderKey = 'contact',
     ) {}
 
     public function handle(): void
     {
-        Mail::to($this->recipientEmail)->send(
-            new GroupRegistrationMessage(
-                recipientName: $this->recipientName,
-                subjectLine: $this->subjectLine,
-                htmlMessage: $this->htmlMessage,
-                attachmentPaths: $this->attachmentPaths,
-            )
+        $sender = config(
+            "mail.campaign_senders.{$this->senderKey}"
         );
+
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw new RuntimeException(
+                "La configuration de l'expéditeur est invalide."
+            );
+        }
+
+        $mail = new GroupRegistrationMessage(
+            recipientName: $this->recipientName,
+            subjectLine: $this->subjectLine,
+            htmlMessage: $this->htmlMessage,
+            attachmentPaths: $this->attachmentPaths,
+        );
+
+        // Définir l'adresse et le nom de l'expéditeur sélectionné.
+        $mail->from(
+            $sender['address'],
+            $sender['name']
+        );
+
+        // Utiliser le compte SMTP correspondant.
+        Mail::mailer($sender['mailer'])
+            ->to($this->recipientEmail)
+            ->send($mail);
     }
 }

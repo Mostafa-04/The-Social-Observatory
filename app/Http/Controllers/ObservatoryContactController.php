@@ -15,6 +15,7 @@ use App\Mail\ObservatoryContactMail;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendObservatoryContactEmail;
 use App\Services\PersonService;
+use Illuminate\Validation\Rule;
 
 class ObservatoryContactController extends Controller
 {
@@ -40,12 +41,21 @@ public function index(Request $request)
         ->paginate(20)
         ->withQueryString(); // garde ?search=...&status=... dans les liens de pagination
 
+        $senders = collect(config('mail.campaign_senders', []))
+        ->map(fn ($sender, $key) => [
+            'key' => $key,
+            'address' => $sender['address'],
+            'name' => $sender['name'],
+        ])
+        ->values();
+
     return Inertia::render('admin/ObservatoryContacts/Index', [
         'contacts' => $contacts,
         'filters'  => [
             'search' => $search,
             'status' => $status,
         ],
+        'senders' => $senders,
     ]);
 }
 
@@ -183,7 +193,24 @@ public function sendEmail(Request $request)
             'max:10240',
             'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,zip',
         ],
+        'sender' => [
+            'required',
+            'string',
+            Rule::in(array_keys(config('mail.campaign_senders', []))),
+        ],
     ]);
+
+    $sender = config("mail.campaign_senders.{$validated['sender']}");
+
+    if (
+        !$sender ||
+        empty($sender['mailer']) ||
+        empty($sender['address'])
+    ) {
+        throw ValidationException::withMessages([
+            'sender' => "La configuration de l'expéditeur est invalide.",
+        ]);
+    }
 
     /**
      * Récupérer les contacts sélectionnés
@@ -226,30 +253,28 @@ public function sendEmail(Request $request)
      * Petit nombre de contacts :
      * envoi immédiat.
      */
-    if ($contacts->count() <= self::QUEUE_THRESHOLD) {
+            if ($contacts->count() <= self::QUEUE_THRESHOLD) {
+                return $this->dispatchSynchronous(
+                    $contacts,
+                    $validated,
+                    $attachments,
+                    $sender
+                );
+            }
 
-        return $this->dispatchSynchronous(
-            $contacts,
-            $validated,
-            $attachments
-        );
-    }
-
-    /**
-     * Beaucoup de contacts :
-     * utilisation de la queue.
-     */
-    return $this->dispatchQueued(
-        $contacts,
-        $validated,
-        $attachments
-    );
+            return $this->dispatchQueued(
+                $contacts,
+                $validated,
+                $attachments,
+                $validated['sender']
+            );
 }
 
 private function dispatchSynchronous(
     $contacts,
     array $validated,
-    array $attachments
+    array $attachments,
+    array $sender
 ) {
     $sent = 0;
 
@@ -259,14 +284,19 @@ private function dispatchSynchronous(
 
         try {
 
-            Mail::to($contact->email)->send(
-                new ObservatoryContactMail(
+                $mail = new ObservatoryContactMail(
                     contact: $contact,
                     subjectText: $validated['subject'],
                     messageHtml: $validated['message'],
                     attachmentFiles: $attachments
-                )
-            );
+                );
+
+                $mail->from($sender['address'], $sender['name']);
+
+                Mail::mailer($sender['mailer'])
+                    ->to($contact->email)
+                    ->send($mail);
+                            
 
             $sent++;
 
@@ -316,7 +346,8 @@ private function dispatchSynchronous(
 private function dispatchQueued(
     $contacts,
     array $validated,
-    array $attachments
+    array $attachments,
+    string $senderKey
 ) {
     foreach ($contacts as $contact) {
 
@@ -347,7 +378,8 @@ private function dispatchQueued(
             contactId: $contact->id,
             subjectText: $validated['subject'],
             messageHtml: $validated['message'],
-            attachments: $contactAttachments
+            attachments: $contactAttachments,
+            senderKey: $senderKey
         );
     }
 

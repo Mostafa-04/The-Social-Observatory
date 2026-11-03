@@ -15,6 +15,8 @@ use App\Jobs\SendPersonEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Services\PersonService;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PersonController extends Controller
 {
@@ -150,10 +152,18 @@ public function index(Request $request)
         ->orderBy('first_name')
         ->paginate(50)
         ->withQueryString();
+        $senders = collect(config('mail.campaign_senders', []))
+        ->map(fn ($sender, $key) => [
+            'key' => $key,
+            'address' => $sender['address'],
+            'name' => $sender['name'],
+        ])
+        ->values();
  
     return Inertia::render('admin/People/Index', [
         'people' => $people,
         'groups' => self::GROUPS,
+         'senders' => $senders,
         'filters' => [
             'search'     => $search,
             'country'    => $country,
@@ -167,6 +177,11 @@ public function index(Request $request)
     public function sendEmail(Request $request)
     {
         $data = $request->validate([
+            'sender' => [
+                'required',
+                'string',
+                Rule::in(array_keys(config('mail.campaign_senders', []))),
+            ],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string'],
             'select_all' => ['required', 'boolean'],
@@ -178,6 +193,18 @@ public function index(Request $request)
             'files' => ['nullable', 'array', 'max:10'],
             'files.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip'],
         ]);
+
+        $sender = config("mail.campaign_senders.{$data['sender']}");
+
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw ValidationException::withMessages([
+                'sender' => "La configuration de l'expéditeur est invalide.",
+            ]);
+        }
  
         // 1) Construire la liste des destinataires
         $query = Person::query()
@@ -211,14 +238,17 @@ public function index(Request $request)
             ->all();
  
         // 3) Un job par destinataire, par paquets
+        $senderKey = $data['sender'];
+
         $query->select(['id', 'email'])
-            ->chunkById(200, function ($chunk) use ($data, $attachments) {
+            ->chunkById(200, function ($chunk) use ($data, $attachments, $senderKey) {
                 foreach ($chunk as $person) {
                     SendPersonEmail::dispatch(
                         $person->email,
                         $data['subject'],
                         $data['message'],
-                        $attachments
+                        $attachments,
+                        $senderKey
                     );
                 }
             });

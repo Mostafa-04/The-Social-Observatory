@@ -15,11 +15,11 @@ import {
     Search,
     Upload,
     Mail,
+    Phone,
     X,
     Users,
     Loader2,
     XCircle,
-    SlidersHorizontal,
     Paperclip,
     FileText,
     Trash2,
@@ -28,6 +28,9 @@ import {
     UserPlus,
     ChevronDown,
     Check,
+    RotateCcw,
+    Globe,
+    Building2,
 } from "lucide-react";
 
 import "react-quill/dist/quill.snow.css";
@@ -67,19 +70,25 @@ const QUILL_FORMATS = [
 ];
 
 /* =========================================================
-   Design tokens (même palette que la page Insights)
+   Design tokens
 ========================================================= */
 
-const STATUS_STYLES = {
-    approved: "bg-[#2F6B4F]/10 text-[#2F6B4F]",
-    pending: "bg-[#BF5429]/10 text-[#BF5429]",
-    rejected: "bg-[#B3261E]/10 text-[#B3261E]",
-};
-
-const STATUS_LABELS = {
-    approved: "Approuvé",
-    pending: "En attente",
-    rejected: "Rejeté",
+const STATUS_META = {
+    approved: {
+        label: "Approuvé",
+        badge: "bg-[#2F6B4F]/10 text-[#2F6B4F]",
+        dot: "bg-[#2F6B4F]",
+    },
+    pending: {
+        label: "En attente",
+        badge: "bg-[#BF5429]/10 text-[#a8451f]",
+        dot: "bg-[#BF5429]",
+    },
+    rejected: {
+        label: "Rejeté",
+        badge: "bg-[#B3261E]/10 text-[#B3261E]",
+        dot: "bg-[#B3261E]",
+    },
 };
 
 const STATUS_OPTIONS = [
@@ -88,12 +97,13 @@ const STATUS_OPTIONS = [
     { value: "rejected", label: "Rejeté" },
 ];
 
+const STATUS_TABS = [{ value: "all", label: "Tous" }, ...STATUS_OPTIONS];
+
 const GENDER_OPTIONS = [
     { value: "H", label: "Homme" },
     { value: "F", label: "Femme" },
 ];
 
-/* Limites alignées avec la validation Laravel */
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo
 
@@ -110,44 +120,89 @@ const INITIAL_FORM = {
 };
 
 const INPUT_BASE =
-    "w-full rounded-lg border border-[#D6D9D8] bg-white px-3 py-2.5 text-[13.5px] text-[#1f2d2d] outline-none transition placeholder:text-[#8A9290] focus:border-[#BF5429] focus:ring-1 focus:ring-[#BF5429]/30";
+    "w-full rounded-xl border border-[#D6D9D8] bg-white px-3.5 py-2.5 text-[13.5px] text-[#1f2d2d] outline-none transition placeholder:text-[#8A9290] focus:border-[#BF5429] focus:ring-4 focus:ring-[#BF5429]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
 const INPUT_INVALID =
-    "!border-[#B3261E] focus:!border-[#B3261E] focus:!ring-[#B3261E]/30";
+    "!border-[#B3261E] focus:!border-[#B3261E] focus:!ring-[#B3261E]/10";
 
 /* =========================================================
-   SweetAlert2
+   SweetAlert2 : thème unifié
 ========================================================= */
 
-const swalTheme = {
-    confirmButtonColor: "#BF5429",
-    cancelButtonColor: "#8A9290",
-    customClass: {
-        popup: "rounded-2xl",
-        title: "!text-[#1f2d2d] !text-lg !font-semibold",
-        htmlContainer: "!text-[13px] !text-[#5B6462]",
-        confirmButton: "!rounded-lg !px-5 !py-2.5 !text-[13.5px] !font-medium",
-        cancelButton: "!rounded-lg !px-5 !py-2.5 !text-[13.5px] !font-medium",
-    },
+const BASE_CLASSES = {
+    popup: "!rounded-3xl !p-8 !shadow-2xl !font-sans",
+    title: "!text-xl !font-semibold !text-[#1f2d2d] !p-0 !mt-2",
+    htmlContainer: "!text-[13.5px] !text-[#5B6462] !m-0 !mt-2 !p-0",
+    actions: "!mt-6 !gap-3",
+    confirmButton:
+        "rounded-xl bg-[#BF5429] px-6 py-3 text-[13.5px] font-semibold text-white transition hover:bg-[#a8451f] focus:outline-none focus:ring-4 focus:ring-[#BF5429]/20",
+    cancelButton:
+        "rounded-xl border border-[#D6D9D8] bg-white px-6 py-3 text-[13.5px] font-semibold text-[#1f2d2d] transition hover:bg-[#F7F8F7] focus:outline-none focus:ring-4 focus:ring-[#D6D9D8]/50",
+    timerProgressBar: "!bg-[#BF5429]",
 };
 
-const toast = Swal.mixin({
+const DANGER_CLASSES = {
+    ...BASE_CLASSES,
+    confirmButton:
+        "rounded-xl bg-[#B3261E] px-6 py-3 text-[13.5px] font-semibold text-white transition hover:bg-[#961f19] focus:outline-none focus:ring-4 focus:ring-[#B3261E]/20",
+};
+
+const AppSwal = Swal.mixin({
+    buttonsStyling: false,
+    reverseButtons: true,
+    focusConfirm: false,
+    customClass: BASE_CLASSES,
+});
+
+const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
     showConfirmButton: false,
-    timer: 3500,
+    timer: 4000,
     timerProgressBar: true,
+    buttonsStyling: false,
     customClass: {
-        popup: "rounded-xl",
-        title: "!text-[13.5px] !text-[#1f2d2d]",
+        popup: "!rounded-2xl !p-4 !shadow-xl !font-sans",
+        title: "!text-[13.5px] !font-medium !text-[#1f2d2d]",
+        timerProgressBar: "!bg-[#BF5429]",
+    },
+    didOpen: (el) => {
+        el.addEventListener("mouseenter", Swal.stopTimer);
+        el.addEventListener("mouseleave", Swal.resumeTimer);
     },
 });
+
+const toastSuccess = (title) => Toast.fire({ icon: "success", title });
+const toastError = (title) => Toast.fire({ icon: "error", title });
+const toastWarning = (title) => Toast.fire({ icon: "warning", title });
+
+const alertError = (text, title = "Une erreur est survenue") =>
+    AppSwal.fire({
+        icon: "error",
+        iconColor: "#B3261E",
+        title,
+        html: text,
+        confirmButtonText: "Fermer",
+    });
+
+const showLoading = (title, text) =>
+    AppSwal.fire({
+        title,
+        text,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+    });
+
+const closeIfLoading = () => {
+    if (Swal.isVisible() && Swal.isLoading()) Swal.close();
+};
 
 /* =========================================================
    Helpers
 ========================================================= */
 
-/* Recherche insensible à la casse ET aux accents */
 const normalize = (value) =>
     String(value ?? "")
         .toLocaleLowerCase("fr")
@@ -155,29 +210,43 @@ const normalize = (value) =>
         .replace(/[\u0300-\u036f]/g, "")
         .trim();
 
-/* Quill renvoie "<p><br></p>" quand l'éditeur est vide */
 const isEmptyHtml = (html) =>
     !String(html ?? "")
         .replace(/<(.|\n)*?>/g, "")
         .replace(/&nbsp;/g, " ")
         .trim();
 
+const escapeHtml = (value) =>
+    String(value ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+
 const formatSize = (bytes) => {
-    if (bytes < 1024) {
-        return `${bytes} o`;
-    }
-
-    if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(0)} Ko`;
-    }
-
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+};
+
+const initialsOf = (name) =>
+    String(name || "?")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase())
+        .join("") || "?";
+
+const formatDate = (date) => {
+    if (!date) return null;
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime())
+        ? null
+        : parsed.toLocaleDateString("fr-FR");
 };
 
 /* =========================================================
    Hook : chargement des pays via route("api.countries")
-   - chargé une seule fois, à la première ouverture du modal
-   - accepte ["Maroc", ...] ou [{ name: "Maroc" }, ...]
 ========================================================= */
 
 function useCountries(enabled) {
@@ -188,9 +257,7 @@ function useCountries(enabled) {
     const loadedRef = useRef(false);
 
     useEffect(() => {
-        if (!enabled || loadedRef.current) {
-            return;
-        }
+        if (!enabled || loadedRef.current) return;
 
         const controller = new AbortController();
 
@@ -234,9 +301,7 @@ function useCountries(enabled) {
                     setFailed(true);
                 }
             } finally {
-                if (!controller.signal.aborted) {
-                    setLoading(false);
-                }
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
 
@@ -251,9 +316,7 @@ function useCountries(enabled) {
 }
 
 /* =========================================================
-   Modal : structure commune (en-tête fixe, corps scrollable,
-   pied fixe). C'est ça qui corrige le scroll : le panneau est
-   limité à 92% de la hauteur écran et SEUL le corps défile.
+   Modal : en-tête fixe, corps scrollable, pied fixe
 ========================================================= */
 
 function Modal({
@@ -272,7 +335,6 @@ function Modal({
     lockedRef.current = locked;
 
     useEffect(() => {
-        // Empêche la page derrière de défiler
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
 
@@ -292,11 +354,9 @@ function Modal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-[#1f2d2d]/50 p-3 backdrop-blur-[2px] sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[#1f2d2d]/50 p-3 backdrop-blur-sm sm:p-6"
             onMouseDown={(event) => {
-                if (event.target === event.currentTarget && !locked) {
-                    onClose();
-                }
+                if (event.target === event.currentTarget && !locked) onClose();
             }}
         >
             <style>{`
@@ -314,12 +374,12 @@ function Modal({
                 aria-modal="true"
                 aria-label={title}
                 style={{ animation: "modalIn .18s ease-out" }}
-                className={`modal-panel flex max-h-[92dvh] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-[#D6D9D8]`}
+                className={`modal-panel flex max-h-[92dvh] w-full ${maxWidth} flex-col overflow-hidden rounded-3xl bg-white shadow-2xl`}
             >
-                <div className="flex shrink-0 items-start gap-3 border-b border-[#D6D9D8] px-6 py-4">
+                <div className="flex shrink-0 items-start gap-4 border-b border-[#E4E7E5] px-6 py-5">
                     {Icon && (
-                        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#BF5429]/10 text-[#BF5429]">
-                            <Icon size={18} strokeWidth={2} />
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#BF5429]/10 text-[#BF5429]">
+                            <Icon size={20} strokeWidth={2} />
                         </span>
                     )}
 
@@ -340,7 +400,7 @@ function Modal({
                         onClick={onClose}
                         disabled={locked}
                         aria-label="Fermer"
-                        className="rounded-lg p-1.5 text-[#8A9290] transition hover:bg-[#F7F8F7] hover:text-[#1f2d2d] disabled:opacity-40"
+                        className="rounded-xl p-2 text-[#8A9290] transition hover:bg-[#F7F8F7] hover:text-[#1f2d2d] disabled:opacity-40"
                     >
                         <X size={18} strokeWidth={2} />
                     </button>
@@ -352,14 +412,13 @@ function Modal({
     );
 }
 
-/* Classes partagées par les formulaires dans les modals */
 const MODAL_FORM = "flex min-h-0 flex-1 flex-col";
-const MODAL_BODY = "min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5";
+const MODAL_BODY = "min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6";
 const MODAL_FOOTER =
-    "flex shrink-0 items-center justify-end gap-2 border-t border-[#D6D9D8] bg-[#F7F8F7] px-6 py-4";
+    "flex shrink-0 items-center justify-end gap-3 border-t border-[#E4E7E5] bg-[#F9FAF8] px-6 py-4";
 
 /* =========================================================
-   Petits composants de formulaire
+   Composants de formulaire
 ========================================================= */
 
 function Field({ label, required, error, hint, className = "", children }) {
@@ -384,7 +443,7 @@ function Field({ label, required, error, hint, className = "", children }) {
 function FormSection({ title, children }) {
     return (
         <section className="space-y-4">
-            <h3 className="border-b border-[#D6D9D8]/70 pb-2 text-[12.5px] font-semibold text-[#5B6462]">
+            <h3 className="border-b border-[#E4E7E5] pb-2 text-[13px] font-semibold text-[#1f2d2d]">
                 {title}
             </h3>
 
@@ -398,7 +457,7 @@ function Segmented({ label, value, onChange, options }) {
         <div
             role="radiogroup"
             aria-label={label}
-            className="flex gap-1 rounded-lg border border-[#D6D9D8] bg-[#F7F8F7] p-1"
+            className="flex gap-1 rounded-xl border border-[#D6D9D8] bg-[#F7F8F7] p-1"
         >
             {options.map((option) => {
                 const selected = option.value === value;
@@ -410,7 +469,7 @@ function Segmented({ label, value, onChange, options }) {
                         role="radio"
                         aria-checked={selected}
                         onClick={() => onChange(option.value)}
-                        className={`flex-1 rounded-md px-3 py-2 text-[13px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BF5429]/40 ${
+                        className={`flex-1 rounded-lg px-3 py-2 text-[13px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BF5429]/40 ${
                             selected
                                 ? "bg-white text-[#BF5429] shadow-sm ring-1 ring-[#BF5429]/30"
                                 : "text-[#5B6462] hover:text-[#1f2d2d]"
@@ -424,11 +483,20 @@ function Segmented({ label, value, onChange, options }) {
     );
 }
 
+function RowCheckbox({ checked, onChange, label }) {
+    return (
+        <input
+            type="checkbox"
+            aria-label={label}
+            checked={checked}
+            onChange={onChange}
+            className="h-4 w-4 cursor-pointer rounded border-[#D6D9D8] text-[#BF5429] focus:ring-[#BF5429]/30"
+        />
+    );
+}
+
 /* =========================================================
-   Select pays avec recherche
-   - recherche insensible aux accents
-   - navigation clavier : ↑ ↓ Entrée Échap
-   - le panneau se fait scroller dans la vue du modal
+   Select pays avec recherche (clavier : ↑ ↓ Entrée Échap)
 ========================================================= */
 
 function CountrySelect({
@@ -469,11 +537,8 @@ function CountrySelect({
         triggerRef.current?.focus();
     };
 
-    /* Fermeture au clic extérieur */
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        if (!open) return;
 
         const handleMouseDown = (event) => {
             if (rootRef.current && !rootRef.current.contains(event.target)) {
@@ -486,11 +551,8 @@ function CountrySelect({
         return () => document.removeEventListener("mousedown", handleMouseDown);
     }, [open, close]);
 
-    /* À l'ouverture : focus recherche + panneau visible dans le modal */
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        if (!open) return;
 
         searchRef.current?.focus();
 
@@ -509,11 +571,8 @@ function CountrySelect({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
-    /* Garde l'élément actif visible dans la liste */
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        if (!open) return;
 
         listRef.current
             ?.querySelector('[data-active="true"]')
@@ -529,12 +588,8 @@ function CountrySelect({
             setActive((index) => Math.max(index - 1, 0));
         } else if (event.key === "Enter") {
             event.preventDefault();
-
-            if (filtered[active]) {
-                select(filtered[active].value);
-            }
+            if (filtered[active]) select(filtered[active].value);
         } else if (event.key === "Escape") {
-            // Ferme seulement la liste, pas le modal
             event.stopPropagation();
             close();
             triggerRef.current?.focus();
@@ -543,7 +598,7 @@ function CountrySelect({
 
     if (failed) {
         return (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-[#B3261E]/30 bg-[#B3261E]/5 px-3 py-2.5 text-[13px] text-[#B3261E]">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-[#B3261E]/30 bg-[#B3261E]/5 px-3.5 py-2.5 text-[13px] text-[#B3261E]">
                 <span>Impossible de charger les pays.</span>
 
                 <button
@@ -566,7 +621,7 @@ function CountrySelect({
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 onClick={() => (open ? close() : setOpen(true))}
-                className={`flex w-full items-center gap-2 rounded-lg border bg-white py-2.5 pl-3 text-left text-[13.5px] outline-none transition focus:border-[#BF5429] focus:ring-1 focus:ring-[#BF5429]/30 disabled:cursor-wait disabled:bg-[#F7F8F7] ${
+                className={`flex w-full items-center gap-2 rounded-xl border bg-white py-2.5 pl-3.5 text-left text-[13.5px] outline-none transition focus:border-[#BF5429] focus:ring-4 focus:ring-[#BF5429]/10 disabled:cursor-wait disabled:bg-[#F7F8F7] ${
                     value ? "pr-16" : "pr-9"
                 } ${
                     invalid
@@ -615,9 +670,9 @@ function CountrySelect({
             {open && (
                 <div
                     ref={panelRef}
-                    className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl border border-[#D6D9D8] bg-white shadow-xl"
+                    className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-2xl border border-[#E4E7E5] bg-white shadow-xl"
                 >
-                    <div className="relative border-b border-[#D6D9D8] p-2">
+                    <div className="relative border-b border-[#E4E7E5] p-2">
                         <Search
                             size={14}
                             strokeWidth={2}
@@ -702,16 +757,13 @@ function CountrySelect({
    Page
 ========================================================= */
 
-export default function Index({ contacts, flash, filters }) {
-    /* =====================================================
-       State
-    ===================================================== */
+export default function Index({ contacts, flash, filters, senders = [] }) {
+    /* ---------- State ---------- */
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
     const [fetchingAllIds, setFetchingAllIds] = useState(false);
 
-    // Initialisés depuis les query params renvoyés par le serveur
     const [search, setSearch] = useState(filters?.search ?? "");
     const [statusFilter, setStatusFilter] = useState(filters?.status ?? "all");
 
@@ -721,15 +773,18 @@ export default function Index({ contacts, flash, filters }) {
     const [importing, setImporting] = useState(false);
     const [adding, setAdding] = useState(false);
     const [sendingEmail, setSendingEmail] = useState(false);
+    const [dragging, setDragging] = useState(false);
 
     const [form, setForm] = useState(INITIAL_FORM);
     const [formErrors, setFormErrors] = useState({});
 
     const [emailForm, setEmailForm] = useState({ subject: "", message: "" });
     const [attachments, setAttachments] = useState([]);
+    const [emailSender, setEmailSender] = useState(
+        senders[0]?.key ?? "contact"
+    );
 
     const importInputRef = useRef(null);
-    const attachInputRef = useRef(null);
     const debounceRef = useRef(null);
 
     const {
@@ -739,20 +794,14 @@ export default function Index({ contacts, flash, filters }) {
         retry: retryCountries,
     } = useCountries(showAddModal);
 
-    /* =====================================================
-       Données dérivées
-       (contactData AVANT totalContactsCount : l'ancien code
-       l'utilisait avant sa déclaration)
-    ===================================================== */
+    /* ---------- Données dérivées ---------- */
 
     const contactData = contacts?.data || [];
 
     const totalContactsCount =
         contacts?.meta?.total ?? contacts?.total ?? contactData.length;
 
-    /* =====================================================
-       Recherche serveur avec debounce (350ms)
-    ===================================================== */
+    /* ---------- Recherche serveur avec debounce (350ms) ---------- */
 
     const runSearch = useCallback((nextSearch, nextStatus) => {
         router.get(
@@ -761,16 +810,11 @@ export default function Index({ contacts, flash, filters }) {
                 search: nextSearch || undefined,
                 status: nextStatus === "all" ? undefined : nextStatus,
             },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true, // évite d'empiler l'historique à chaque frappe
-            }
+            { preserveState: true, preserveScroll: true, replace: true }
         );
     }, []);
 
     useEffect(() => {
-        // Ne pas re-déclencher au tout premier rendu si rien n'a changé
         if (
             search === (filters?.search ?? "") &&
             statusFilter === (filters?.status ?? "all")
@@ -778,9 +822,7 @@ export default function Index({ contacts, flash, filters }) {
             return;
         }
 
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
 
         debounceRef.current = setTimeout(() => {
             runSearch(search, statusFilter);
@@ -790,52 +832,40 @@ export default function Index({ contacts, flash, filters }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search, statusFilter]);
 
-    /* =====================================================
-       Flash messages → SweetAlert2
-    ===================================================== */
+    /* ---------- Flash messages → SweetAlert2 ---------- */
 
     useEffect(() => {
-        if (flash?.success) {
-            toast.fire({ icon: "success", title: flash.success });
-        }
+        if (flash?.success) toastSuccess(flash.success);
 
-        if (flash?.error) {
-            Swal.fire({
-                ...swalTheme,
-                icon: "error",
-                title: "Une erreur est survenue",
-                text: flash.error,
-                confirmButtonText: "Fermer",
-            });
-        }
+        if (flash?.error) alertError(escapeHtml(flash.error));
 
         if (flash?.import_errors?.length > 0) {
             const rows = flash.import_errors
                 .map(
                     (error) => `
-                        <div style="text-align:left;border:1px solid #F0D5CC;background:#FDF6F3;border-radius:10px;padding:10px 12px;margin-bottom:8px;">
-                            <div style="font-size:12px;color:#8A9290;">Ligne ${error.row} — ${error.attribute}</div>
-                            <div style="font-size:13px;color:#B3261E;margin-top:2px;">
-                                ${(error.errors || []).join("<br/>")}
+                        <div class="mb-2 rounded-xl border border-[#F0D5CC] bg-[#FDF6F3] px-3.5 py-3 text-left">
+                            <div class="text-xs text-[#8A9290]">Ligne ${escapeHtml(error.row)} — ${escapeHtml(error.attribute)}</div>
+                            <div class="mt-1 text-[13px] text-[#B3261E]">
+                                ${(error.errors || []).map(escapeHtml).join("<br/>")}
                             </div>
                         </div>`
                 )
                 .join("");
 
-            Swal.fire({
-                ...swalTheme,
+            AppSwal.fire({
                 icon: "warning",
+                iconColor: "#BF5429",
                 title: "Erreurs dans le fichier Excel",
-                html: `<div style="max-height:320px;overflow:auto;">${rows}</div>`,
+                html: `
+                    <p class="mb-3">${flash.import_errors.length} ligne(s) n'ont pas pu être importées. Corrigez-les puis relancez l'import.</p>
+                    <div style="max-height:320px;overflow:auto;">${rows}</div>`,
                 width: 620,
                 confirmButtonText: "J'ai compris",
             });
         }
     }, [flash]);
 
-    /* =====================================================
-       Search + Filter (côté client, sur la page courante)
-    ===================================================== */
+    /* ---------- Filtrage côté client (page courante) ---------- */
 
     const filteredContacts = useMemo(() => {
         const searchValue = normalize(search);
@@ -866,9 +896,18 @@ export default function Index({ contacts, flash, filters }) {
         visibleIds.length > 0 &&
         visibleIds.every((id) => selectedIds.includes(id));
 
-    /* =====================================================
-       Sélection (page courante + toutes les pages)
-    ===================================================== */
+    const someVisibleSelected = visibleIds.some((id) =>
+        selectedIds.includes(id)
+    );
+
+    const hasActiveFilters = Boolean(search || statusFilter !== "all");
+
+    const resetFilters = () => {
+        setSearch("");
+        setStatusFilter("all");
+    };
+
+    /* ---------- Sélection ---------- */
 
     const handleSelectAllAcrossPages = async () => {
         setFetchingAllIds(true);
@@ -882,19 +921,14 @@ export default function Index({ contacts, flash, filters }) {
                 { headers: { Accept: "application/json" } }
             );
 
-            if (!response.ok) {
-                throw new Error("Request failed");
-            }
+            if (!response.ok) throw new Error("Request failed");
 
             const data = await response.json();
 
             setSelectedIds(data.ids);
             setSelectAllAcrossPages(true);
         } catch (error) {
-            toast.fire({
-                icon: "error",
-                title: "Impossible de récupérer tous les contacts",
-            });
+            toastError("Impossible de récupérer tous les contacts.");
         } finally {
             setFetchingAllIds(false);
         }
@@ -906,11 +940,8 @@ export default function Index({ contacts, flash, filters }) {
     };
 
     const handleToggleSelectAllContacts = () => {
-        if (selectAllAcrossPages) {
-            clearSelectAllAcrossPages();
-        } else {
-            handleSelectAllAcrossPages();
-        }
+        if (selectAllAcrossPages) clearSelectAllAcrossPages();
+        else handleSelectAllAcrossPages();
     };
 
     const toggleContact = (id) => {
@@ -937,23 +968,16 @@ export default function Index({ contacts, flash, filters }) {
         setSelectAllAcrossPages(false);
     };
 
-    /* =====================================================
-       Add contact
-    ===================================================== */
+    /* ---------- Ajout d'un contact ---------- */
 
     const setField = (name, value) => {
         setForm((previous) => ({ ...previous, [name]: value }));
 
-        // Efface l'erreur du champ dès qu'on le modifie
         setFormErrors((previous) => {
-            if (!previous[name]) {
-                return previous;
-            }
+            if (!previous[name]) return previous;
 
             const next = { ...previous };
-
             delete next[name];
-
             return next;
         });
     };
@@ -963,10 +987,7 @@ export default function Index({ contacts, flash, filters }) {
     };
 
     const closeAddModal = () => {
-        if (adding) {
-            return;
-        }
-
+        if (adding) return;
         setShowAddModal(false);
         setFormErrors({});
     };
@@ -983,44 +1004,34 @@ export default function Index({ contacts, flash, filters }) {
             onSuccess: () => {
                 setForm(INITIAL_FORM);
                 setShowAddModal(false);
-
-                toast.fire({ icon: "success", title: "Contact ajouté" });
+                toastSuccess("Contact ajouté.");
             },
 
             onError: (errors) => {
                 setFormErrors(errors);
-
-                toast.fire({
-                    icon: "error",
-                    title: "Corrigez les champs en erreur",
-                });
+                toastError("Corrigez les champs en erreur.");
             },
 
             onFinish: () => setAdding(false),
         });
     };
 
-    /* Erreurs serveur qui ne correspondent à aucun champ affiché */
     const otherErrors = Object.entries(formErrors).filter(
         ([key]) => !(key in INITIAL_FORM)
     );
 
-    /* =====================================================
-       Import Excel
-    ===================================================== */
+    /* ---------- Import Excel ---------- */
 
     const handleImport = (event) => {
         const file = event.target.files?.[0];
 
-        if (!file) {
-            return;
-        }
+        if (!file) return;
 
         const formData = new FormData();
-
         formData.append("file", file);
 
         setImporting(true);
+        showLoading("Importation en cours...", file.name);
 
         router.post(route("admin.observatory-contacts.import"), formData, {
             forceFormData: true,
@@ -1028,31 +1039,30 @@ export default function Index({ contacts, flash, filters }) {
 
             onFinish: () => {
                 setImporting(false);
+                // Si aucun message flash ne remplace la fenêtre de chargement
+                setTimeout(closeIfLoading, 50);
 
-                if (importInputRef.current) {
-                    importInputRef.current.value = "";
-                }
+                if (importInputRef.current) importInputRef.current.value = "";
             },
         });
     };
 
-    /* =====================================================
-       Delete contact
-    ===================================================== */
+    /* ---------- Suppression ---------- */
 
     const handleDelete = (contact) => {
-        Swal.fire({
-            ...swalTheme,
+        AppSwal.fire({
             icon: "warning",
+            iconColor: "#B3261E",
             title: "Supprimer ce contact ?",
-            text: `${contact.name || "Ce contact"} sera définitivement supprimé.`,
+            html: `<strong>${escapeHtml(
+                contact.name || "Ce contact"
+            )}</strong> sera définitivement supprimé. Cette action est irréversible.`,
             showCancelButton: true,
-            confirmButtonText: "Supprimer",
+            confirmButtonText: "Oui, supprimer",
             cancelButtonText: "Annuler",
+            customClass: DANGER_CLASSES,
         }).then((result) => {
-            if (!result.isConfirmed) {
-                return;
-            }
+            if (!result.isConfirmed) return;
 
             router.delete(
                 route("admin.observatory-contacts.destroy", contact.id),
@@ -1063,30 +1073,27 @@ export default function Index({ contacts, flash, filters }) {
                         setSelectedIds((previous) =>
                             previous.filter((id) => id !== contact.id)
                         );
-
-                        toast.fire({
-                            icon: "success",
-                            title: "Contact supprimé",
-                        });
+                        toastSuccess("Contact supprimé.");
                     },
+
+                    onError: () =>
+                        toastError("La suppression a échoué. Réessayez."),
                 }
             );
         });
     };
 
-    /* =====================================================
-       Attachments
-    ===================================================== */
+    /* ---------- Pièces jointes ---------- */
 
-    const handleAttachmentChange = (event) => {
-        const files = Array.from(event.target.files || []);
+    const addAttachments = (fileList) => {
+        const files = Array.from(fileList || []);
 
-        if (files.length === 0) {
-            return;
-        }
+        if (files.length === 0) return;
 
         const tooBig = files.filter((file) => file.size > MAX_FILE_SIZE);
         const accepted = files.filter((file) => file.size <= MAX_FILE_SIZE);
+
+        let overLimit = false;
 
         setAttachments((previous) => {
             const merged = [...previous];
@@ -1096,28 +1103,51 @@ export default function Index({ contacts, flash, filters }) {
                     (item) => item.name === file.name && item.size === file.size
                 );
 
-                if (!exists && merged.length < MAX_FILES) {
-                    merged.push(file);
+                if (exists) return;
+
+                if (merged.length >= MAX_FILES) {
+                    overLimit = true;
+                    return;
                 }
+
+                merged.push(file);
             });
 
             return merged;
         });
 
         if (tooBig.length > 0) {
-            Swal.fire({
-                ...swalTheme,
+            AppSwal.fire({
                 icon: "warning",
+                iconColor: "#BF5429",
                 title: "Fichier trop volumineux",
-                html: `Taille maximale : 10 Mo.<br/>${tooBig
-                    .map((file) => file.name)
-                    .join("<br/>")}`,
+                html: `<p class="mb-2">Taille maximale : 10 Mo par fichier.</p>${tooBig
+                    .map(
+                        (file) =>
+                            `<div class="text-[#B3261E]">${escapeHtml(file.name)} (${formatSize(
+                                file.size
+                            )})</div>`
+                    )
+                    .join("")}`,
                 confirmButtonText: "Compris",
             });
+        } else if (
+            overLimit ||
+            attachments.length + accepted.length > MAX_FILES
+        ) {
+            toastWarning(`Maximum ${MAX_FILES} fichiers par email.`);
         }
+    };
 
-        // Permet de re-sélectionner le même fichier
+    const handleAttachmentChange = (event) => {
+        addAttachments(event.target.files);
         event.target.value = "";
+    };
+
+    const handleDrop = (event) => {
+        event.preventDefault();
+        setDragging(false);
+        addAttachments(event.dataTransfer.files);
     };
 
     const removeAttachment = (index) => {
@@ -1126,20 +1156,11 @@ export default function Index({ contacts, flash, filters }) {
         );
     };
 
-    /* =====================================================
-       Email
-    ===================================================== */
+    /* ---------- Email ---------- */
 
     const openEmailModal = () => {
         if (selectedIds.length === 0) {
-            Swal.fire({
-                ...swalTheme,
-                icon: "info",
-                title: "Aucun contact sélectionné",
-                text: "Sélectionnez au moins un contact avant d'envoyer un email.",
-                confirmButtonText: "Compris",
-            });
-
+            toastWarning("Sélectionnez au moins un contact.");
             return;
         }
 
@@ -1147,50 +1168,55 @@ export default function Index({ contacts, flash, filters }) {
     };
 
     const closeEmailModal = () => {
-        if (sendingEmail) {
-            return;
-        }
-
+        if (sendingEmail) return;
         setShowEmailModal(false);
     };
 
     const handleEmailChange = (event) => {
         const { name, value } = event.target;
-
         setEmailForm((previous) => ({ ...previous, [name]: value }));
     };
 
     const handleSendEmail = (event) => {
         event.preventDefault();
 
-        if (!emailForm.subject.trim() || isEmptyHtml(emailForm.message)) {
-            Swal.fire({
-                ...swalTheme,
-                icon: "info",
-                title: "Champs manquants",
-                text: "Le sujet et le message sont obligatoires.",
-                confirmButtonText: "Compris",
-            });
-
+        if (!emailForm.subject.trim()) {
+            toastWarning("Veuillez saisir le sujet de l'email.");
             return;
         }
 
-        Swal.fire({
-            ...swalTheme,
+        if (isEmptyHtml(emailForm.message)) {
+            toastWarning("Veuillez saisir le message.");
+            return;
+        }
+
+        const senderInfo = senders.find((s) => s.key === emailSender);
+
+        AppSwal.fire({
             icon: "question",
+            iconColor: "#BF5429",
             title: "Envoyer l'email ?",
-            html: `L'email sera envoyé à <strong>${selectedIds.length}</strong> contact(s)${
-                attachments.length > 0
-                    ? ` avec ${attachments.length} pièce(s) jointe(s)`
-                    : ""
-            }.`,
+            html: `
+                <div class="mt-4 space-y-2 rounded-2xl bg-[#F7F8F7] p-4 text-left text-[13.5px]">
+                    <div class="flex justify-between gap-4"><span class="text-[#8A9290]">Destinataires</span><strong class="text-[#1f2d2d]">${selectedIds.length} contact(s)</strong></div>
+                    <div class="flex justify-between gap-4"><span class="text-[#8A9290]">Expéditeur</span><strong class="truncate text-[#1f2d2d]">${escapeHtml(
+                        senderInfo ? senderInfo.address : emailSender
+                    )}</strong></div>
+                    <div class="flex justify-between gap-4"><span class="text-[#8A9290]">Sujet</span><strong class="truncate text-[#1f2d2d]">${escapeHtml(
+                        emailForm.subject.trim()
+                    )}</strong></div>
+                    <div class="flex justify-between gap-4"><span class="text-[#8A9290]">Pièces jointes</span><strong class="text-[#1f2d2d]">${
+                        attachments.length > 0
+                            ? `${attachments.length} fichier(s)`
+                            : "Aucune"
+                    }</strong></div>
+                </div>
+                <p class="mt-3 text-xs text-[#8A9290]">Chaque contact recevra un email individuel.</p>`,
             showCancelButton: true,
-            confirmButtonText: "Envoyer",
-            cancelButtonText: "Annuler",
+            confirmButtonText: "Envoyer maintenant",
+            cancelButtonText: "Revenir",
         }).then((result) => {
-            if (!result.isConfirmed) {
-                return;
-            }
+            if (!result.isConfirmed) return;
 
             /*
              * FormData obligatoire dès qu'il y a des fichiers.
@@ -1198,18 +1224,21 @@ export default function Index({ contacts, flash, filters }) {
              */
             const formData = new FormData();
 
-            selectedIds.forEach((id) => {
-                formData.append("contact_ids[]", id);
-            });
+            selectedIds.forEach((id) => formData.append("contact_ids[]", id));
 
             formData.append("subject", emailForm.subject);
             formData.append("message", emailForm.message);
+            formData.append("sender", emailSender);
 
-            attachments.forEach((file) => {
-                formData.append("attachments[]", file);
-            });
+            attachments.forEach((file) =>
+                formData.append("attachments[]", file)
+            );
 
             setSendingEmail(true);
+            showLoading(
+                "Envoi en cours...",
+                "Merci de patienter, ne fermez pas cette page."
+            );
 
             router.post(
                 route("admin.observatory-contacts.send-email"),
@@ -1224,52 +1253,52 @@ export default function Index({ contacts, flash, filters }) {
                         setEmailForm({ subject: "", message: "" });
                         setAttachments([]);
                         setShowEmailModal(false);
+
+                        // Le message de succès vient du flash serveur ;
+                        // s'il est absent, on confirme quand même.
+                        if (!flash?.success) {
+                            closeIfLoading();
+                            AppSwal.fire({
+                                icon: "success",
+                                iconColor: "#2F6B4F",
+                                title: "Email envoyé",
+                                text: "Votre email a été envoyé avec succès.",
+                                confirmButtonText: "Parfait",
+                                timer: 6000,
+                                timerProgressBar: true,
+                            });
+                        }
                     },
 
                     onError: (errors) => {
-                        Swal.fire({
-                            ...swalTheme,
-                            icon: "error",
-                            title: "Envoi échoué",
-                            html:
-                                Object.values(errors).join("<br/>") ||
+                        const messages = Object.values(errors || {})
+                            .map(escapeHtml)
+                            .join("<br/>");
+
+                        alertError(
+                            messages ||
                                 "L'email n'a pas pu être envoyé. Réessayez.",
-                            confirmButtonText: "Fermer",
-                        });
+                            "Envoi échoué"
+                        );
                     },
 
-                    onFinish: () => setSendingEmail(false),
+                    onFinish: () => {
+                        setSendingEmail(false);
+                        setTimeout(closeIfLoading, 50);
+                    },
                 }
             );
         });
     };
 
-    /* =====================================================
-       UI helpers
-    ===================================================== */
+    /* ---------- Styles utilitaires ---------- */
 
-    const formatDate = (date) => {
-        if (!date) {
-            return "—";
-        }
-
-        const parsedDate = new Date(date);
-
-        return Number.isNaN(parsedDate.getTime())
-            ? "—"
-            : parsedDate.toLocaleDateString("fr-FR");
-    };
-
-    const inputClass = INPUT_BASE;
-
-    // Classe d'un champ du formulaire d'ajout (rouge si erreur serveur)
     const fieldClass = (name) =>
         `${INPUT_BASE} ${formErrors[name] ? INPUT_INVALID : ""}`;
 
-    const thClass =
-        "px-4 py-4 text-[11px] font-semibold uppercase tracking-wider text-[#8A9290]";
+    const thClass = "px-4 py-4 text-[12px] font-medium text-[#8A9290]";
 
-    const tdClass = "px-4 py-4 text-[13px] text-[#5B6462]";
+    const hasSelection = selectedIds.length > 0;
 
     /* =====================================================
        Render
@@ -1279,33 +1308,49 @@ export default function Index({ contacts, flash, filters }) {
         <AdminLayout>
             <Head title="Contacts — Observatory" />
 
-            <div className="mx-auto max-w-7xl space-y-6 p-6">
-                {/* Header */}
-                <div className="mb-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#BF5429]">
-                            Observatory — Contacts
-                        </p>
+            <style>{`
+                .quill-observatory .ql-toolbar.ql-snow { border: 0; border-bottom: 1px solid #E4E7E5; background: #F9FAF8; padding: 10px 12px; }
+                .quill-observatory .ql-container.ql-snow { border: 0; font-size: 14px; }
+                .quill-observatory .ql-editor { max-height: 320px; color: #1f2d2d; }
+                .quill-observatory .ql-editor.ql-blank::before { color: #8A9290; font-style: normal; }
+                .quill-observatory .ql-snow .ql-stroke { stroke: #5B6462; }
+                .quill-observatory .ql-snow .ql-fill { fill: #5B6462; }
+                .quill-observatory .ql-snow.ql-toolbar button:hover .ql-stroke,
+                .quill-observatory .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #BF5429; }
+                .quill-observatory .ql-snow.ql-toolbar button:hover .ql-fill,
+                .quill-observatory .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #BF5429; }
+                @keyframes barIn { from { transform: translate(-50%, 16px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+                .selection-bar { animation: barIn .2s ease-out; }
+                @media (prefers-reduced-motion: reduce) { .selection-bar { animation: none; } }
+            `}</style>
 
-                        <h1 className="font-display text-2xl text-[#1f2d2d]">
+            <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 pb-28 md:px-6">
+                {/* ---------- En-tête ---------- */}
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h1 className="font-display text-2xl tracking-tight text-[#1f2d2d] md:text-3xl">
                             Maroc Social 2030
                         </h1>
 
-                        <p className="mt-1 text-[13px] text-[#5B6462]">
-                            Gérer les contacts du Maroc Social 2030.
+                        <p className="mt-2 text-[13.5px] text-[#5B6462]">
+                            Gérer les contacts de l'Observatoire.{" "}
+                            <strong className="font-semibold text-[#1f2d2d]">
+                                {totalContactsCount}
+                            </strong>{" "}
+                            contact(s) au total.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#1f2d2d] shadow-sm transition hover:bg-[#F7F8F7]">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#1f2d2d] shadow-sm transition hover:bg-[#F7F8F7]">
                             {importing ? (
                                 <Loader2
-                                    size={12}
+                                    size={14}
                                     strokeWidth={2}
                                     className="animate-spin"
                                 />
                             ) : (
-                                <Upload size={12} strokeWidth={2} />
+                                <Upload size={14} strokeWidth={2} />
                             )}
                             {importing ? "Importation..." : "Import Excel"}
                             <input
@@ -1322,7 +1367,7 @@ export default function Index({ contacts, flash, filters }) {
                             type="button"
                             onClick={handleToggleSelectAllContacts}
                             disabled={fetchingAllIds || totalContactsCount === 0}
-                            className={`flex items-center gap-1.5 rounded-lg border px-4 py-2.5 text-[13.5px] font-medium shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[13.5px] font-medium shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                 selectAllAcrossPages
                                     ? "border-[#BF5429] bg-[#BF5429]/5 text-[#BF5429] hover:bg-[#BF5429]/10"
                                     : "border-[#D6D9D8] bg-white text-[#1f2d2d] hover:bg-[#F7F8F7]"
@@ -1330,14 +1375,14 @@ export default function Index({ contacts, flash, filters }) {
                         >
                             {fetchingAllIds ? (
                                 <Loader2
-                                    size={12}
+                                    size={14}
                                     strokeWidth={2}
                                     className="animate-spin"
                                 />
                             ) : selectAllAcrossPages ? (
-                                <CheckSquare size={12} strokeWidth={2} />
+                                <CheckSquare size={14} strokeWidth={2} />
                             ) : (
-                                <Square size={12} strokeWidth={2} />
+                                <Square size={14} strokeWidth={2} />
                             )}
                             {fetchingAllIds
                                 ? "Chargement..."
@@ -1348,40 +1393,23 @@ export default function Index({ contacts, flash, filters }) {
 
                         <button
                             type="button"
-                            onClick={openEmailModal}
-                            disabled={selectedIds.length === 0}
-                            className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13.5px] font-medium transition ${
-                                selectedIds.length > 0
-                                    ? "border border-[#2F6B4F] bg-[#2F6B4F]/5 text-[#2F6B4F] hover:bg-[#2F6B4F]/10"
-                                    : "cursor-not-allowed border border-[#D6D9D8] bg-white text-[#8A9290]"
-                            }`}
-                        >
-                            <Mail size={12} strokeWidth={2} />
-                            Envoyer un email
-                            {selectedIds.length > 0 && (
-                                <span>({selectedIds.length})</span>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f]"
+                            className="flex items-center gap-2 rounded-xl bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] focus:outline-none focus:ring-4 focus:ring-[#BF5429]/20"
                         >
-                            <Plus size={12} strokeWidth={2} />
+                            <Plus size={14} strokeWidth={2} />
                             Ajouter un contact
                         </button>
                     </div>
                 </div>
 
-                {/* Search / Filters */}
-                <div className="rounded-xl border border-[#D6D9D8] bg-white p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 md:flex-row">
+                {/* ---------- Recherche / filtres ---------- */}
+                <div className="rounded-2xl border border-[#D6D9D8] bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center">
                         <div className="relative flex-1">
                             <Search
                                 size={15}
                                 strokeWidth={2}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A9290]"
+                                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A9290]"
                             />
 
                             <input
@@ -1389,7 +1417,7 @@ export default function Index({ contacts, flash, filters }) {
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                                 placeholder="Rechercher un nom, email, organisation..."
-                                className={`${inputClass} pl-9 pr-9`}
+                                className={`${INPUT_BASE} pl-10 pr-10`}
                             />
 
                             {search && (
@@ -1404,220 +1432,323 @@ export default function Index({ contacts, flash, filters }) {
                             )}
                         </div>
 
-                        <div className="relative w-full md:w-56">
-                            <SlidersHorizontal
-                                size={15}
-                                strokeWidth={2}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8A9290]"
-                            />
+                        <div
+                            role="tablist"
+                            aria-label="Filtrer par statut"
+                            className="flex gap-1 overflow-x-auto rounded-xl border border-[#D6D9D8] bg-[#F7F8F7] p-1"
+                        >
+                            {STATUS_TABS.map((tab) => {
+                                const selected = statusFilter === tab.value;
 
-                            <select
-                                value={statusFilter}
-                                onChange={(event) =>
-                                    setStatusFilter(event.target.value)
-                                }
-                                className={`${inputClass} pl-9`}
-                            >
-                                <option value="all">Tous les statuts</option>
-                                <option value="pending">En attente</option>
-                                <option value="approved">Approuvé</option>
-                                <option value="rejected">Rejeté</option>
-                            </select>
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={selected}
+                                        onClick={() => setStatusFilter(tab.value)}
+                                        className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-[13px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BF5429]/40 ${
+                                            selected
+                                                ? "bg-white text-[#BF5429] shadow-sm ring-1 ring-[#BF5429]/30"
+                                                : "text-[#5B6462] hover:text-[#1f2d2d]"
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </div>
 
-                    {selectedIds.length > 0 && (
-                        <div className="mt-3 flex items-center justify-between rounded-lg bg-[#BF5429]/5 px-4 py-3">
-                            <p className="text-[13px] text-[#1f2d2d]">
-                                <strong>{selectedIds.length}</strong> contact(s)
-                                sélectionné(s)
-                                {allVisibleSelected &&
-                                    !selectAllAcrossPages &&
-                                    totalContactsCount > visibleIds.length && (
-                                        <button
-                                            type="button"
-                                            onClick={handleSelectAllAcrossPages}
-                                            disabled={fetchingAllIds}
-                                            className="ml-2 font-medium text-[#BF5429] underline hover:no-underline"
-                                        >
-                                            {fetchingAllIds
-                                                ? "Chargement..."
-                                                : `Sélectionner les ${totalContactsCount} contacts correspondants`}
-                                        </button>
-                                    )}
-                            </p>
-
+                        {hasActiveFilters && (
                             <button
                                 type="button"
-                                onClick={clearSelectAllAcrossPages}
-                                className="text-[13px] font-medium text-[#5B6462] transition hover:text-[#1f2d2d]"
+                                onClick={resetFilters}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-[#5B6462] transition hover:bg-[#F7F8F7] hover:text-[#BF5429]"
                             >
-                                Tout désélectionner
+                                <RotateCcw size={14} strokeWidth={2} />
+                                Réinitialiser
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
+
+                    {hasSelection &&
+                        allVisibleSelected &&
+                        !selectAllAcrossPages &&
+                        totalContactsCount > visibleIds.length && (
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[#BF5429]/20 bg-[#BF5429]/5 px-4 py-3 text-[13px] text-[#1f2d2d]">
+                                <span>
+                                    Les <strong>{visibleIds.length}</strong>{" "}
+                                    contacts de cette page sont sélectionnés.
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={handleSelectAllAcrossPages}
+                                    disabled={fetchingAllIds}
+                                    className="font-semibold text-[#BF5429] underline underline-offset-2 hover:no-underline"
+                                >
+                                    {fetchingAllIds
+                                        ? "Chargement..."
+                                        : `Sélectionner les ${totalContactsCount} contacts correspondants`}
+                                </button>
+                            </div>
+                        )}
                 </div>
 
-                {/* Table */}
-                <div className="rounded-xl border border-[#D6D9D8] bg-white p-2 shadow-sm">
+                {/* ---------- Tableau ---------- */}
+                <div className="overflow-hidden rounded-2xl border border-[#D6D9D8] bg-white shadow-sm">
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1200px] text-left">
-                            <thead className="border-b border-[#D6D9D8]">
+                        <table className="w-full min-w-[980px] text-left">
+                            <thead className="border-b border-[#D6D9D8] bg-[#F9FAF8]">
                                 <tr>
                                     <th className="w-12 px-4 py-4">
                                         <input
                                             type="checkbox"
+                                            aria-label="Sélectionner la page"
                                             checked={allVisibleSelected}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    el.indeterminate =
+                                                        someVisibleSelected &&
+                                                        !allVisibleSelected;
+                                                }
+                                            }}
                                             onChange={toggleSelectAll}
-                                            className="h-4 w-4 rounded border-[#D6D9D8] text-[#BF5429] focus:ring-[#BF5429]"
+                                            className="h-4 w-4 cursor-pointer rounded border-[#D6D9D8] text-[#BF5429] focus:ring-[#BF5429]/30"
                                         />
                                     </th>
 
-                                    <th className={thClass}>Nom</th>
-                                    <th className={thClass}>Organisation</th>
-                                    <th className={thClass}>Rôle</th>
+                                    <th className={thClass}>Contact</th>
+                                    <th className={thClass}>Coordonnées</th>
                                     <th className={thClass}>Genre</th>
-                                    <th className={thClass}>Email</th>
-                                    <th className={thClass}>Téléphone</th>
                                     <th className={thClass}>Statut</th>
-                                    <th className={thClass}>Inscrit le</th>
-                                    <th className={thClass}>Approuvé le</th>
-                                    <th className={thClass}>Rejeté le</th>
+                                    <th className={thClass}>Suivi</th>
                                     <th className={`${thClass} text-right`}>
-                                        Actions
+                                        <span className="sr-only">Actions</span>
                                     </th>
                                 </tr>
                             </thead>
 
-                            <tbody className="divide-y divide-[#D6D9D8]/60">
+                            <tbody className="divide-y divide-[#E4E7E5]">
                                 {filteredContacts.length > 0 ? (
-                                    filteredContacts.map((contact) => (
-                                        <tr
-                                            key={contact.id}
-                                            className={`transition hover:bg-[#F7F8F7] ${
-                                                selectedIds.includes(contact.id)
-                                                    ? "bg-[#BF5429]/5"
-                                                    : ""
-                                            }`}
-                                        >
-                                            <td className="px-4 py-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedIds.includes(
-                                                        contact.id
-                                                    )}
-                                                    onChange={() =>
-                                                        toggleContact(contact.id)
-                                                    }
-                                                    className="h-4 w-4 rounded border-[#D6D9D8] text-[#BF5429] focus:ring-[#BF5429]"
-                                                />
-                                            </td>
+                                    filteredContacts.map((contact) => {
+                                        const checked = selectedIds.includes(
+                                            contact.id
+                                        );
+                                        const status =
+                                            STATUS_META[contact.status];
 
-                                            <td className="whitespace-nowrap px-4 py-4">
-                                                <span className="font-medium text-[#1f2d2d]">
-                                                    {contact.name || "—"}
-                                                </span>
-                                            </td>
+                                        const registered = formatDate(
+                                            contact.registered_at
+                                        );
+                                        const approved = formatDate(
+                                            contact.approved_at
+                                        );
+                                        const rejected = formatDate(
+                                            contact.rejected_at
+                                        );
 
-                                            <td className={tdClass}>
-                                                {contact.organisation || "—"}
-                                            </td>
-
-                                            <td className={tdClass}>
-                                                {contact.role || "—"}
-                                            </td>
-
-                                            <td className={tdClass}>
-                                                {contact.gender === "H"
-                                                    ? "Homme"
-                                                    : contact.gender === "F"
-                                                    ? "Femme"
-                                                    : "—"}
-                                            </td>
-
-                                            <td className={tdClass}>
-                                                {contact.email ? (
-                                                    <a
-                                                        href={`mailto:${contact.email}`}
-                                                        className="text-[#BF5429] hover:underline"
-                                                    >
-                                                        {contact.email}
-                                                    </a>
-                                                ) : (
-                                                    "—"
-                                                )}
-                                            </td>
-
-                                            <td
-                                                className={`${tdClass} whitespace-nowrap`}
+                                        return (
+                                            <tr
+                                                key={contact.id}
+                                                className={`transition ${
+                                                    checked
+                                                        ? "bg-[#BF5429]/[0.04]"
+                                                        : "hover:bg-[#F9FAF8]"
+                                                }`}
                                             >
-                                                {contact.phone || "—"}
-                                            </td>
-
-                                            <td className="px-4 py-4">
-                                                <span
-                                                    className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                                        STATUS_STYLES[
-                                                            contact.status
-                                                        ] ??
-                                                        "bg-[#8A9290]/10 text-[#5B6462]"
-                                                    }`}
-                                                >
-                                                    {STATUS_LABELS[
-                                                        contact.status
-                                                    ] ?? contact.status}
-                                                </span>
-                                            </td>
-
-                                            <td
-                                                className={`${tdClass} whitespace-nowrap`}
-                                            >
-                                                {formatDate(contact.registered_at)}
-                                            </td>
-
-                                            <td
-                                                className={`${tdClass} whitespace-nowrap`}
-                                            >
-                                                {formatDate(contact.approved_at)}
-                                            </td>
-
-                                            <td
-                                                className={`${tdClass} whitespace-nowrap`}
-                                            >
-                                                {formatDate(contact.rejected_at)}
-                                            </td>
-
-                                            <td className="px-4 py-4 text-right">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleDelete(contact)
-                                                    }
-                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#D6D9D8] px-3 py-1.5 text-[12.5px] font-medium text-[#B3261E] transition hover:bg-[#B3261E]/5"
-                                                >
-                                                    <Trash2
-                                                        size={14}
-                                                        strokeWidth={2}
+                                                <td className="px-4 py-4">
+                                                    <RowCheckbox
+                                                        label={`Sélectionner ${
+                                                            contact.name || "ce contact"
+                                                        }`}
+                                                        checked={checked}
+                                                        onChange={() =>
+                                                            toggleContact(
+                                                                contact.id
+                                                            )
+                                                        }
                                                     />
-                                                    Supprimer
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                </td>
+
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF5429]/10 text-xs font-semibold text-[#BF5429]">
+                                                            {initialsOf(
+                                                                contact.name
+                                                            )}
+                                                        </div>
+
+                                                        <div className="min-w-0">
+                                                            <div className="truncate text-[13.5px] font-medium text-[#1f2d2d]">
+                                                                {contact.name ||
+                                                                    "—"}
+                                                            </div>
+
+                                                            {(contact.role ||
+                                                                contact.organisation) && (
+                                                                <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-[#5B6462]">
+                                                                    <Building2
+                                                                        size={12}
+                                                                        className="shrink-0 text-[#8A9290]"
+                                                                    />
+                                                                    <span className="truncate">
+                                                                        {[
+                                                                            contact.role,
+                                                                            contact.organisation,
+                                                                        ]
+                                                                            .filter(
+                                                                                Boolean
+                                                                            )
+                                                                            .join(
+                                                                                " · "
+                                                                            )}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {contact.country && (
+                                                                <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-[#8A9290]">
+                                                                    <Globe
+                                                                        size={12}
+                                                                        className="shrink-0"
+                                                                    />
+                                                                    {contact.country}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td className="px-4 py-4 text-[13px]">
+                                                    {contact.email ? (
+                                                        <a
+                                                            href={`mailto:${contact.email}`}
+                                                            className="flex items-center gap-1.5 break-all text-[#BF5429] hover:underline"
+                                                        >
+                                                            <Mail
+                                                                size={13}
+                                                                className="shrink-0"
+                                                            />
+                                                            {contact.email}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-[#C3C8C6]">
+                                                            —
+                                                        </span>
+                                                    )}
+
+                                                    {contact.phone && (
+                                                        <a
+                                                            href={`tel:${contact.phone}`}
+                                                            className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[#5B6462] hover:text-[#BF5429]"
+                                                        >
+                                                            <Phone
+                                                                size={13}
+                                                                className="shrink-0"
+                                                            />
+                                                            {contact.phone}
+                                                        </a>
+                                                    )}
+                                                </td>
+
+                                                <td className="px-4 py-4 text-[13px] text-[#5B6462]">
+                                                    {contact.gender === "H"
+                                                        ? "Homme"
+                                                        : contact.gender === "F"
+                                                        ? "Femme"
+                                                        : "—"}
+                                                </td>
+
+                                                <td className="px-4 py-4">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium ${
+                                                            status?.badge ??
+                                                            "bg-[#8A9290]/10 text-[#5B6462]"
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`h-1.5 w-1.5 rounded-full ${
+                                                                status?.dot ??
+                                                                "bg-[#8A9290]"
+                                                            }`}
+                                                        />
+                                                        {status?.label ??
+                                                            contact.status}
+                                                    </span>
+                                                </td>
+
+                                                <td className="whitespace-nowrap px-4 py-4 text-[12px] leading-relaxed text-[#5B6462]">
+                                                    <div>
+                                                        Inscrit le{" "}
+                                                        {registered ?? "—"}
+                                                    </div>
+
+                                                    {approved && (
+                                                        <div className="text-[#2F6B4F]">
+                                                            Approuvé le{" "}
+                                                            {approved}
+                                                        </div>
+                                                    )}
+
+                                                    {rejected && (
+                                                        <div className="text-[#B3261E]">
+                                                            Rejeté le {rejected}
+                                                        </div>
+                                                    )}
+                                                </td>
+
+                                                <td className="px-4 py-4 text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleDelete(contact)
+                                                        }
+                                                        aria-label={`Supprimer ${
+                                                            contact.name || "ce contact"
+                                                        }`}
+                                                        title="Supprimer"
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#8A9290] transition hover:bg-[#B3261E]/10 hover:text-[#B3261E]"
+                                                    >
+                                                        <Trash2
+                                                            size={16}
+                                                            strokeWidth={2}
+                                                        />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 ) : (
                                     <tr>
-                                        {/* 12 colonnes (et non 11) */}
-                                        <td
-                                            colSpan="12"
-                                            className="px-6 py-16 text-center"
-                                        >
-                                            <div className="flex flex-col items-center gap-2 text-[#8A9290]">
-                                                <Users size={24} strokeWidth={1.6} />
+                                        <td colSpan={7} className="px-6 py-16">
+                                            <div className="flex flex-col items-center text-center">
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7F8F7] text-[#8A9290]">
+                                                    <Users
+                                                        size={24}
+                                                        strokeWidth={1.6}
+                                                    />
+                                                </div>
 
-                                                <p className="text-[13px]">
-                                                    Aucun contact ne correspond à
-                                                    cette recherche.
+                                                <p className="mt-4 text-[14px] font-medium text-[#1f2d2d]">
+                                                    Aucun contact trouvé
                                                 </p>
+
+                                                <p className="mt-1 text-[13px] text-[#5B6462]">
+                                                    {hasActiveFilters
+                                                        ? "Modifiez la recherche ou réinitialisez les filtres."
+                                                        : "Ajoutez un contact ou importez un fichier Excel."}
+                                                </p>
+
+                                                {hasActiveFilters && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetFilters}
+                                                        className="mt-4 rounded-xl border border-[#D6D9D8] px-4 py-2.5 text-[13px] font-medium text-[#1f2d2d] transition hover:bg-[#F7F8F7]"
+                                                    >
+                                                        Réinitialiser les filtres
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -1627,7 +1758,7 @@ export default function Index({ contacts, flash, filters }) {
                     </div>
 
                     {contacts?.links && contacts.links.length > 3 && (
-                        <div className="flex flex-wrap items-center justify-center gap-1 border-t border-[#D6D9D8] p-4">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 border-t border-[#D6D9D8] p-4">
                             {contacts.links.map((link, index) => (
                                 <button
                                     key={index}
@@ -1645,11 +1776,11 @@ export default function Index({ contacts, flash, filters }) {
                                             );
                                         }
                                     }}
-                                    className={`rounded-lg px-3 py-2 text-[13px] transition ${
+                                    className={`min-w-[40px] rounded-lg px-3 py-2 text-center text-[13px] transition ${
                                         link.active
-                                            ? "bg-[#BF5429] text-white"
+                                            ? "bg-[#BF5429] font-semibold text-white"
                                             : link.url
-                                            ? "text-[#5B6462] hover:bg-[#F7F8F7]"
+                                            ? "text-[#5B6462] hover:bg-[#F7F8F7] hover:text-[#BF5429]"
                                             : "cursor-not-allowed text-[#D6D9D8]"
                                     }`}
                                     dangerouslySetInnerHTML={{
@@ -1661,6 +1792,41 @@ export default function Index({ contacts, flash, filters }) {
                     )}
                 </div>
             </div>
+
+            {/* ---------- Barre flottante de sélection ---------- */}
+            {hasSelection && !showEmailModal && !showAddModal && (
+                <div className="selection-bar fixed bottom-6 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 items-center gap-3 rounded-2xl bg-[#1f2d2d] px-4 py-3 text-white shadow-2xl">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="flex h-9 min-w-[2.25rem] shrink-0 items-center justify-center rounded-xl bg-white/10 px-2 text-sm font-semibold">
+                            {selectedIds.length}
+                        </div>
+                        <p className="truncate text-[13.5px]">
+                            {selectedIds.length > 1
+                                ? "contacts sélectionnés"
+                                : "contact sélectionné"}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={clearSelectAllAcrossPages}
+                        aria-label="Annuler la sélection"
+                        title="Tout désélectionner"
+                        className="rounded-xl p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                    >
+                        <X size={16} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={openEmailModal}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[#d4622f] focus:outline-none focus:ring-4 focus:ring-[#BF5429]/40"
+                    >
+                        <Mail size={15} />
+                        Envoyer un email
+                    </button>
+                </div>
+            )}
 
             {/* =================================================
                 Modal : Ajouter un contact
@@ -1678,7 +1844,7 @@ export default function Index({ contacts, flash, filters }) {
                     <form onSubmit={handleAddContact} className={MODAL_FORM}>
                         <div className={MODAL_BODY}>
                             {otherErrors.length > 0 && (
-                                <div className="rounded-lg border border-[#B3261E]/30 bg-[#B3261E]/5 px-4 py-3 text-[13px] text-[#B3261E]">
+                                <div className="rounded-xl border border-[#B3261E]/30 bg-[#B3261E]/5 px-4 py-3 text-[13px] text-[#B3261E]">
                                     {otherErrors.map(([key, message]) => (
                                         <p key={key}>{message}</p>
                                     ))}
@@ -1820,7 +1986,7 @@ export default function Index({ contacts, flash, filters }) {
                                 type="button"
                                 onClick={closeAddModal}
                                 disabled={adding}
-                                className="rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#5B6462] transition hover:bg-[#F7F8F7] disabled:opacity-50"
+                                className="rounded-xl border border-[#D6D9D8] bg-white px-5 py-2.5 text-[13.5px] font-medium text-[#5B6462] transition hover:bg-[#F7F8F7] disabled:opacity-50"
                             >
                                 Annuler
                             </button>
@@ -1828,7 +1994,7 @@ export default function Index({ contacts, flash, filters }) {
                             <button
                                 type="submit"
                                 disabled={adding}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex items-center gap-2 rounded-xl bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] focus:outline-none focus:ring-4 focus:ring-[#BF5429]/20 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {adding ? (
                                     <Loader2
@@ -1854,33 +2020,53 @@ export default function Index({ contacts, flash, filters }) {
                 <Modal
                     icon={Mail}
                     title="Envoyer un email"
-                    subtitle={`${selectedIds.length} contact(s) sélectionné(s)`}
+                    subtitle={`À ${selectedIds.length} contact(s) — un email individuel pour chacun`}
                     onClose={closeEmailModal}
                     locked={sendingEmail}
                     maxWidth="max-w-2xl"
                 >
                     <form onSubmit={handleSendEmail} className={MODAL_FORM}>
                         <div className={MODAL_BODY}>
-                            {/* Sujet */}
-                            <Field label="Sujet" required>
-                                <input
-                                    type="text"
-                                    name="subject"
-                                    value={emailForm.subject}
-                                    onChange={handleEmailChange}
-                                    required
-                                    className={inputClass}
-                                    placeholder="Sujet de l'email"
-                                />
-                            </Field>
+                            <div className="grid gap-5 md:grid-cols-2">
+                                <Field label="Expéditeur" required>
+                                    <select
+                                        value={emailSender}
+                                        onChange={(event) =>
+                                            setEmailSender(event.target.value)
+                                        }
+                                        disabled={sendingEmail}
+                                        className={INPUT_BASE}
+                                    >
+                                        {senders.map((sender) => (
+                                            <option
+                                                key={sender.key}
+                                                value={sender.key}
+                                            >
+                                                {sender.name} ({sender.address})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
 
-                            {/* Message — éditeur riche */}
+                                <Field label="Sujet" required>
+                                    <input
+                                        type="text"
+                                        name="subject"
+                                        value={emailForm.subject}
+                                        onChange={handleEmailChange}
+                                        disabled={sendingEmail}
+                                        className={INPUT_BASE}
+                                        placeholder="Sujet de l'email"
+                                    />
+                                </Field>
+                            </div>
+
                             <Field
                                 label="Message"
                                 required
                                 hint="Mise en forme simple : gras, italique, listes, liens."
                             >
-                                <div className="quill-observatory overflow-hidden rounded-lg border border-[#D6D9D8]">
+                                <div className="quill-observatory overflow-hidden rounded-xl border border-[#D6D9D8] transition focus-within:border-[#BF5429] focus-within:ring-4 focus-within:ring-[#BF5429]/10">
                                     <Suspense
                                         fallback={
                                             <div className="flex h-40 items-center justify-center text-[#8A9290]">
@@ -1900,29 +2086,48 @@ export default function Index({ contacts, flash, filters }) {
                                                     message: value,
                                                 }))
                                             }
+                                            readOnly={sendingEmail}
                                             modules={QUILL_MODULES}
                                             formats={QUILL_FORMATS}
                                             placeholder="Écrivez votre message..."
-                                            className="bg-white [&_.ql-container]:min-h-[220px] [&_.ql-toolbar]:border-0 [&_.ql-container]:border-0 [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-[#D6D9D8]"
+                                            className="bg-white [&_.ql-container]:min-h-[220px]"
                                         />
                                     </Suspense>
                                 </div>
                             </Field>
 
-                            {/* Pièces jointes */}
                             <Field label="Pièces jointes">
                                 <label
-                                    className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#D6D9D8] px-4 py-6 text-[13px] text-[#5B6462] transition hover:border-[#BF5429] hover:bg-[#BF5429]/5 ${
+                                    onDragOver={(event) => {
+                                        event.preventDefault();
+                                        setDragging(true);
+                                    }}
+                                    onDragLeave={() => setDragging(false)}
+                                    onDrop={handleDrop}
+                                    className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+                                        dragging
+                                            ? "border-[#BF5429] bg-[#BF5429]/5"
+                                            : "border-[#D6D9D8] hover:border-[#BF5429]/60 hover:bg-[#BF5429]/[0.03]"
+                                    } ${
                                         attachments.length >= MAX_FILES
                                             ? "pointer-events-none opacity-50"
                                             : ""
                                     }`}
                                 >
-                                    <Paperclip size={15} strokeWidth={2} />
-                                    Cliquez pour ajouter des fichiers (max{" "}
-                                    {MAX_FILES}, 10 Mo chacun)
+                                    <Paperclip
+                                        size={18}
+                                        strokeWidth={2}
+                                        className="text-[#BF5429]"
+                                    />
+                                    <span className="text-[13px] font-medium text-[#1f2d2d]">
+                                        Glissez vos fichiers ici ou cliquez pour
+                                        parcourir
+                                    </span>
+                                    <span className="text-[12px] text-[#8A9290]">
+                                        {attachments.length}/{MAX_FILES} fichiers
+                                        · 10 Mo maximum chacun
+                                    </span>
                                     <input
-                                        ref={attachInputRef}
                                         type="file"
                                         multiple
                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip"
@@ -1936,22 +2141,20 @@ export default function Index({ contacts, flash, filters }) {
                                         {attachments.map((file, index) => (
                                             <li
                                                 key={`${file.name}-${index}`}
-                                                className="flex items-center justify-between rounded-lg border border-[#D6D9D8] px-3 py-2"
+                                                className="flex items-center gap-3 rounded-xl bg-[#F7F8F7] px-3 py-2.5"
                                             >
-                                                <span className="flex min-w-0 items-center gap-2">
-                                                    <FileText
-                                                        size={15}
-                                                        strokeWidth={2}
-                                                        className="shrink-0 text-[#8A9290]"
-                                                    />
+                                                <FileText
+                                                    size={15}
+                                                    strokeWidth={2}
+                                                    className="shrink-0 text-[#BF5429]"
+                                                />
 
-                                                    <span className="truncate text-[13px] text-[#1f2d2d]">
-                                                        {file.name}
-                                                    </span>
+                                                <span className="min-w-0 flex-1 truncate text-[13px] text-[#1f2d2d]">
+                                                    {file.name}
+                                                </span>
 
-                                                    <span className="shrink-0 text-[12px] text-[#8A9290]">
-                                                        {formatSize(file.size)}
-                                                    </span>
+                                                <span className="shrink-0 text-[12px] text-[#8A9290]">
+                                                    {formatSize(file.size)}
                                                 </span>
 
                                                 <button
@@ -1959,24 +2162,20 @@ export default function Index({ contacts, flash, filters }) {
                                                     onClick={() =>
                                                         removeAttachment(index)
                                                     }
+                                                    disabled={sendingEmail}
                                                     aria-label={`Retirer ${file.name}`}
-                                                    className="shrink-0 text-[#8A9290] transition hover:text-[#B3261E]"
+                                                    className="shrink-0 rounded-lg p-1.5 text-[#8A9290] transition hover:bg-white hover:text-[#B3261E]"
                                                 >
-                                                    <X size={15} strokeWidth={2} />
+                                                    <Trash2
+                                                        size={15}
+                                                        strokeWidth={2}
+                                                    />
                                                 </button>
                                             </li>
                                         ))}
                                     </ul>
                                 )}
                             </Field>
-
-                            <div className="rounded-lg bg-[#BF5429]/5 p-4 text-[13px] text-[#5B6462]">
-                                Chaque contact recevra un email individuel —{" "}
-                                <strong className="text-[#1f2d2d]">
-                                    {selectedIds.length}
-                                </strong>{" "}
-                                envoi(s) au total.
-                            </div>
                         </div>
 
                         <div className={MODAL_FOOTER}>
@@ -1984,7 +2183,7 @@ export default function Index({ contacts, flash, filters }) {
                                 type="button"
                                 onClick={closeEmailModal}
                                 disabled={sendingEmail}
-                                className="rounded-lg border border-[#D6D9D8] bg-white px-4 py-2.5 text-[13.5px] font-medium text-[#5B6462] transition hover:bg-[#F7F8F7] disabled:opacity-50"
+                                className="rounded-xl border border-[#D6D9D8] bg-white px-5 py-2.5 text-[13.5px] font-medium text-[#5B6462] transition hover:bg-[#F7F8F7] disabled:opacity-50"
                             >
                                 Annuler
                             </button>
@@ -1992,7 +2191,7 @@ export default function Index({ contacts, flash, filters }) {
                             <button
                                 type="submit"
                                 disabled={sendingEmail}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex items-center gap-2 rounded-xl bg-[#BF5429] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm shadow-[#BF5429]/20 transition hover:bg-[#a8451f] focus:outline-none focus:ring-4 focus:ring-[#BF5429]/20 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {sendingEmail ? (
                                     <Loader2

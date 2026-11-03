@@ -11,12 +11,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 
 class SendEventCampaignEmailJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $backoff = 30;
 
     public function __construct(
@@ -24,6 +26,7 @@ class SendEventCampaignEmailJob implements ShouldQueue
         public string $subject,
         public string $content,
         public array $attachmentPaths = [],
+        public string $senderKey = 'contact',
     ) {}
 
     public function middleware(): array
@@ -35,7 +38,7 @@ class SendEventCampaignEmailJob implements ShouldQueue
 
     public function handle(): void
     {
-        // Vérifier si le batch a été annulé
+        // Check if the batch was cancelled.
         if ($this->batch()?->cancelled()) {
             return;
         }
@@ -47,14 +50,49 @@ class SendEventCampaignEmailJob implements ShouldQueue
         }
 
         try {
-            Mail::html(
+
+            /*
+            |--------------------------------------------------------------------------
+            | Get selected sender configuration
+            |--------------------------------------------------------------------------
+            */
+
+            $sender = config(
+                "mail.campaign_senders.{$this->senderKey}"
+            );
+
+            if (!$sender) {
+                throw new RuntimeException(
+                    'Invalid email sender configuration.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Send email using selected mailer
+            |--------------------------------------------------------------------------
+            */
+
+            Mail::mailer($sender['mailer'])->html(
                 $this->content,
-                function ($message) use ($log) {
+                function ($message) use ($log, $sender) {
+
                     $message
+                        ->from(
+                            $sender['address'],
+                            $sender['name']
+                        )
                         ->to($log->email)
                         ->subject($this->subject);
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Attachments
+                    |--------------------------------------------------------------------------
+                    */
+
                     foreach ($this->attachmentPaths as $attachment) {
+
                         $message->attach(
                             $attachment['path'],
                             [
@@ -66,6 +104,12 @@ class SendEventCampaignEmailJob implements ShouldQueue
                 }
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Update log as sent
+            |--------------------------------------------------------------------------
+            */
+
             $log->update([
                 'status' => 'sent',
                 'sent_at' => now(),
@@ -73,6 +117,13 @@ class SendEventCampaignEmailJob implements ShouldQueue
             ]);
 
         } catch (\Throwable $e) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update log as failed
+            |--------------------------------------------------------------------------
+            */
+
             $log->update([
                 'status' => 'failed',
                 'error' => $e->getMessage(),

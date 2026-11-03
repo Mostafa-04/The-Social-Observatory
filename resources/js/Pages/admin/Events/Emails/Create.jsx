@@ -29,13 +29,15 @@ export default function Create({
     event,
     registrations=[],
     totalRecipients,
+     senders = [],
 }) {
-    const { data, setData, post, processing, errors } = useForm({
-        registration_ids: [],
-        subject: "",
-        content: "",
-        attachments: [],
-    });
+const { data, setData, post, processing, errors } = useForm({
+    registration_ids: [],
+    sender: "contact",
+    subject: "",
+    content: "",
+    attachments: [],
+});
 
 
     /*
@@ -494,6 +496,58 @@ export default function Create({
                     onSubmit={submit}
                     className="rounded-xl border border-[#D6D9D8] bg-white p-6 shadow-sm"
                 >
+
+                
+{/* Email Sender */}
+
+<div className="mb-6">
+
+    <label className="mb-2 block text-sm font-medium text-[#1f2d2d]">
+        Adresse email de l'expéditeur
+    </label>
+
+    <div className="relative">
+
+        <select
+            value={data.sender}
+            onChange={(e) => setData("sender", e.target.value)}
+            className="w-full appearance-none rounded-xl border border-[#D6D9D8] bg-white px-4 py-3 pr-10 text-sm text-[#1f2d2d] outline-none transition focus:border-[#BF5429] focus:ring-2 focus:ring-[#BF5429]/10"
+        >
+
+            {senders.map((sender) => (
+
+                <option
+                    key={sender.key}
+                    value={sender.key}
+                >
+                    {sender.name} ({sender.address})
+                </option>
+
+            ))}
+
+        </select>
+
+        <Mail
+            size={17}
+            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#8A9290]"
+        />
+
+    </div>
+
+    {errors.sender && (
+
+        <p className="mt-1 text-xs text-red-600">
+            {errors.sender}
+        </p>
+
+    )}
+
+    <p className="mt-2 text-xs text-[#8A9290]">
+        Les emails seront envoyés depuis l'adresse sélectionnée.
+    </p>
+
+</div>
+
 
                     {/* Subject */}
 

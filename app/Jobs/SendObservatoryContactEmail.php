@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class SendObservatoryContactEmail implements ShouldQueue
 {
@@ -25,7 +26,8 @@ class SendObservatoryContactEmail implements ShouldQueue
         public int $contactId,
         public string $subjectText,
         public string $messageHtml,
-        public array $attachments
+        public array $attachments,
+        public string $senderKey = 'contact'
     ) {}
 
     public function handle(): void
@@ -34,24 +36,39 @@ class SendObservatoryContactEmail implements ShouldQueue
 
         if (!$contact || !$contact->email) {
             $this->cleanup();
-
             return;
         }
 
-        try {
+        $sender = config("mail.campaign_senders.{$this->senderKey}");
 
-            Mail::to($contact->email)->send(
-                new ObservatoryContactMail(
-                    contact: $contact,
-                    subjectText: $this->subjectText,
-                    messageHtml: $this->messageHtml,
-                    attachmentFiles: $this->attachments
-                )
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw new RuntimeException(
+                "La configuration de l'expéditeur est invalide."
             );
+        }
+
+        try {
+            $mail = new ObservatoryContactMail(
+                contact: $contact,
+                subjectText: $this->subjectText,
+                messageHtml: $this->messageHtml,
+                attachmentFiles: $this->attachments
+            );
+
+            $mail->from($sender['address'], $sender['name']);
+
+            Mail::mailer($sender['mailer'])
+                ->to($contact->email)
+                ->send($mail);
 
             Log::info('Observatory email sent', [
                 'contact_id' => $contact->id,
                 'email' => $contact->email,
+                'sender' => $this->senderKey,
             ]);
 
             $this->cleanup();
@@ -61,6 +78,7 @@ class SendObservatoryContactEmail implements ShouldQueue
             Log::error('Observatory email failed', [
                 'contact_id' => $contact->id,
                 'email' => $contact->email,
+                'sender' => $this->senderKey,
                 'error' => $exception->getMessage(),
             ]);
 
@@ -74,6 +92,7 @@ class SendObservatoryContactEmail implements ShouldQueue
 
         Log::error('Observatory email permanently failed', [
             'contact_id' => $this->contactId,
+            'sender' => $this->senderKey,
             'error' => $exception->getMessage(),
         ]);
     }

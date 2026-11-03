@@ -57,9 +57,11 @@ export default function GroupRegistrationsIndex({
     registrations,
     filters,
     groups,
+    senders = [],
 }) {
     const [search, setSearch] = useState(filters?.search ?? "");
     const [groupType, setGroupType] = useState(filters?.group_type ?? "");
+    const [emailSender, setEmailSender] = useState("contact");
 
     // Import Excel
     const [showImportModal, setShowImportModal] = useState(false);
@@ -246,6 +248,7 @@ export default function GroupRegistrationsIndex({
         setEmailSubject("");
         setEmailMessage("");
         setEmailAttachments([]);
+        setEmailSender("contact");
     };
 
     const handleEmailAttachmentsChange = (e) => {
@@ -272,6 +275,7 @@ export default function GroupRegistrationsIndex({
         const formData = new FormData();
         formData.append("subject", emailSubject);
         formData.append("message", emailMessage);
+        formData.append("sender", emailSender);
         formData.append("select_all", selectAllMatching ? "1" : "0");
 
         if (selectAllMatching) {
@@ -291,7 +295,12 @@ export default function GroupRegistrationsIndex({
             forceFormData: true,
             preserveScroll: true,
             onSuccess: (page) => {
-                closeEmailModal();
+                setShowEmailModal(false);
+                setEmailSubject("");
+                setEmailMessage("");
+                setEmailAttachments([]);
+                setEmailSender("contact");
+
                 setSelectedIds([]);
                 setSelectAllMatching(false);
 
@@ -759,6 +768,33 @@ export default function GroupRegistrationsIndex({
                             className="flex flex-1 flex-col overflow-hidden"
                         >
                             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+                                {/* Email Sender */}
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-semibold text-[#1f2d2d]">
+                                            Adresse email de l'expéditeur
+                                        </label>
+
+                                        <div className="relative">
+                                            <select
+                                                value={emailSender}
+                                                onChange={(e) => setEmailSender(e.target.value)}
+                                                disabled={isSendingEmail}
+                                                className="w-full appearance-none rounded-xl border border-[#d6d9d8] bg-white px-4 py-3 pr-10 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10 disabled:opacity-60"
+                                            >
+                                                {senders.map((sender) => (
+                                                    <option key={sender.key} value={sender.key}>
+                                                        {sender.name} ({sender.address})
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            <Mail className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78807e]" />
+                                        </div>
+
+                                        <p className="mt-2 text-xs text-[#78807e]">
+                                            Les e-mails seront envoyés depuis l'adresse sélectionnée.
+                                        </p>
+                                    </div>
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold text-[#1f2d2d]">
                                         Objet

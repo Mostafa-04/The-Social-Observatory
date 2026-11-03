@@ -371,11 +371,19 @@ class IapsSubmissionController extends Controller
             ->latest()
             ->paginate(15)
             ->withQueryString();
- 
-        return Inertia::render('admin/IapsSubmissions/Index', [
-            'submissions' => $submissions,
-            'filters' => $request->only(['search', 'participant_type']),
-        ]);
+            $senders = collect(config('mail.campaign_senders'))
+                ->map(fn ($sender, $key) => [
+                    'key' => $key,
+                    'address' => $sender['address'],
+                    'name' => $sender['name'],
+                ])
+                ->values();
+
+            return Inertia::render('admin/IapsSubmissions/Index', [
+                'submissions' => $submissions,
+                'filters' => $request->only(['search', 'participant_type']),
+                'senders' => $senders,
+            ]);
     }
  
     /**
@@ -407,6 +415,10 @@ class IapsSubmissionController extends Controller
             'submissions.*'          => ['integer'],
             'excluded_submissions'   => ['nullable', 'array'],
             'excluded_submissions.*' => ['integer'],
+            'sender' => [
+                'required',
+                Rule::in(array_keys(config('mail.campaign_senders', []))),
+            ],
             'search'                 => ['nullable', 'string', 'max:255'],
             'participant_type'       => ['nullable', Rule::in(['individual', 'organization'])],
             'files'                  => ['nullable', 'array', 'max:10'],
@@ -448,6 +460,18 @@ class IapsSubmissionController extends Controller
                 'message' => 'Aucune adresse email valide dans cette sélection.',
             ], 422);
         }
+
+        $sender = config("mail.campaign_senders.{$data['sender']}");
+
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw ValidationException::withMessages([
+                'sender' => "La configuration de l'expéditeur est invalide.",
+            ]);
+        }
  
         // Pièces jointes : stockées UNE fois, partagées par tous les jobs
         $dir         = 'bulk-mail/' . Str::uuid();
@@ -466,6 +490,7 @@ class IapsSubmissionController extends Controller
             'subject'     => $data['subject'],
             'message'     => $message,
             'attachments' => $attachments,
+            'sender'      => $data['sender'],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
  
         DispatchIapsBulkEmailJob::dispatch(

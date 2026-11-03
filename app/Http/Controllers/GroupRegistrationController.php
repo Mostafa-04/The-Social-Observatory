@@ -13,6 +13,8 @@ use App\Imports\GroupRegistrationsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Mail;
 use App\Jobs\SendGroupRegistrationEmail;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 class GroupRegistrationController extends Controller
 {
 
@@ -116,11 +118,20 @@ class GroupRegistrationController extends Controller
             ->paginate(15)
             ->withQueryString();
  
-        return Inertia::render('admin/GroupRegistrations/Index', [
-            'registrations' => $registrations,
-            'filters' => $request->only(['search', 'group_type']),
-            'groups' => GroupRegistration::GROUPS,
-        ]);
+            $senders = collect(config('mail.campaign_senders', []))
+                ->map(fn ($sender, $key) => [
+                    'key' => $key,
+                    'address' => $sender['address'],
+                    'name' => $sender['name'],
+                ])
+                ->values();
+
+            return Inertia::render('admin/GroupRegistrations/Index', [
+                'registrations' => $registrations,
+                'filters' => $request->only(['search', 'group_type']),
+                'groups' => GroupRegistration::GROUPS,
+                'senders' => $senders,
+            ]);
     }
  
     /**
@@ -170,7 +181,23 @@ public function sendEmail(Request $request)
         'group_type'       => 'nullable|string',
         'attachments'      => 'nullable|array',
         'attachments.*'    => 'file|max:10240', // 10 Mo par fichier
+        'sender' => [
+                        'required',
+                        Rule::in(array_keys(config('mail.campaign_senders', []))),
+                    ],
     ]);
+
+        $sender = config("mail.campaign_senders.{$validated['sender']}");
+
+        if (
+            !$sender ||
+            empty($sender['mailer']) ||
+            empty($sender['address'])
+        ) {
+            throw ValidationException::withMessages([
+                'sender' => "La configuration de l'expéditeur est invalide.",
+            ]);
+        }
  
     // Détermine les destinataires : soit "tous ceux qui correspondent aux filtres
     // actuels" (select_all = true, quel que soit le nombre de pages), soit une
@@ -216,7 +243,8 @@ public function sendEmail(Request $request)
             $registration->full_name,
             $validated['subject'],
             $validated['message'],
-            $attachmentPaths
+            $attachmentPaths,
+            $validated['sender']
         );
     }
  

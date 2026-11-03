@@ -1,25 +1,145 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import axios from "axios";
-import {
-    Search,
-    UserPlus,
-    History,
-    Mail,
-    X,
-    Paperclip,
-    Globe,
-    Building2,
-    Users,
-    ChevronDown,
-    Phone,
-} from "lucide-react";
+import Swal from "sweetalert2";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import AdminLayout from "@/Pages/admin/AdminLayout";
+import {
+    Building2,
+    Check,
+    CheckSquare,
+    ChevronDown,
+    FileText,
+    Globe,
+    History,
+    Mail,
+    Paperclip,
+    Phone,
+    RotateCcw,
+    Search,
+    Send,
+    Square,
+    Trash2,
+    UserPlus,
+    Users,
+    X,
+} from "lucide-react";
 
-const selectClass =
-    "rounded-xl border border-[#d6d9d8] bg-white px-4 py-3 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10";
+/* ==========================================================================
+   SweetAlert2 : thème unifié
+   ========================================================================== */
+
+const BRAND_COLOR = "#bf5429";
+
+const AppSwal = Swal.mixin({
+    buttonsStyling: false,
+    reverseButtons: true,
+    focusConfirm: false,
+    customClass: {
+        popup: "!rounded-3xl !p-8 !shadow-2xl !font-sans",
+        title: "!text-xl !font-semibold !text-[#1f2d2d] !p-0 !mt-2",
+        htmlContainer: "!text-sm !text-[#68706e] !m-0 !mt-2 !p-0",
+        actions: "!mt-6 !gap-3",
+        confirmButton:
+            "rounded-xl bg-[#bf5429] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#a94320] focus:outline-none focus:ring-4 focus:ring-[#bf5429]/20",
+        cancelButton:
+            "rounded-xl border border-[#d6d9d8] bg-white px-6 py-3 text-sm font-semibold text-[#263333] transition hover:border-[#aeb5b2] focus:outline-none focus:ring-4 focus:ring-[#d6d9d8]/50",
+        timerProgressBar: "!bg-[#bf5429]",
+    },
+});
+
+const Toast = AppSwal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    customClass: {
+        popup: "!rounded-2xl !p-4 !shadow-xl !font-sans",
+        title: "!text-sm !font-medium !text-[#263333]",
+        timerProgressBar: "!bg-[#bf5429]",
+    },
+    didOpen: (toast) => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+    },
+});
+
+const toastWarning = (text) => Toast.fire({ icon: "warning", title: text });
+
+const alertSuccess = (text) =>
+    AppSwal.fire({
+        icon: "success",
+        iconColor: "#2f8f5b",
+        title: "Email envoyé",
+        text,
+        confirmButtonText: "Parfait",
+        timer: 6000,
+        timerProgressBar: true,
+    });
+
+const alertError = (text, title = "Échec de l'envoi") =>
+    AppSwal.fire({
+        icon: "error",
+        iconColor: "#d64545",
+        title,
+        text,
+        confirmButtonText: "Fermer",
+    });
+
+const confirmSend = ({ recipients, subject, attachments, senderLabel }) =>
+    AppSwal.fire({
+        icon: "question",
+        iconColor: BRAND_COLOR,
+        title: "Confirmer l'envoi ?",
+        html: `
+            <div style="text-align:left" class="mt-4 space-y-2 rounded-2xl bg-[#f6f7f5] p-4 text-sm">
+                <div class="flex justify-between gap-4"><span class="text-[#78807e]">Destinataires</span><strong class="text-[#263333]">${recipients}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-[#78807e]">Expéditeur</span><strong class="text-[#263333] truncate">${senderLabel}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-[#78807e]">Objet</span><strong class="text-[#263333] truncate">${subject}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-[#78807e]">Pièces jointes</span><strong class="text-[#263333]">${attachments}</strong></div>
+            </div>
+            <p class="mt-3 text-xs text-[#78807e]">Cette action ne peut pas être annulée.</p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Envoyer maintenant",
+        cancelButtonText: "Revenir",
+    });
+
+const showSending = () =>
+    AppSwal.fire({
+        title: "Envoi en cours...",
+        text: "Merci de patienter, ne fermez pas cette page.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+    });
+
+/* ==========================================================================
+   Utilitaires
+   ========================================================================== */
+
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
+
+const escapeHtml = (value) =>
+    String(value ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+
+const initialsOf = (first, last) =>
+    [first, last]
+        .filter(Boolean)
+        .map((w) => w[0]?.toUpperCase())
+        .join("") || "?";
+
+const formatSize = (bytes) =>
+    bytes < 1024 * 1024
+        ? `${Math.max(1, Math.round(bytes / 1024))} Ko`
+        : `${(bytes / 1024 / 1024).toFixed(2)} Mo`;
 
 const SOURCE_OPTIONS = [
     { value: "", label: "Toutes les inscriptions" },
@@ -29,12 +149,26 @@ const SOURCE_OPTIONS = [
     { value: "event", label: "Événement" },
 ];
 
-/**
- * Liste déroulante avec recherche au clavier, pour le filtre Pays
- * (alimentée par /api/countries, comme les autres pages du back-office).
- */
+// Les filtres envoient H / F ; on accepte aussi M / O par sécurité
+const GENDER_META = {
+    H: { label: "Masculin", cls: "bg-blue-50 text-blue-700" },
+    M: { label: "Masculin", cls: "bg-blue-50 text-blue-700" },
+    F: { label: "Féminin", cls: "bg-pink-50 text-pink-700" },
+    O: { label: "Autre", cls: "bg-purple-50 text-purple-700" },
+};
+
+const fieldClass =
+    "w-full rounded-xl border border-[#d6d9d8] bg-white px-4 py-3 text-sm text-[#263333] outline-none transition placeholder:text-[#9aa19f] focus:border-[#bf5429] focus:ring-4 focus:ring-[#bf5429]/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+const activeFieldClass = "border-[#bf5429]/50 bg-[#bf5429]/[0.03]";
+
+/* ==========================================================================
+   Composants
+   ========================================================================== */
+
 function SearchableSelect({
     placeholder = "Sélectionner...",
+    searchPlaceholder = "Rechercher...",
     loadingLabel = "Chargement...",
     loading = false,
     options = [],
@@ -47,16 +181,12 @@ function SearchableSelect({
     const wrapperRef = useRef(null);
 
     const selectedLabel =
-        options.find((option) => option.value === value)?.label ?? "";
+        options.find((o) => o.value === value)?.label ?? "";
 
     const filtered = useMemo(() => {
         if (!query) return options;
-
         const q = query.toLowerCase();
-
-        return options.filter((option) =>
-            option.label.toLowerCase().includes(q)
-        );
+        return options.filter((o) => o.label.toLowerCase().includes(q));
     }, [options, query]);
 
     useEffect(() => {
@@ -66,9 +196,7 @@ function SearchableSelect({
                 setQuery("");
             }
         };
-
         document.addEventListener("mousedown", handleClickOutside);
-
         return () =>
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
@@ -84,64 +212,78 @@ function SearchableSelect({
             <button
                 type="button"
                 onClick={() => {
-                    if (!loading) setOpen((prev) => !prev);
+                    if (!loading) setOpen((p) => !p);
                 }}
                 disabled={loading}
-                className={`${selectClass} flex w-full items-center justify-between text-left`}
+                aria-expanded={open}
+                className={`${fieldClass} flex items-center justify-between text-left ${
+                    value ? activeFieldClass : ""
+                }`}
             >
-                <span className={selectedLabel ? "text-[#263333]" : "text-[#9aa19f]"}>
+                <span
+                    className={`truncate ${
+                        selectedLabel ? "text-[#263333]" : "text-[#9aa19f]"
+                    }`}
+                >
                     {loading ? loadingLabel : selectedLabel || placeholder}
                 </span>
-
-                <ChevronDown className="h-4 w-4 shrink-0 text-[#9aa19f]" />
+                <ChevronDown
+                    className={`ml-2 h-4 w-4 shrink-0 text-[#9aa19f] transition-transform ${
+                        open ? "rotate-180" : ""
+                    }`}
+                />
             </button>
 
             {open && !loading && (
-                <div className="absolute z-20 mt-2 w-full min-w-[220px] overflow-hidden rounded-xl border border-[#d6d9d8] bg-white shadow-lg">
-                    <div className="flex items-center gap-2 border-b border-[#eef0ee] px-3 py-2.5">
+                <div className="absolute z-30 mt-2 w-full min-w-[240px] overflow-hidden rounded-2xl border border-[#e4e7e5] bg-white shadow-xl">
+                    <div className="flex items-center gap-2 border-b border-[#eef0ee] px-3.5 py-3">
                         <Search className="h-4 w-4 text-[#9aa19f]" />
-
                         <input
                             autoFocus
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Rechercher un pays..."
+                            placeholder={searchPlaceholder}
                             className="w-full text-sm outline-none placeholder:text-[#9aa19f]"
                         />
                     </div>
 
-                    <div className="max-h-56 overflow-y-auto">
+                    <div className="max-h-60 overflow-y-auto py-1">
                         {value && (
                             <button
                                 type="button"
                                 onClick={() => handleSelect({ value: "" })}
-                                className="block w-full px-3 py-2.5 text-left text-sm text-[#9aa19f] hover:bg-[#f6f7f5]"
+                                className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm text-[#bf5429] hover:bg-[#f6f7f5]"
                             >
+                                <X className="h-3.5 w-3.5" />
                                 Effacer la sélection
                             </button>
                         )}
 
                         {filtered.length === 0 && (
-                            <p className="px-3 py-2.5 text-sm text-[#9aa19f]">
+                            <p className="px-3.5 py-3 text-sm text-[#9aa19f]">
                                 Aucun résultat.
                             </p>
                         )}
 
-                        {filtered.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => handleSelect(option)}
-                                className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-[#f6f7f5] ${
-                                    option.value === value
-                                        ? "bg-[#bf5429]/10 text-[#bf5429]"
-                                        : "text-[#263333]"
-                                }`}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
+                        {filtered.map((option) => {
+                            const active = option.value === value;
+                            return (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleSelect(option)}
+                                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm transition hover:bg-[#f6f7f5] ${
+                                        active
+                                            ? "bg-[#bf5429]/10 font-medium text-[#bf5429]"
+                                            : "text-[#263333]"
+                                    }`}
+                                >
+                                    {option.label}
+                                    {active && <Check className="h-4 w-4" />}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -149,12 +291,55 @@ function SearchableSelect({
     );
 }
 
-export default function PeopleIndex({ people, filters, groups = {} }) {
+function FilterChip({ label, onRemove }) {
+    return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#bf5429]/10 py-1 pl-3 pr-1.5 text-xs font-medium text-[#a94320]">
+            {label}
+            <button
+                type="button"
+                onClick={onRemove}
+                aria-label={`Retirer le filtre ${label}`}
+                className="rounded-full p-0.5 transition hover:bg-[#bf5429]/20"
+            >
+                <X className="h-3.5 w-3.5" />
+            </button>
+        </span>
+    );
+}
+
+function Checkbox({ checked, onChange, indeterminate = false, label }) {
+    return (
+        <input
+            type="checkbox"
+            aria-label={label}
+            checked={checked}
+            ref={(el) => {
+                if (el) el.indeterminate = indeterminate;
+            }}
+            onChange={onChange}
+            className="h-4 w-4 cursor-pointer rounded border-[#c3c8c6] text-[#bf5429] focus:ring-[#bf5429]/30"
+        />
+    );
+}
+
+/* ==========================================================================
+   Page
+   ========================================================================== */
+
+export default function PeopleIndex({
+    people,
+    filters,
+    groups = {},
+    senders = [],
+}) {
     const [search, setSearch] = useState(filters?.search ?? "");
     const [country, setCountry] = useState(filters?.country ?? "");
     const [gender, setGender] = useState(filters?.gender ?? "");
     const [source, setSource] = useState(filters?.source ?? "");
     const [groupType, setGroupType] = useState(filters?.group_type ?? "");
+    const [emailSender, setEmailSender] = useState(
+        senders[0]?.key ?? "contact"
+    );
 
     // Sélection :
     // - selectAll = false -> seuls les ids de selectedPeople sont concernés
@@ -168,12 +353,13 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
     const [emailMessage, setEmailMessage] = useState("");
     const [emailFiles, setEmailFiles] = useState([]);
     const [sendingEmail, setSendingEmail] = useState(false);
+    const [dragging, setDragging] = useState(false);
 
     const rows = people?.data ?? [];
     const links = people?.links ?? [];
     const total = people?.total ?? rows.length;
 
-    /* ---------- Pays via /api/countries ---------- */
+    /* ---------- Pays ---------- */
 
     const [countries, setCountries] = useState([]);
     const [loadingCountries, setLoadingCountries] = useState(false);
@@ -181,14 +367,10 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
     useEffect(() => {
         const loadCountries = async () => {
             setLoadingCountries(true);
-
             try {
                 const response = await fetch(route("api.countries"));
-
                 if (!response.ok) throw new Error("Erreur pays");
-
                 const result = await response.json();
-
                 setCountries(result.countries || []);
             } catch (error) {
                 console.error(error);
@@ -197,7 +379,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                 setLoadingCountries(false);
             }
         };
-
         loadCountries();
     }, []);
 
@@ -218,7 +399,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
 
     const allPageSelected =
         rows.length > 0 && rows.every((p) => isRowChecked(p.id));
-
     const somePageSelected = rows.some((p) => isRowChecked(p.id));
 
     const selectedCount = selectAll
@@ -228,8 +408,11 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
     const hasSelection = selectedCount > 0;
 
     const hasActiveFilters = Boolean(
-        search || country || gender || source
+        search || country || gender || source || groupType
     );
+
+    const sourceLabel = SOURCE_OPTIONS.find((o) => o.value === source)?.label;
+    const groupLabel = groups[groupType];
 
     /* ---------- Sélection ---------- */
 
@@ -245,7 +428,11 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
         setExcludedPeople([]);
     };
 
-    // Checkbox du header : agit uniquement sur la page courante
+    const toggleSelectAllGlobal = () => {
+        if (selectAll) clearSelection();
+        else selectEverything();
+    };
+
     const togglePage = (checked) => {
         const ids = rows.map((p) => p.id);
 
@@ -280,7 +467,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
     /* ---------- Filtres ---------- */
 
     const applyFilters = (overrides = {}) => {
-        // Le filtre change l'ensemble des résultats : on repart de zéro
         clearSelection();
 
         const nextSource = overrides.source ?? source;
@@ -292,7 +478,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                 country: overrides.country ?? country,
                 gender: overrides.gender ?? gender,
                 source: nextSource || undefined,
-                // Le sous-groupe n'a de sens que si "Groupe de travail" est choisi
                 group_type:
                     nextSource === "group"
                         ? overrides.group_type ?? groupType
@@ -317,25 +502,23 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
         );
     };
 
-    // Changer la source réinitialise le sous-groupe si on quitte "Groupe de travail"
     const handleSourceChange = (value) => {
         setSource(value);
+        if (value !== "group") setGroupType("");
 
-        if (value !== "group") {
-            setGroupType("");
-        }
-
-        applyFilters({ source: value, group_type: value === "group" ? groupType : "" });
+        applyFilters({
+            source: value,
+            group_type: value === "group" ? groupType : "",
+        });
     };
 
     /* ---------- Email ---------- */
 
     const openEmailModal = () => {
         if (!hasSelection) {
-            alert("Veuillez sélectionner au moins une personne.");
+            toastWarning("Sélectionnez au moins une personne.");
             return;
         }
-
         setShowEmailModal(true);
     };
 
@@ -344,34 +527,75 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
         setShowEmailModal(false);
     };
 
-    const handleFiles = (e) => {
-        setEmailFiles(Array.from(e.target.files || []));
+    const addFiles = (fileList) => {
+        const incoming = Array.from(fileList || []);
+        if (incoming.length === 0) return;
+
+        setEmailFiles((current) => {
+            const merged = [...current];
+            incoming.forEach((file) => {
+                const duplicate = merged.some(
+                    (f) => f.name === file.name && f.size === file.size
+                );
+                if (!duplicate) merged.push(file);
+            });
+            return merged;
+        });
     };
 
+    const handleFiles = (e) => {
+        addFiles(e.target.files);
+        e.target.value = "";
+    };
+
+    const removeFile = (index) =>
+        setEmailFiles((cur) => cur.filter((_, i) => i !== index));
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragging(false);
+        addFiles(e.dataTransfer.files);
+    };
+
+    const totalFilesSize = emailFiles.reduce((sum, f) => sum + f.size, 0);
+
     const sendEmail = async () => {
-        if (!emailSubject.trim()) {
-            alert("Veuillez saisir l'objet du message.");
-            return;
-        }
-
-        if (!emailMessage.trim() || emailMessage === "<p><br></p>") {
-            alert("Veuillez saisir le message.");
-            return;
-        }
-
         if (!hasSelection) {
-            alert("Veuillez sélectionner au moins une personne.");
+            toastWarning("Sélectionnez au moins une personne.");
             return;
         }
+        if (!emailSubject.trim()) {
+            toastWarning("Veuillez saisir l'objet du message.");
+            return;
+        }
+        if (!stripHtml(emailMessage)) {
+            toastWarning("Veuillez saisir le message.");
+            return;
+        }
+
+        const senderInfo = senders.find((s) => s.key === emailSender);
+
+        const { isConfirmed } = await confirmSend({
+            recipients: `${selectedCount} personne(s)`,
+            senderLabel: escapeHtml(
+                senderInfo ? senderInfo.address : emailSender
+            ),
+            subject: escapeHtml(emailSubject.trim()),
+            attachments: emailFiles.length
+                ? `${emailFiles.length} fichier(s)`
+                : "Aucune",
+        });
+
+        if (!isConfirmed) return;
 
         const formData = new FormData();
 
         formData.append("subject", emailSubject);
+        formData.append("sender", emailSender);
         formData.append("message", emailMessage);
         formData.append("select_all", selectAll ? "1" : "0");
 
         if (selectAll) {
-            // Filtres ACTUELLEMENT appliqués (ceux de la liste affichée)
             if (search) formData.append("search", search);
             if (country) formData.append("country", country);
             if (gender) formData.append("gender", gender);
@@ -379,7 +603,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
             if (source === "group" && groupType) {
                 formData.append("group_type", groupType);
             }
-
             excludedPeople.forEach((id) =>
                 formData.append("excluded_people[]", id)
             );
@@ -390,6 +613,7 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
         emailFiles.forEach((file) => formData.append("files[]", file));
 
         setSendingEmail(true);
+        showSending();
 
         try {
             const { data } = await axios.post(
@@ -398,139 +622,125 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                 { headers: { "Content-Type": "multipart/form-data" } }
             );
 
-            alert(data?.message || "Email envoyé avec succès.");
-
             setShowEmailModal(false);
             setEmailSubject("");
             setEmailMessage("");
             setEmailFiles([]);
             clearSelection();
+
+            alertSuccess(data?.message || "Votre email a été envoyé avec succès.");
         } catch (error) {
             console.error(error);
 
             const errors = error?.response?.data?.errors;
             const firstError = errors ? Object.values(errors)[0]?.[0] : null;
 
-            alert(
+            alertError(
                 firstError ||
                     error?.response?.data?.message ||
-                    "Une erreur est survenue lors de l'envoi de l'email."
+                    "L'email n'a pas pu être envoyé. Vérifiez les champs et réessayez."
             );
         } finally {
             setSendingEmail(false);
         }
     };
 
-    // Mappage du genre
-    const genderLabels = {
-        H: "Masculin",
-        F: "Féminin",
+    /* ---------- Quill ---------- */
+
+    const quillModules = {
+        toolbar: [
+            ["bold", "italic", "underline"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link"],
+            ["clean"],
+        ],
     };
 
-    const getGenderColor = (gender) => {
-        switch (gender) {
-            case "M":
-                return "bg-blue-50 text-blue-700";
-            case "F":
-                return "bg-pink-50 text-pink-700";
-            case "O":
-                return "bg-purple-50 text-purple-700";
-            default:
-                return "bg-gray-50 text-gray-700";
-        }
-    };
+    /* ======================================================================
+       Rendu
+       ====================================================================== */
 
     return (
         <AdminLayout>
-            <Head title="People" />
+            <Head title="Personnes" />
 
-            <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
-                {/* HEADER */}
-                <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <style>{`
+                .quill-clean .ql-toolbar.ql-snow { border: 0; border-bottom: 1px solid #eef0ee; background: #f9faf8; padding: 10px 12px; }
+                .quill-clean .ql-container.ql-snow { border: 0; font-size: 14px; }
+                .quill-clean .ql-editor { min-height: 180px; max-height: 320px; color: #263333; }
+                .quill-clean .ql-editor.ql-blank::before { color: #9aa19f; font-style: normal; }
+                .quill-clean .ql-snow .ql-stroke { stroke: #68706e; }
+                .quill-clean .ql-snow .ql-fill { fill: #68706e; }
+                .quill-clean .ql-snow.ql-toolbar button:hover .ql-stroke,
+                .quill-clean .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #bf5429; }
+                .quill-clean .ql-snow.ql-toolbar button:hover .ql-fill,
+                .quill-clean .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #bf5429; }
+                @keyframes bar-in { from { transform: translate(-50%, 16px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+                .selection-bar { animation: bar-in .2s ease-out; }
+                @media (prefers-reduced-motion: reduce) { .selection-bar { animation: none; } }
+            `}</style>
+
+            <div className="mx-auto max-w-7xl px-4 py-8 pb-28 md:px-8 md:py-12">
+                {/* ---------- EN-TÊTE ---------- */}
+                <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#bf5429]/10 text-[#bf5429]">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#bf5429]/10 text-[#bf5429]">
                                 <Users className="h-5 w-5" />
                             </span>
-                            <h1 className="text-2xl font-semibold text-[#1f2d2d] md:text-3xl">
+                            <h1 className="text-2xl font-semibold tracking-tight text-[#1f2d2d] md:text-3xl">
                                 Personnes
                             </h1>
                         </div>
-
-                        <p className="mt-2 text-sm text-[#68706e]">
-                            Liste globale des {total} personne(s) enregistrée(s)
-                            dans l'Observatoire.
+                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#68706e]">
+                            <strong className="font-semibold text-[#263333]">
+                                {total}
+                            </strong>{" "}
+                            personne(s) enregistrée(s) dans l'Observatoire.
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        {hasSelection && (
-                            <button
-                                type="button"
-                                onClick={openEmailModal}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#bf5429] bg-white px-5 py-3 text-sm font-semibold text-[#bf5429] transition hover:bg-[#bf5429]/5"
-                            >
-                                <Mail className="h-4 w-4" />
-                                Email ({selectedCount})
-                            </button>
-                        )}
-
-                        <Link
-                            href={route("people.create")}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#bf5429] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#a94320]"
-                        >
-                            <UserPlus className="h-4 w-4" />
-                            Ajouter
-                        </Link>
-                    </div>
+                    <Link
+                        href={route("people.create")}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#bf5429] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#a94320] focus:outline-none focus:ring-4 focus:ring-[#bf5429]/20"
+                    >
+                        <UserPlus className="h-4 w-4" />
+                        Ajouter une personne
+                    </Link>
                 </div>
 
-                {/* FILTRES */}
+                {/* ---------- FILTRES ---------- */}
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         applyFilters();
                     }}
-                    className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#dfe3e0] bg-white p-4"
+                    className="rounded-2xl border border-[#dfe3e0] bg-white p-4 shadow-sm"
                 >
-                    {/* Ligne 1 : recherche texte */}
                     <div className="flex flex-col gap-3 md:flex-row md:items-center">
                         <div className="relative flex-1">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa19f]" />
-
                             <input
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Nom, email, téléphone, organisation..."
-                                className="w-full rounded-xl border border-[#d6d9d8] bg-white py-3 pl-10 pr-4 text-sm text-[#263333] outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10"
+                                className={`${fieldClass} pl-10`}
                             />
                         </div>
 
-                        <div className="flex gap-2">
-                            <button
-                                type="submit"
-                                className="rounded-xl bg-[#bf5429] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#a94320]"
-                            >
-                                Rechercher
-                            </button>
-
-                            {hasActiveFilters && (
-                                <button
-                                    type="button"
-                                    onClick={resetFilters}
-                                    className="rounded-xl border border-[#d6d9d8] bg-white px-5 py-3 text-sm font-semibold text-[#263333] transition hover:border-[#aeb5b2]"
-                                >
-                                    Réinitialiser
-                                </button>
-                            )}
-                        </div>
+                        <button
+                            type="submit"
+                            className="rounded-xl bg-[#1f2d2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2c3d3d] focus:outline-none focus:ring-4 focus:ring-[#1f2d2d]/20"
+                        >
+                            Rechercher
+                        </button>
                     </div>
 
-                    {/* Ligne 2 : pays, genre, source d'inscription (+ sous-groupe) */}
-                    <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+                    <div className="mt-3 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
                         <SearchableSelect
                             placeholder="Tous les pays"
+                            searchPlaceholder="Rechercher un pays..."
                             loadingLabel="Chargement des pays..."
                             loading={loadingCountries}
                             options={countryOptions}
@@ -548,7 +758,9 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                                 setGender(e.target.value);
                                 applyFilters({ gender: e.target.value });
                             }}
-                            className={`${selectClass} md:w-44`}
+                            className={`${fieldClass} md:w-44 ${
+                                gender ? activeFieldClass : ""
+                            }`}
                         >
                             <option value="">Tous les genres</option>
                             <option value="H">Hommes</option>
@@ -558,7 +770,9 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                         <select
                             value={source}
                             onChange={(e) => handleSourceChange(e.target.value)}
-                            className={`${selectClass} md:w-60`}
+                            className={`${fieldClass} md:w-60 ${
+                                source ? activeFieldClass : ""
+                            }`}
                         >
                             {SOURCE_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -567,7 +781,6 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                             ))}
                         </select>
 
-                        {/* Sous-filtre : quel groupe de travail précisément */}
                         {source === "group" && (
                             <select
                                 value={groupType}
@@ -575,94 +788,156 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                                     setGroupType(e.target.value);
                                     applyFilters({ group_type: e.target.value });
                                 }}
-                                className={`${selectClass} md:w-72`}
+                                className={`${fieldClass} md:w-72 ${
+                                    groupType ? activeFieldClass : ""
+                                }`}
                             >
-                                <option value="">Tous les groupes de travail</option>
-
+                                <option value="">
+                                    Tous les groupes de travail
+                                </option>
                                 {groupOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </option>
                                 ))}
                             </select>
                         )}
                     </div>
+
+                    {hasActiveFilters && (
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#eef0ee] pt-3">
+                            <span className="text-xs text-[#78807e]">
+                                Filtres actifs :
+                            </span>
+
+                            {search && (
+                                <FilterChip
+                                    label={`« ${search} »`}
+                                    onRemove={() => {
+                                        setSearch("");
+                                        applyFilters({ search: "" });
+                                    }}
+                                />
+                            )}
+                            {country && (
+                                <FilterChip
+                                    label={country}
+                                    onRemove={() => {
+                                        setCountry("");
+                                        applyFilters({ country: "" });
+                                    }}
+                                />
+                            )}
+                            {gender && (
+                                <FilterChip
+                                    label={GENDER_META[gender]?.label ?? gender}
+                                    onRemove={() => {
+                                        setGender("");
+                                        applyFilters({ gender: "" });
+                                    }}
+                                />
+                            )}
+                            {source && (
+                                <FilterChip
+                                    label={sourceLabel}
+                                    onRemove={() => handleSourceChange("")}
+                                />
+                            )}
+                            {groupType && source === "group" && (
+                                <FilterChip
+                                    label={groupLabel ?? groupType}
+                                    onRemove={() => {
+                                        setGroupType("");
+                                        applyFilters({ group_type: "" });
+                                    }}
+                                />
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-[#68706e] transition hover:text-[#bf5429]"
+                            >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                Tout réinitialiser
+                            </button>
+                        </div>
+                    )}
                 </form>
 
-                {/* BANNIÈRE "SÉLECTIONNER TOUT" (style Gmail) */}
+                {/* ---------- BANDEAU « TOUT SÉLECTIONNER » ---------- */}
                 {allPageSelected && total > rows.length && (
-                    <div className="mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl bg-[#bf5429]/5 px-4 py-3 text-sm text-[#263333]">
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[#bf5429]/20 bg-[#bf5429]/5 px-4 py-3 text-sm text-[#263333]">
                         {selectAll ? (
                             <>
                                 <span>
-                                    Les <strong>{selectedCount}</strong> personne(s)
-                                    sont sélectionnées.
+                                    Les <strong>{selectedCount}</strong>{" "}
+                                    personne(s) sont sélectionnées.
                                 </span>
                                 <button
                                     type="button"
                                     onClick={clearSelection}
-                                    className="font-semibold text-[#bf5429] underline hover:no-underline"
+                                    className="font-semibold text-[#bf5429] underline underline-offset-2"
                                 >
-                                    Annuler
+                                    Annuler la sélection
                                 </button>
                             </>
                         ) : (
                             <>
                                 <span>
-                                    <strong>{rows.length}</strong> de cette page sont
-                                    sélectionnées.
+                                    Les <strong>{rows.length}</strong> personnes
+                                    de cette page sont sélectionnées.
                                 </span>
                                 <button
                                     type="button"
                                     onClick={selectEverything}
-                                    className="font-semibold text-[#bf5429] underline hover:no-underline"
+                                    className="font-semibold text-[#bf5429] underline underline-offset-2"
                                 >
-                                    Sélectionner les {total}
+                                    Sélectionner les {total} personnes
                                 </button>
                             </>
                         )}
                     </div>
                 )}
 
-                {/* TABLEAU */}
-                <div className="overflow-hidden rounded-2xl border border-[#dfe3e0] bg-white shadow-sm">
+                {/* ---------- TABLEAU ---------- */}
+                <div className="mt-4 overflow-hidden rounded-2xl border border-[#dfe3e0] bg-white shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-[#f6f7f5] text-xs uppercase tracking-wide text-[#78807e]">
+                            <thead className="bg-[#f6f7f5] text-xs text-[#78807e]">
                                 <tr>
-                                    <th className="w-12 px-5 py-3.5 font-medium">
-                                        <input
-                                            type="checkbox"
+                                    <th className="w-12 px-5 py-4">
+                                        <Checkbox
+                                            label="Sélectionner la page"
                                             checked={allPageSelected}
-                                            ref={(el) => {
-                                                if (el) {
-                                                    el.indeterminate =
-                                                        somePageSelected &&
-                                                        !allPageSelected;
-                                                }
-                                            }}
+                                            indeterminate={
+                                                somePageSelected &&
+                                                !allPageSelected
+                                            }
                                             onChange={(e) =>
                                                 togglePage(e.target.checked)
                                             }
                                         />
                                     </th>
-
-                                    <th className="px-5 py-3.5 font-medium">
+                                    <th className="px-5 py-4 font-medium">
                                         Personne
                                     </th>
-                                    <th className="px-5 py-3.5 font-medium">
+                                    <th className="px-5 py-4 font-medium">
                                         Fonction
                                     </th>
-                                    <th className="px-5 py-3.5 font-medium">
+                                    <th className="px-5 py-4 font-medium">
                                         Organisation
                                     </th>
-                                    <th className="px-5 py-3.5 font-medium">
+                                    <th className="px-5 py-4 font-medium">
                                         Pays
                                     </th>
-                                    <th className="px-5 py-3.5 font-medium">
+                                    <th className="px-5 py-4 font-medium">
                                         Genre
                                     </th>
-                                    <th className="px-5 py-3.5 text-right font-medium">
+                                    <th className="px-5 py-4">
                                         <span className="sr-only">Actions</span>
                                     </th>
                                 </tr>
@@ -671,159 +946,186 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                             <tbody className="divide-y divide-[#eef0ee]">
                                 {rows.length === 0 && (
                                     <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="px-5 py-12 text-center text-sm text-[#78807e]"
-                                        >
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Users className="h-8 w-8 opacity-30" />
-                                                <span>
-                                                    Aucune personne ne correspond
-                                                    à ces critères.
-                                                </span>
+                                        <td colSpan={7} className="px-5 py-16">
+                                            <div className="flex flex-col items-center text-center">
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f6f7f5] text-[#9aa19f]">
+                                                    <Users className="h-6 w-6" />
+                                                </div>
+                                                <p className="mt-4 text-sm font-medium text-[#263333]">
+                                                    Aucune personne trouvée
+                                                </p>
+                                                <p className="mt-1 text-sm text-[#78807e]">
+                                                    {hasActiveFilters
+                                                        ? "Modifiez ou réinitialisez les filtres pour élargir la recherche."
+                                                        : "Ajoutez la première personne pour commencer."}
+                                                </p>
+                                                {hasActiveFilters && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetFilters}
+                                                        className="mt-4 rounded-xl border border-[#d6d9d8] px-4 py-2.5 text-sm font-semibold text-[#263333] transition hover:border-[#aeb5b2]"
+                                                    >
+                                                        Réinitialiser les filtres
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                 )}
 
-                                {rows.map((person) => (
-                                    <tr
-                                        key={person.id}
-                                        className="transition hover:bg-[#f6f7f5]"
-                                    >
-                                        <td className="px-5 py-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={isRowChecked(person.id)}
-                                                onChange={(e) =>
-                                                    toggleRow(
-                                                        person.id,
-                                                        e.target.checked
-                                                    )
-                                                }
-                                            />
-                                        </td>
+                                {rows.map((person) => {
+                                    const checked = isRowChecked(person.id);
+                                    const genderMeta = GENDER_META[person.gender];
 
-                                        {/* Personne (Nom, Prénom, Email) */}
-                                        <td className="px-5 py-4">
-                                            <div className="font-medium text-[#263333]">
-                                                {person.first_name}{" "}
-                                                {person.last_name}
-                                            </div>
+                                    return (
+                                        <tr
+                                            key={person.id}
+                                            className={`transition ${
+                                                checked
+                                                    ? "bg-[#bf5429]/[0.04]"
+                                                    : "hover:bg-[#f9faf8]"
+                                            }`}
+                                        >
+                                            <td className="px-5 py-4">
+                                                <Checkbox
+                                                    label={`Sélectionner ${person.first_name} ${person.last_name}`}
+                                                    checked={checked}
+                                                    onChange={(e) =>
+                                                        toggleRow(
+                                                            person.id,
+                                                            e.target.checked
+                                                        )
+                                                    }
+                                                />
+                                            </td>
 
-                                            <div className="mt-1 flex items-center gap-1.5 text-xs text-[#78807e]">
-                                                <Mail className="h-3.5 w-3.5" />
-                                                <a
-                                                    href={`mailto:${person.email}`}
-                                                    className="break-all hover:text-[#bf5429]"
-                                                >
-                                                    {person.email || "—"}
-                                                </a>
-                                            </div>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#bf5429]/10 text-xs font-semibold text-[#bf5429]">
+                                                        {initialsOf(
+                                                            person.first_name,
+                                                            person.last_name
+                                                        )}
+                                                    </div>
 
-                                            {person.phone && (
-                                                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[#78807e]">
-                                                    <Phone className="h-3.5 w-3.5" />
-                                                    <a
-                                                        href={`tel:${person.phone}`}
-                                                        className="break-all hover:text-[#bf5429]"
+                                                    <div className="min-w-0">
+                                                        <div className="font-medium text-[#263333]">
+                                                            {person.first_name}{" "}
+                                                            {person.last_name}
+                                                        </div>
+
+                                                        <a
+                                                            href={`mailto:${person.email}`}
+                                                            className="mt-0.5 flex items-center gap-1.5 break-all text-xs text-[#78807e] hover:text-[#bf5429]"
+                                                        >
+                                                            <Mail className="h-3.5 w-3.5 shrink-0" />
+                                                            {person.email || "—"}
+                                                        </a>
+
+                                                        {person.phone && (
+                                                            <a
+                                                                href={`tel:${person.phone}`}
+                                                                className="mt-0.5 flex items-center gap-1.5 break-all text-xs text-[#78807e] hover:text-[#bf5429]"
+                                                            >
+                                                                <Phone className="h-3.5 w-3.5 shrink-0" />
+                                                                {person.phone}
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                {person.role ? (
+                                                    <span className="inline-block rounded-full bg-[#bf5429]/10 px-3 py-1 text-xs font-medium text-[#a94320]">
+                                                        {person.role}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[#c3c8c6]">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                {person.organisation ? (
+                                                    <div className="flex items-center gap-1.5 text-[#68706e]">
+                                                        <Building2 className="h-4 w-4 shrink-0 text-[#9aa19f]" />
+                                                        {person.organisation}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[#c3c8c6]">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                {person.country ? (
+                                                    <div className="flex items-center gap-1.5 text-[#68706e]">
+                                                        <Globe className="h-4 w-4 shrink-0 text-[#9aa19f]" />
+                                                        {person.country}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[#c3c8c6]">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                {person.gender ? (
+                                                    <span
+                                                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                                                            genderMeta?.cls ??
+                                                            "bg-gray-50 text-gray-700"
+                                                        }`}
                                                     >
-                                                        {person.phone}
-                                                    </a>
-                                                </div>
-                                            )}
-                                        </td>
+                                                        {genderMeta?.label ??
+                                                            person.gender}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[#c3c8c6]">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
 
-                                        {/* Fonction */}
-                                        <td className="px-5 py-4">
-                                            <span className="inline-block rounded-lg bg-[#bf5429]/10 px-2.5 py-1 text-xs font-medium text-[#bf5429]">
-                                                {person.role || "—"}
-                                            </span>
-                                        </td>
-
-                                        {/* Organisation */}
-                                        <td className="px-5 py-4">
-                                            {person.organisation ? (
-                                                <div className="flex items-center gap-1.5 text-sm text-[#68706e]">
-                                                    <Building2 className="h-4 w-4 text-[#78807e]" />
-                                                    {person.organisation}
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm text-[#c3c8c6]">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* Pays */}
-                                        <td className="px-5 py-4">
-                                            {person.country ? (
-                                                <div className="flex items-center gap-1.5 text-sm text-[#68706e]">
-                                                    <Globe className="h-4 w-4 text-[#78807e]" />
-                                                    {person.country}
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm text-[#c3c8c6]">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* Genre */}
-                                        <td className="px-5 py-4">
-                                            {person.gender ? (
-                                                <span
-                                                    className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${getGenderColor(
-                                                        person.gender
-                                                    )}`}
+                                            <td className="px-5 py-4 text-right">
+                                                <Link
+                                                    href={route("people.history", {
+                                                        person: person.id,
+                                                    })}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-[#bf5429] transition hover:bg-[#bf5429]/10"
                                                 >
-                                                    {genderLabels[person.gender] ||
-                                                        person.gender}
-                                                </span>
-                                            ) : (
-                                                <span className="text-sm text-[#c3c8c6]">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="px-5 py-4 text-right">
-                                            <Link
-                                                href={route("people.history", {
-                                                    person: person.id,
-                                                })}
-                                                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#bf5429] transition hover:text-[#a94320]"
-                                            >
-                                                <History className="h-4 w-4" />
-                                                <span className="hidden sm:inline">
-                                                    Historique
-                                                </span>
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                    <History className="h-4 w-4" />
+                                                    <span className="hidden sm:inline">
+                                                        Historique
+                                                    </span>
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                {/* PAGINATION */}
+                {/* ---------- PAGINATION ---------- */}
                 {links.length > 3 && (
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
                         {links.map((link, index) => (
                             <Link
                                 key={index}
                                 href={link.url || "#"}
-                                dangerouslySetInnerHTML={{
-                                    __html: link.label,
-                                }}
-                                className={`rounded-lg px-3.5 py-2 text-sm transition ${
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                className={`min-w-[40px] rounded-lg px-3.5 py-2 text-center text-sm transition ${
                                     link.active
-                                        ? "bg-[#bf5429] text-white"
+                                        ? "bg-[#bf5429] font-semibold text-white"
                                         : link.url
-                                        ? "bg-white text-[#263333] hover:bg-[#f0f2f0]"
-                                        : "cursor-not-allowed bg-white text-[#c3c8c6]"
+                                        ? "border border-[#e4e7e5] bg-white text-[#263333] hover:border-[#bf5429]/40 hover:text-[#bf5429]"
+                                        : "cursor-not-allowed text-[#c3c8c6]"
                                 }`}
                                 preserveScroll
                                 preserveState
@@ -833,83 +1135,195 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                 )}
             </div>
 
-            {/* EMAIL MODAL */}
-            {showEmailModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
-                    <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-                        {/* MODAL HEADER */}
-                        <div className="flex items-center justify-between border-b border-[#e4e7e5] px-6 py-4">
-                            <div>
-                                <h2 className="text-lg font-semibold text-[#1f2d2d]">
-                                    Envoyer un email
-                                </h2>
+            {/* ---------- BARRE FLOTTANTE DE SÉLECTION ---------- */}
+            {hasSelection && !showEmailModal && (
+                <div className="selection-bar fixed bottom-6 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 items-center gap-3 rounded-2xl bg-[#1f2d2d] px-4 py-3 text-white shadow-2xl">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="flex h-9 min-w-[2.25rem] shrink-0 items-center justify-center rounded-xl bg-white/10 px-2 text-sm font-semibold">
+                            {selectedCount}
+                        </div>
+                        <p className="truncate text-sm">
+                            {selectedCount > 1
+                                ? "personnes sélectionnées"
+                                : "personne sélectionnée"}
+                        </p>
+                    </div>
 
-                                <p className="mt-1 text-sm text-[#78807e]">
-                                    {selectedCount} personne(s) sélectionnée(s)
-                                </p>
+                    <button
+                        type="button"
+                        onClick={toggleSelectAllGlobal}
+                        className="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10 hover:text-white sm:inline-flex"
+                    >
+                        {selectAll ? (
+                            <CheckSquare className="h-4 w-4" />
+                        ) : (
+                            <Square className="h-4 w-4" />
+                        )}
+                        {selectAll
+                            ? "Tout désélectionner"
+                            : `Tout sélectionner (${total})`}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={clearSelection}
+                        aria-label="Annuler la sélection"
+                        className="rounded-xl p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={openEmailModal}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#bf5429] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#d4622f] focus:outline-none focus:ring-4 focus:ring-[#bf5429]/40"
+                    >
+                        <Mail className="h-4 w-4" />
+                        Envoyer un email
+                    </button>
+                </div>
+            )}
+
+            {!hasSelection && total > 0 && (
+                <button
+                    type="button"
+                    onClick={toggleSelectAllGlobal}
+                    className="fixed bottom-6 right-6 z-30 hidden items-center gap-2 rounded-full border border-[#d6d9d8] bg-white px-4 py-2.5 text-sm font-semibold text-[#263333] shadow-lg transition hover:border-[#bf5429]/50 hover:text-[#bf5429] md:inline-flex"
+                >
+                    <Square className="h-4 w-4" />
+                    Tout sélectionner ({total})
+                </button>
+            )}
+
+            {/* ---------- MODALE EMAIL ---------- */}
+            {showEmailModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-[#1f2d2d]/50 px-4 py-6 backdrop-blur-sm"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) closeEmailModal();
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="email-modal-title"
+                        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-4 border-b border-[#e4e7e5] px-6 py-5">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#bf5429]/10 text-[#bf5429]">
+                                    <Mail className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h2
+                                        id="email-modal-title"
+                                        className="text-lg font-semibold text-[#1f2d2d]"
+                                    >
+                                        Envoyer un email
+                                    </h2>
+                                    <p className="mt-0.5 text-sm text-[#78807e]">
+                                        À {selectedCount} personne
+                                        {selectedCount > 1 ? "s" : ""}
+                                    </p>
+                                </div>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={closeEmailModal}
                                 disabled={sendingEmail}
-                                className="rounded-lg p-2 text-[#78807e] transition hover:bg-[#f6f7f5] hover:text-[#263333] disabled:cursor-not-allowed"
+                                aria-label="Fermer"
+                                className="rounded-xl p-2 text-[#78807e] transition hover:bg-[#f6f7f5] hover:text-[#263333] disabled:opacity-50"
                             >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        {/* MODAL BODY */}
-                        <div className="overflow-y-auto px-6 py-5">
-                            <div className="mb-5">
-                                <label className="mb-2 block text-sm font-medium text-[#263333]">
-                                    Objet <span className="text-[#bf5429]">*</span>
-                                </label>
+                        <div className="space-y-5 overflow-y-auto px-6 py-6">
+                            <div className="grid gap-5 md:grid-cols-2">
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-[#263333]">
+                                        Expéditeur
+                                    </label>
+                                    <select
+                                        value={emailSender}
+                                        onChange={(e) =>
+                                            setEmailSender(e.target.value)
+                                        }
+                                        disabled={sendingEmail}
+                                        className={fieldClass}
+                                    >
+                                        {senders.map((sender) => (
+                                            <option
+                                                key={sender.key}
+                                                value={sender.key}
+                                            >
+                                                {sender.name} ({sender.address})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                                <input
-                                    type="text"
-                                    value={emailSubject}
-                                    onChange={(e) =>
-                                        setEmailSubject(e.target.value)
-                                    }
-                                    placeholder="Objet de l'email"
-                                    className="w-full rounded-xl border border-[#d6d9d8] px-4 py-3 text-sm outline-none transition focus:border-[#bf5429] focus:ring-2 focus:ring-[#bf5429]/10"
-                                />
-                            </div>
-
-                            <div className="mb-5">
-                                <label className="mb-2 block text-sm font-medium text-[#263333]">
-                                    Message <span className="text-[#bf5429]">*</span>
-                                </label>
-
-                                <div className="overflow-hidden rounded-xl border border-[#d6d9d8]">
-                                    <ReactQuill
-                                        theme="snow"
-                                        value={emailMessage}
-                                        onChange={setEmailMessage}
-                                        placeholder="Écrivez votre message..."
-                                        modules={{
-                                            toolbar: [
-                                                ["bold", "italic", "underline"],
-                                                [{ list: "ordered" }, { list: "bullet" }],
-                                                ["link"],
-                                                ["clean"],
-                                            ],
-                                        }}
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-[#263333]">
+                                        Objet
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={emailSubject}
+                                        onChange={(e) =>
+                                            setEmailSubject(e.target.value)
+                                        }
+                                        disabled={sendingEmail}
+                                        placeholder="Objet de l'email"
+                                        className={fieldClass}
                                     />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-[#263333]">
-                                    Fichiers / Images
+                                    Message
+                                </label>
+                                <div className="quill-clean overflow-hidden rounded-xl border border-[#d6d9d8] transition focus-within:border-[#bf5429] focus-within:ring-4 focus-within:ring-[#bf5429]/10">
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={emailMessage}
+                                        onChange={setEmailMessage}
+                                        readOnly={sendingEmail}
+                                        placeholder="Écrivez votre message..."
+                                        modules={quillModules}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-[#263333]">
+                                    Pièces jointes
                                 </label>
 
-                                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#d6d9d8] px-4 py-4 text-sm text-[#68706e] transition hover:border-[#bf5429] hover:bg-[#bf5429]/5">
+                                <label
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setDragging(true);
+                                    }}
+                                    onDragLeave={() => setDragging(false)}
+                                    onDrop={handleDrop}
+                                    className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+                                        dragging
+                                            ? "border-[#bf5429] bg-[#bf5429]/5"
+                                            : "border-[#d6d9d8] hover:border-[#bf5429]/60 hover:bg-[#bf5429]/[0.03]"
+                                    }`}
+                                >
                                     <Paperclip className="h-5 w-5 text-[#bf5429]" />
-
-                                    <span>Ajouter des fichiers ou images</span>
-
+                                    <span className="text-sm font-medium text-[#263333]">
+                                        Glissez vos fichiers ici ou cliquez pour
+                                        parcourir
+                                    </span>
+                                    <span className="text-xs text-[#78807e]">
+                                        Images, PDF, Word, Excel, PowerPoint ou
+                                        ZIP
+                                    </span>
                                     <input
                                         type="file"
                                         multiple
@@ -920,36 +1334,44 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                                 </label>
 
                                 {emailFiles.length > 0 && (
-                                    <div className="mt-3 space-y-2">
-                                        <p className="text-xs text-[#78807e]">
-                                            {emailFiles.length} fichier(s) à envoyer
+                                    <>
+                                        <ul className="mt-3 space-y-2">
+                                            {emailFiles.map((file, index) => (
+                                                <li
+                                                    key={`${file.name}-${index}`}
+                                                    className="flex items-center gap-3 rounded-xl bg-[#f6f7f5] px-3 py-2.5 text-sm"
+                                                >
+                                                    <FileText className="h-4 w-4 shrink-0 text-[#bf5429]" />
+                                                    <span className="min-w-0 flex-1 truncate text-[#263333]">
+                                                        {file.name}
+                                                    </span>
+                                                    <span className="shrink-0 text-xs text-[#78807e]">
+                                                        {formatSize(file.size)}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeFile(index)
+                                                        }
+                                                        disabled={sendingEmail}
+                                                        aria-label={`Retirer ${file.name}`}
+                                                        className="rounded-lg p-1.5 text-[#9aa19f] transition hover:bg-white hover:text-red-600"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <p className="mt-2 text-xs text-[#78807e]">
+                                            {emailFiles.length} fichier(s) ·{" "}
+                                            {formatSize(totalFilesSize)} au total
                                         </p>
-                                        {emailFiles.map((file, index) => (
-                                            <div
-                                                key={`${file.name}-${index}`}
-                                                className="flex items-center justify-between rounded-lg bg-[#f6f7f5] px-3 py-2 text-sm"
-                                            >
-                                                <span className="truncate text-[#263333]">
-                                                    {file.name}
-                                                </span>
-
-                                                <span className="ml-3 text-xs text-[#78807e]">
-                                                    {(
-                                                        file.size /
-                                                        1024 /
-                                                        1024
-                                                    ).toFixed(2)}{" "}
-                                                    MB
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         </div>
 
-                        {/* MODAL FOOTER */}
-                        <div className="flex items-center justify-end gap-3 border-t border-[#e4e7e5] px-6 py-4">
+                        <div className="flex items-center justify-end gap-3 border-t border-[#e4e7e5] bg-[#f9faf8] px-6 py-4">
                             <button
                                 type="button"
                                 onClick={closeEmailModal}
@@ -963,10 +1385,19 @@ export default function PeopleIndex({ people, filters, groups = {} }) {
                                 type="button"
                                 onClick={sendEmail}
                                 disabled={sendingEmail}
-                                className="inline-flex items-center gap-2 rounded-xl bg-[#bf5429] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#a94320] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#bf5429] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#a94320] focus:outline-none focus:ring-4 focus:ring-[#bf5429]/20 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                <Mail className="h-4 w-4" />
-                                {sendingEmail ? "Envoi en cours..." : "Envoyer"}
+                                {sendingEmail ? (
+                                    <>
+                                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        Envoi...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="h-4 w-4" />
+                                        Envoyer
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

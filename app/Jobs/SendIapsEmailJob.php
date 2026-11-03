@@ -31,20 +31,44 @@ class SendIapsEmailJob implements ShouldQueue
         $this->onQueue('emails');
     }
 
-    public function handle(): void
-    {
-        $campaign = json_decode(
-            Storage::disk('local')->get("{$this->dir}/campaign.json"),
-            true
-        );
+public function handle(): void
+{
+    $campaign = json_decode(
+        Storage::disk('local')->get("{$this->dir}/campaign.json"),
+        true
+    );
 
-        Mail::to($this->email)->send(new IapsBulkMail(
-            $campaign['subject'],
-            $campaign['message'],
-            $this->name,
-            $campaign['attachments'] ?? []
-        ));
+    if (!$campaign) {
+        throw new \RuntimeException('Impossible de charger la campagne email.');
     }
+
+    $sender = config(
+        "mail.campaign_senders.{$campaign['sender']}"
+    );
+
+    if (
+        !$sender ||
+        empty($sender['mailer']) ||
+        empty($sender['address'])
+    ) {
+        throw new \RuntimeException(
+            "La configuration de l'expéditeur est invalide."
+        );
+    }
+
+    $mail = new IapsBulkMail(
+        $campaign['subject'],
+        $campaign['message'],
+        $this->name,
+        $campaign['attachments'] ?? []
+    );
+
+    $mail->from($sender['address'], $sender['name']);
+
+    Mail::mailer($sender['mailer'])
+        ->to($this->email)
+        ->send($mail);
+}
 
     public function failed(Throwable $e): void
     {

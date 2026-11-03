@@ -60,7 +60,15 @@ public function create(Event $event)
         ->latest()
         ->get();
 
-    $totalRecipients = $registrations->count();
+        $totalRecipients = $registrations->count();
+
+    $senders = collect(config('mail.campaign_senders'))
+        ->map(fn ($sender, $key) => [
+            'key' => $key,
+            'address' => $sender['address'],
+            'name' => $sender['name'],
+        ])
+        ->values();
 
     return Inertia::render(
         'admin/Events/Emails/Create',
@@ -68,6 +76,7 @@ public function create(Event $event)
             'event' => $event,
             'registrations' => $registrations,
             'totalRecipients' => $totalRecipients,
+            'senders' => $senders,
         ]
     );
 }
@@ -88,6 +97,8 @@ public function store(Request $request, Event $event)
         'registration_ids' => 'required|array|min:1',
         'registration_ids.*' => 'integer|distinct',
 
+        'sender' => 'required|in:contact,oumaima',
+
         'subject' => 'required|string|max:255',
 
         'content' => 'required|string',
@@ -97,6 +108,23 @@ public function store(Request $request, Event $event)
         'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip',
     ]);
 
+    /*
+    |--------------------------------------------------------------------------
+    | Get selected sender
+    |--------------------------------------------------------------------------
+    */
+
+    $sender = config(
+        "mail.campaign_senders.{$validated['sender']}"
+    );
+
+    if (!$sender || empty($sender['address']) || empty($sender['mailer'])) {
+        return back()
+            ->withErrors([
+                'sender' => 'La configuration de cet expéditeur est invalide.',
+            ])
+            ->withInput();
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -107,7 +135,6 @@ public function store(Request $request, Event $event)
     $registrations = $event->registrations()
         ->whereIn('id', $validated['registration_ids'])
         ->get();
-
 
     /*
     |--------------------------------------------------------------------------
@@ -122,7 +149,6 @@ public function store(Request $request, Event $event)
             ])
             ->withInput();
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -152,7 +178,6 @@ public function store(Request $request, Event $event)
         }
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | Create campaign
@@ -170,7 +195,6 @@ public function store(Request $request, Event $event)
         'failed_count' => 0,
     ]);
 
-
     /*
     |--------------------------------------------------------------------------
     | Create logs + build jobs list
@@ -183,11 +207,10 @@ public function store(Request $request, Event $event)
 
         $email = trim((string) $registration->email);
 
-
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Clean markdown mailto format if necessary
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
 
         if (
@@ -200,11 +223,10 @@ public function store(Request $request, Event $event)
             $email = trim($matches[1]);
         }
 
-
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | No email
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
 
         if (!$email) {
@@ -219,11 +241,10 @@ public function store(Request $request, Event $event)
             continue;
         }
 
-
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Create log
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
 
         $log = $campaign->logs()->create([
@@ -232,11 +253,10 @@ public function store(Request $request, Event $event)
             'status' => 'pending',
         ]);
 
-
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Create email job
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
 
         $jobs[] = new SendEventCampaignEmailJob(
@@ -244,9 +264,9 @@ public function store(Request $request, Event $event)
             subject: $validated['subject'],
             content: $validated['content'],
             attachmentPaths: $attachmentPaths,
+            senderKey: $validated['sender'],
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -263,19 +283,16 @@ public function store(Request $request, Event $event)
 
         foreach ($storedRelativePaths as $relativePath) {
 
-            Storage::disk('local')->delete(
-                $relativePath
-            );
+            Storage::disk('local')->delete($relativePath);
         }
 
         return redirect()
             ->route('events.emails.index', $event)
             ->with(
                 'success',
-                "Aucun participant sélectionné ne possède une adresse email valide."
+                'Aucun participant sélectionné ne possède une adresse email valide.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -310,7 +327,6 @@ public function store(Request $request, Event $event)
 
         ->dispatch();
 
-
     /*
     |--------------------------------------------------------------------------
     | Save batch ID
@@ -321,7 +337,6 @@ public function store(Request $request, Event $event)
         'batch_id' => $batch->id,
     ]);
 
-
     /*
     |--------------------------------------------------------------------------
     | Redirect
@@ -329,15 +344,13 @@ public function store(Request $request, Event $event)
     */
 
     return redirect()
-        ->route(
-            'events.emails.index',
-            $event
-        )
+        ->route('events.emails.index', $event)
         ->with(
             'success',
             "L'envoi de {$registrations->count()} email(s) a démarré en arrière-plan."
         );
 }
+
 
 
     /**
